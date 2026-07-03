@@ -36,7 +36,7 @@ For local staging, put the one-click installer in any folder you want to use as 
 The single-file installer clones or updates:
 
 ```text
-https://github.com/Feddakalkun/Fedda_hub-v2.0
+https://github.com/Feddakalkun/Fedda_hub_v2.0
 ```
 
 into `app/`, then runs `scripts\install.bat LITE`.

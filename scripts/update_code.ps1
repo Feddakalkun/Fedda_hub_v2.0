@@ -49,7 +49,7 @@ if (-not (Test-Path (Join-Path $RootPath ".git"))) {
         Write-Host "`n  Initializing git from GitHub..." -ForegroundColor Yellow
     }
     & $GitExe init
-    & $GitExe remote add origin https://github.com/Feddakalkun/Fedda_hub-v2.0.git
+    & $GitExe remote add origin https://github.com/Feddakalkun/Fedda_hub_v2.0.git
 }
 
 # ============================================================================

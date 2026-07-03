@@ -1,4 +1,4 @@
-﻿# FEDDA Hub v20 Breadcrumbs
+# FEDDA Hub v20 Breadcrumbs
 
 ## 2026-06-12 - v18 Clean Bootstrap & Migration
 - Created H:\Fedda-Hub\Fedda_hub_v18\git-repo (clean source of truth) and \install (test clone).
@@ -209,5 +209,5 @@ This file is the running trail for v20/v21. Add a new dated entry after every me
 - Selective robocopy from Fedda_hub_v22\repo with strict runtime excludes (/XD .git node_modules ComfyUI python_embeded dist logs __pycache__ .agent_snapshots downloads /XF *.db) — 366 files, 213 MB.
 - Reference hygiene v22 -> v2.0: update_code.ps1 remote, run.ps1 titles, runpod_boot.sh FEDDA_REPO, README.md, APP_VERSION_LABEL in registry.ts (was stale at "v21" since two versions back — now "FEDDA Hub v2.0").
 - BREADCRUMBS.md + HANDOFF.md carried over intact (full v18->v2.0 history preserved).
-- New outer installer: install\FEDDA_v2.0_Installer.bat (single file, local only, NOT in git) — clones https://github.com/Feddakalkun/Fedda_hub-v2.0.git into install\app\, runs inner scripts\install.bat, creates thin run.bat + update.bat.
+- New outer installer: install\FEDDA_v2.0_Installer.bat (single file, local only, NOT in git) — clones https://github.com/Feddakalkun/Fedda_hub_v2.0.git into install\app\, runs inner scripts\install.bat, creates thin run.bat + update.bat.
 - Carries over all v22 content: 33 workflow pages, TikTok/Media Downloader + Send to Workflow system, Ollama prompt coverage, all workflow JSONs and cards.

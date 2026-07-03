@@ -14,7 +14,7 @@ echo "ðŸš€ [FEDDA] Starting Universal Bootstrapper..."
 WORKSPACE="/workspace"
 MODELS_DIR="$WORKSPACE/models"
 COMFY_DIR="$WORKSPACE/ComfyUI"
-FEDDA_REPO="https://github.com/Feddakalkun/Fedda_hub-v2.0"
+FEDDA_REPO="https://github.com/Feddakalkun/Fedda_hub_v2.0"
 
 cd "$WORKSPACE"
 
