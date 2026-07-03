@@ -5,7 +5,7 @@ import { Camera, Expand, Loader2, Minus, Plus, Upload } from 'lucide-react';
 import { BACKEND_API } from '../../config/api';
 import { useToast } from '../../components/ui/Toast';
 import { Lightbox } from '../../components/ui/Lightbox';
-import { WorkflowWorkbench } from '../../components/layout/WorkflowWorkbench';
+import { WorkflowShell } from '../../components/layout/WorkflowShell';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
 import { comfyService } from '../../services/comfyService';
@@ -449,14 +449,15 @@ export const QwenMultiAnglesPage = () => {
 
   return (
     <>
-      <WorkflowWorkbench
+      <WorkflowShell
         title="Qwen Multi Angle"
         eyebrow="Image workflow"
         description="Generate up to six camera-angle variants from one reference image."
         icon={Camera}
         isGenerating={isGenerating}
         canGenerate={!!uploadedImageName && !isGenerating}
-        maxWidthClassName="max-w-7xl"
+        hideOutputPane
+        output={null}
         preview={
           <section className="rounded-lg border border-white/10 bg-black/25 p-3">
             <div className="mb-2 flex items-center justify-between">
@@ -777,7 +778,7 @@ export const QwenMultiAnglesPage = () => {
             </div>
           )}
         </section>
-      </WorkflowWorkbench>
+      </WorkflowShell>
       {lightboxImage && <Lightbox imageUrl={lightboxImage} onClose={() => setLightboxImage(null)} />}
     </>
   );
