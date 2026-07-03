@@ -157,7 +157,7 @@ export const FEDDA_MODULES: FeddaModule[] = [
     tabs: ['media-downloader'],
     defaultTab: 'media-downloader',
     Icon: Download,
-    card: {},
+    card: { poster: '/cards/new/venice/33.jpeg' },
   },
   {
     id: 'companion',
