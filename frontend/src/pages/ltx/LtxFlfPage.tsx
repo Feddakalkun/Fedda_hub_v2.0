@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Loader2, Play, RefreshCw, Upload } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Play } from 'lucide-react';
 import { PromptAssistant } from '../../components/ui/PromptAssistant';
 import { LoraSelector } from '../../components/ui/LoraSelector';
 import { useToast } from '../../components/ui/Toast';
@@ -7,67 +7,13 @@ import { BACKEND_API } from '../../config/api';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useWorkflowRun } from '../../hooks/useWorkflowRun';
 import { comfyService } from '../../services/comfyService';
-import { FeddaButton, FeddaSectionTitle } from '../../components/ui/FeddaPrimitives';
-import { WorkflowWorkbench } from '../../components/layout/WorkflowWorkbench';
+import { Field } from '../../components/ui/FeddaPrimitives';
+import { WorkflowShell, WorkflowSection } from '../../components/layout/WorkflowShell';
 import { WorkflowVideoPreviewStrip } from '../../components/layout/WorkflowVideoPreviewStrip';
-import { LTX_RATIOS, LTX_RESOLUTIONS, getLtxDimensions, getSafeLtxAspect, type LtxResolution } from '../../config/ltx';
+import { ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
+import { LTX_RATIOS, LTX_RESOLUTIONS, getLtxDimensions, getSafeLtxAspect, type LtxRatio, type LtxResolution } from '../../config/ltx';
 
-function FrameSlot({ label, preview, uploading, onFile, onUrl }: {
-  label: string;
-  preview: string | null;
-  uploading: boolean;
-  onFile: (file: File) => void;
-  onUrl?: (url: string) => void;
-}) {
-  const ref = useRef<HTMLInputElement>(null);
-  const [dragOver, setDragOver] = useState(false);
-  return (
-    <div
-      onClick={() => ref.current?.click()}
-      onDrop={(event) => {
-        event.preventDefault();
-        setDragOver(false);
-        const file = event.dataTransfer.files[0];
-        if (file?.type.startsWith('image/')) { onFile(file); return; }
-        const url = event.dataTransfer.getData('text/uri-list') || event.dataTransfer.getData('text/plain');
-        if (url && onUrl) onUrl(url.trim());
-      }}
-      onDragOver={(event) => { event.preventDefault(); setDragOver(true); }}
-      onDragLeave={() => setDragOver(false)}
-      className={`relative min-h-[124px] flex-1 cursor-pointer overflow-hidden rounded-xl border border-dashed transition-all group ${
-        dragOver ? 'border-violet-400/60 bg-violet-500/10' :
-        preview ? 'border-zinc-500/40 bg-black/40' : 'border-white/[0.08] bg-white/[0.02] hover:border-white/25'
-      }`}
-    >
-      {preview ? (
-        <>
-          <img src={preview} alt={label} className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent" />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-all group-hover:opacity-100">
-            <span className="text-[8px] font-black uppercase tracking-widest text-white/70">Replace</span>
-          </div>
-        </>
-      ) : (
-        <div className="flex h-full flex-col items-center justify-center gap-2">
-          {uploading ? <Loader2 className="h-5 w-5 animate-spin text-white/45" /> : <Upload className="h-5 w-5 text-white/15" />}
-          <span className="text-[8px] font-black uppercase tracking-widest text-white/25">
-            {uploading ? 'Uploading...' : label}
-          </span>
-        </div>
-      )}
-      <div className="absolute inset-x-0 bottom-0 px-2 py-1">
-        <span className="text-[7px] font-black uppercase tracking-widest text-white/40">{label}</span>
-      </div>
-      <input
-        ref={ref}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(event) => event.target.files?.[0] && onFile(event.target.files[0])}
-      />
-    </div>
-  );
-}
+const DIRECTIONS = ['Horizontal', 'Vertical'] as const;
 
 export const LtxFlfPage = () => {
   const [prompt, setPrompt] = usePersistentState('ltx_flf_prompt', '');
@@ -98,7 +44,6 @@ export const LtxFlfPage = () => {
 
   const firstPreview = firstFilename ? `/comfy/view?filename=${encodeURIComponent(firstFilename)}&type=input` : null;
   const lastPreview = lastFilename ? `/comfy/view?filename=${encodeURIComponent(lastFilename)}&type=input` : null;
-  const ratios = LTX_RATIOS;
 
   useEffect(() => {
     comfyService.getLoras().then((loras) => {
@@ -168,16 +113,18 @@ export const LtxFlfPage = () => {
   };
 
   const canGenerate = !!firstFilename && !!lastFilename && !!prompt.trim() && !run.isGenerating;
+  const dims = getLtxDimensions(aspectRatio, resolution);
 
   return (
-    <WorkflowWorkbench
+    <WorkflowShell
       title="LTX First / Last Frame"
       eyebrow="LTX Video 2.3"
       description="Generate motion between two keyframes with controlled duration and direction."
       icon={Play}
       isGenerating={run.isGenerating}
       canGenerate={canGenerate}
-      preview={(
+      workflowId="ltx-flf"
+      output={(
         <WorkflowVideoPreviewStrip
           title="LTX First / Last Output"
           currentVideo={run.currentMedia}
@@ -188,204 +135,118 @@ export const LtxFlfPage = () => {
         />
       )}
     >
-      <div className="grid gap-3 lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)]">
-        <section className="workflow-section">
-          <div className="workflow-section-header">
-            <FeddaSectionTitle className="text-white/30">Keyframes</FeddaSectionTitle>
-          </div>
-          <div className="flex gap-2">
-            <FrameSlot
-              label="First"
-              preview={firstPreview}
-              uploading={firstUploading}
-              onFile={(file) => uploadFrame(file, setFirstFilename, setFirstUploading)}
-              onUrl={(url) => uploadFrameFromUrl(url, setFirstFilename, setFirstUploading)}
-            />
-            <FrameSlot
-              label="Last"
-              preview={lastPreview}
-              uploading={lastUploading}
-              onFile={(file) => uploadFrame(file, setLastFilename, setLastUploading)}
-              onUrl={(url) => uploadFrameFromUrl(url, setLastFilename, setLastUploading)}
-            />
-          </div>
-          {firstFilename && lastFilename && <p className="mt-2 font-mono text-[8px] text-white/35">Both frames ready</p>}
-        </section>
-
-        <section className="workflow-section">
-          <PromptAssistant
-            context="ltx-flf"
-            value={prompt}
-            onChange={setPrompt}
-            placeholder="Describe the motion between the two frames..."
-            minRows={4}
-            accent="violet"
-            label="Motion Prompt"
-            enableCaption={false}
-          />
-        </section>
-      </div>
-
-      <section className="workflow-section">
-        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="space-y-3">
-            <FeddaSectionTitle className="text-white/30">Format</FeddaSectionTitle>
-            <div className="flex flex-wrap gap-1.5">
-              {ratios.map((ratio) => (
-                <button
-                  key={ratio}
-                  onClick={() => setAspectRatio(ratio)}
-                  className={`rounded-lg border px-2.5 py-1 text-[8px] font-black uppercase tracking-wider transition-all ${
-                    aspectRatio === ratio
-                      ? 'border-white/30 bg-white/[0.12] text-white'
-                      : 'border-white/[0.08] bg-white/[0.03] text-white/35 hover:text-white/65'
-                  }`}
-                >
-                  {ratio}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[8px] font-black uppercase tracking-widest text-white/25">Res</span>
-              <div className="flex gap-1">
-                {LTX_RESOLUTIONS.map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setResolution(r)}
-                    className={`rounded-lg border px-2.5 py-1 text-[8px] font-black uppercase tracking-wider transition-all ${
-                      resolution === r
-                        ? 'border-white/30 bg-white/[0.12] text-white'
-                        : 'border-white/[0.08] bg-white/[0.03] text-white/35 hover:text-white/65'
-                    }`}
-                  >
-                    {r}
-                  </button>
-                ))}
+      <div className="space-y-4">
+        <div className="grid gap-4 lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)]">
+          <WorkflowSection title="Keyframes">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <UploadSlot
+                  preview={firstPreview}
+                  uploading={firstUploading}
+                  onFile={(file) => uploadFrame(file, setFirstFilename, setFirstUploading)}
+                  onUrl={(url) => uploadFrameFromUrl(url, setFirstFilename, setFirstUploading)}
+                  label="First"
+                  hint="Click or drop"
+                  height={124}
+                />
               </div>
-              <span className="font-mono text-[10px] text-white/40">
-                {getLtxDimensions(aspectRatio, resolution).width}×{getLtxDimensions(aspectRatio, resolution).height}
-              </span>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <p className="text-[8px] font-black uppercase tracking-widest text-white/25">Direction</p>
-                <div className="flex gap-1">
-                  {['Horizontal', 'Vertical'].map((item) => (
-                    <button
-                      key={item}
-                      onClick={() => setDirection(item)}
-                      className={`flex-1 rounded-lg border py-1.5 text-[8px] font-black uppercase tracking-wider transition-all ${
-                        direction === item
-                          ? 'border-white/30 bg-white/[0.12] text-white'
-                          : 'border-white/[0.08] bg-white/[0.03] text-white/35 hover:text-white/65'
-                      }`}
-                    >
-                      {item === 'Horizontal' ? 'H' : 'V'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex justify-between">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-white/25">Length</p>
-                  <span className="font-mono text-[8px] text-white/55">{lengthSec}s</span>
-                </div>
-                <input
-                  type="range"
-                  min={2}
-                  max={15}
-                  step={1}
-                  value={lengthSec}
-                  onChange={(event) => setLengthSec(Number(event.target.value))}
-                  className="w-full accent-zinc-400"
+              <div className="flex-1">
+                <UploadSlot
+                  preview={lastPreview}
+                  uploading={lastUploading}
+                  onFile={(file) => uploadFrame(file, setLastFilename, setLastUploading)}
+                  onUrl={(url) => uploadFrameFromUrl(url, setLastFilename, setLastUploading)}
+                  label="Last"
+                  hint="Click or drop"
+                  height={124}
                 />
               </div>
             </div>
-          </div>
+            {firstFilename && lastFilename && <p className="mt-2 font-mono text-[9px] text-zinc-600">Both frames ready</p>}
+          </WorkflowSection>
 
-          <div className="space-y-3">
-            <FeddaSectionTitle className="text-white/30">LoRA</FeddaSectionTitle>
-            <LoraSelector
-              label="LTX LoRA"
-              value={loraName}
-              onChange={setLoraName}
-              strength={loraStrength}
-              onStrengthChange={setLoraStrength}
-              options={availableLoras}
+          <WorkflowSection title="Motion Prompt">
+            <PromptAssistant
+              context="ltx-flf"
+              value={prompt}
+              onChange={setPrompt}
+              placeholder="Describe the motion between the two frames..."
+              minRows={4}
               accent="violet"
+              label="Motion Prompt"
+              enableCaption={false}
+            />
+          </WorkflowSection>
+        </div>
+
+        <WorkflowSection
+          title="Run Settings"
+          actions={(
+            <button
+              type="button"
+              onClick={() => setShowAdvanced((v) => !v)}
+              className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600 transition hover:text-zinc-400"
+            >
+              {showAdvanced ? '− Guide strengths' : '+ Guide strengths'}
+            </button>
+          )}
+        >
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="space-y-3">
+              <Field label="Aspect Ratio">
+                <ChipGroup options={LTX_RATIOS} value={aspectRatio as LtxRatio} onChange={setAspectRatio} />
+              </Field>
+              <Field label={`Resolution — ${dims.width}×${dims.height}`}>
+                <ChipGroup options={LTX_RESOLUTIONS} value={resolution} onChange={setResolution} />
+              </Field>
+              <Field label="Direction">
+                <ChipGroup options={DIRECTIONS} value={direction as typeof DIRECTIONS[number]} onChange={setDirection} />
+              </Field>
+              <SliderField
+                label="Length"
+                value={lengthSec}
+                onChange={setLengthSec}
+                min={2}
+                max={15}
+                step={1}
+                format={(v) => `${v}s`}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <LoraSelector
+                label="LTX LoRA"
+                value={loraName}
+                onChange={setLoraName}
+                strength={loraStrength}
+                onStrengthChange={setLoraStrength}
+                options={availableLoras}
+                accent="violet"
+              />
+              <Field label="Seed (-1 = random)">
+                <SeedField value={seed} onChange={setSeed} />
+              </Field>
+            </div>
+          </div>
+
+          {showAdvanced && (
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <SliderField label="First Frame Guide" value={guideFirst} onChange={setGuideFirst} min={0} max={1} step={0.05} />
+              <SliderField label="Last Frame Guide" value={guideLast} onChange={setGuideLast} min={0} max={1} step={0.05} />
+            </div>
+          )}
+
+          <div className="mt-4">
+            <GenerateButton
+              onClick={handleGenerate}
+              disabled={!canGenerate}
+              isGenerating={run.isGenerating}
+              label="Generate Video"
+              requirementHint="Upload both frames and enter a motion prompt"
             />
           </div>
-        </div>
-      </section>
-
-      <section className="workflow-section">
-        <div className="flex gap-2">
-          <input
-            type="number"
-            value={seed}
-            onChange={(event) => setSeed(parseInt(event.target.value) || -1)}
-            className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.02] px-3 py-2.5 font-mono text-[11px] text-white/65 outline-none focus:border-white/22"
-          />
-          <FeddaButton onClick={() => setSeed(-1)} variant={seed === -1 ? 'violet' : 'ghost'} className="rounded-xl p-2.5 transition-all">
-            <RefreshCw className="h-3.5 w-3.5" />
-          </FeddaButton>
-        </div>
-
-        <FeddaButton
-          onClick={() => setShowAdvanced((value) => !value)}
-          variant="ghost"
-          className="mt-3 flex w-full items-center justify-between rounded-xl px-3 py-2 text-white/35 transition-colors hover:text-white/65"
-        >
-          <span className="text-[8px] font-black uppercase tracking-widest">Guide Strengths</span>
-          {showAdvanced ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-        </FeddaButton>
-
-        {showAdvanced && (
-          <div className="mt-3 grid grid-cols-2 gap-3 px-1">
-            {[
-              { label: 'First Frame', value: guideFirst, set: setGuideFirst },
-              { label: 'Last Frame', value: guideLast, set: setGuideLast },
-            ].map(({ label, value, set }) => (
-              <div key={label} className="space-y-1">
-                <div className="flex justify-between">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-white/25">{label}</p>
-                  <span className="font-mono text-[8px] text-white/55">{value.toFixed(2)}</span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={value}
-                  onChange={(event) => set(Number(event.target.value))}
-                  className="w-full accent-zinc-400"
-                />
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-4">
-          <FeddaButton
-            disabled={!canGenerate}
-            onClick={handleGenerate}
-            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-zinc-200 py-4 text-[11px] font-black uppercase tracking-[0.35em] text-black transition-all duration-300 hover:bg-white disabled:bg-white/[0.03] disabled:text-white/15"
-          >
-            {run.isGenerating ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /><span>Generating...</span></>
-            ) : (
-              <><Play className="h-4 w-4" /><span>Generate</span></>
-            )}
-          </FeddaButton>
-          {(!firstFilename || !lastFilename) && (
-            <p className="mt-2 text-center text-[8px] uppercase tracking-widest text-white/20">
-              Upload both frames to start
-            </p>
-          )}
-        </div>
-      </section>
-    </WorkflowWorkbench>
+        </WorkflowSection>
+      </div>
+    </WorkflowShell>
   );
 };
