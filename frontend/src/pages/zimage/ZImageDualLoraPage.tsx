@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { BACKEND_API } from '../../config/api';
 import { TopPreviewStrip } from '../../components/layout/TopPreviewStrip';
-import { WorkflowWorkbench } from '../../components/layout/WorkflowWorkbench';
+import { WorkflowShell } from '../../components/layout/WorkflowShell';
 import { PromptAssistant } from '../../components/ui/PromptAssistant';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
 import { comfyService } from '../../services/comfyService';
@@ -423,7 +423,7 @@ export const ZImageDualLoraPage = () => {
   const loraOptions = availableLoras.length ? availableLoras : [loraMainName, loraDetailName].filter(Boolean);
 
   return (
-    <WorkflowWorkbench
+    <WorkflowShell
       title="Z-Image Dual LoRA"
       eyebrow="Image workflow"
       description="Create a two-person image, choose one person, then refine that person with the second LoRA."
@@ -431,7 +431,8 @@ export const ZImageDualLoraPage = () => {
       isGenerating={isRunning}
       canGenerate={canRun && !isRunning}
       preview={<TopPreviewStrip storageKey="zimage_dual_lora" maxItems={12} />}
-      maxWidthClassName="max-w-[1680px]"
+      hideOutputPane
+      output={null}
     >
         <section className={`${panelBase} p-3`}>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -779,6 +780,6 @@ export const ZImageDualLoraPage = () => {
               </div>
             </section>
           </main>
-    </WorkflowWorkbench>
+    </WorkflowShell>
   );
 };
