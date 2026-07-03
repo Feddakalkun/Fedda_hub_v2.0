@@ -508,11 +508,22 @@ if (-not (Test-Path $ComfyDir)) {
 # ============================================================================
 Write-Header "STEP 3/7 - PyTorch + Dependencies"
 
-Write-Step "Installing PyTorch (CUDA 12.4)... this takes a few minutes"
-Venv-Pip "install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124"
+# RTX 50-series (Blackwell, sm_120) needs CUDA 12.8+ wheels; cu124 has no kernels for it.
+# Older cards stay on cu124 so existing 20/30/40-series installs behave exactly as before.
+$CudaChannel = "cu124"
+try {
+    $TorchGPUName = (Get-CimInstance Win32_VideoController | Where-Object { $_.Name -match "NVIDIA" } | Select-Object -First 1).Name
+    if ($TorchGPUName -match "RTX 50\d\d") {
+        $CudaChannel = "cu128"
+        Write-Step "RTX 50-series detected - using CUDA 12.8 wheels" "Yellow"
+    }
+} catch {}
+
+Write-Step "Installing PyTorch ($CudaChannel)... this takes a few minutes"
+Venv-Pip "install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/$CudaChannel"
 
 Write-Step "Installing xformers..."
-Venv-Pip "install xformers --index-url https://download.pytorch.org/whl/cu124"
+Venv-Pip "install xformers --index-url https://download.pytorch.org/whl/$CudaChannel"
 
 Write-Step "Installing ComfyUI requirements..."
 $ComfyReq = Join-Path $ComfyDir "requirements.txt"
