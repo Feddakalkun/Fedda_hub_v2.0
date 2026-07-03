@@ -7,12 +7,14 @@ $Python    = Join-Path $RootPath "python_embeded\python.exe"
 $ComfyMain = Join-Path $RootPath "ComfyUI\main.py"
 $BackendPy = Join-Path $RootPath "backend\server.py"
 $FrontDir  = Join-Path $RootPath "frontend"
+$LogDir    = Join-Path $RootPath "logs"
 
 $Host.UI.RawUI.WindowTitle = "FEDDA Hub v2.0"
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
 Write-Host ""
 Write-Host "  ============================================================" -ForegroundColor Cyan
-Write-Host "    FEDDA Hub v2.0" -ForegroundColor Cyan
+Write-Host "    FEDDA Hub v2.0  -  single-window launcher" -ForegroundColor Cyan
 Write-Host "  ============================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -28,6 +30,7 @@ if (-not (Test-Path "$FrontDir\node_modules")) {
     Write-Host "  [ERROR] Frontend dependencies missing. Run the installer first." -ForegroundColor Red
     Write-Host ""; Read-Host "Press Enter to exit"; exit 1
 }
+if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir -Force | Out-Null }
 
 function Wait-Port {
     param([int]$Port, [string]$Name, [System.Diagnostics.Process]$Proc, [int]$TimeoutSec = 120)
@@ -53,20 +56,37 @@ function Wait-Port {
     return $false
 }
 
+# Each service runs hidden; stdout+stderr go to log files that we tail back
+# into THIS window as prefixed lines. Logs also persist for debugging.
+$Services = @(
+    @{ Tag = "COMFY"; Color = "Magenta"; Out = Join-Path $LogDir "comfyui_live.log";  Err = Join-Path $LogDir "comfyui_live.err.log" },
+    @{ Tag = "BACK";  Color = "Green";   Out = Join-Path $LogDir "backend_live.log";  Err = Join-Path $LogDir "backend_live.err.log" },
+    @{ Tag = "VITE";  Color = "Cyan";    Out = Join-Path $LogDir "frontend_live.log"; Err = Join-Path $LogDir "frontend_live.err.log" }
+)
+foreach ($s in $Services) {
+    Remove-Item $s.Out, $s.Err -ErrorAction SilentlyContinue
+    New-Item -ItemType File -Path $s.Out -Force | Out-Null
+    New-Item -ItemType File -Path $s.Err -Force | Out-Null
+}
+
 $ComfyProc   = $null
 $BackendProc = $null
+$ViteProc    = $null
+$TailJobs    = @()
 
 try {
     Write-Host "  [1/3] Starting ComfyUI on port 8199..." -ForegroundColor White
     $ComfyProc = Start-Process -FilePath $Python `
         -ArgumentList "-s", $ComfyMain, "--windows-standalone-build", "--port", "8199" `
-        -PassThru -WindowStyle Minimized
+        -PassThru -WindowStyle Hidden `
+        -RedirectStandardOutput $Services[0].Out -RedirectStandardError $Services[0].Err
 
     Write-Host "  [2/3] Starting backend on port 8000..." -ForegroundColor White
     $BackendProc = Start-Process -FilePath $Python `
         -ArgumentList $BackendPy `
         -WorkingDirectory (Split-Path $BackendPy -Parent) `
-        -PassThru -WindowStyle Minimized
+        -PassThru -WindowStyle Hidden `
+        -RedirectStandardOutput $Services[1].Out -RedirectStandardError $Services[1].Err
 
     $comfyOk   = Wait-Port -Port 8199 -Name "ComfyUI (this can take ~30s)" -Proc $ComfyProc -TimeoutSec 120
     $backendOk = Wait-Port -Port 8000 -Name "backend" -Proc $BackendProc -TimeoutSec 30
@@ -78,25 +98,65 @@ try {
         Write-Host "  [WARN] Backend did not respond - some features may be unavailable." -ForegroundColor Yellow
     }
 
+    Write-Host "  [3/3] Starting frontend (vite)..." -ForegroundColor White
+    $NpmCmd = "cd /d `"$FrontDir`" && npm run dev"
+    $ViteProc = Start-Process -FilePath "cmd.exe" `
+        -ArgumentList "/c", $NpmCmd `
+        -PassThru -WindowStyle Hidden `
+        -RedirectStandardOutput $Services[2].Out -RedirectStandardError $Services[2].Err
+
+    # Tail all service logs back into this window
+    foreach ($s in $Services) {
+        foreach ($f in @($s.Out, $s.Err)) {
+            $TailJobs += Start-Job -Name $s.Tag -ArgumentList $f -ScriptBlock {
+                param($Path)
+                Get-Content -LiteralPath $Path -Wait -Tail 0 -ErrorAction SilentlyContinue
+            }
+        }
+    }
+
     Write-Host ""
-    Write-Host "  [3/3] Opening browser..." -ForegroundColor White
-    Write-Host ""
-    Write-Host "  Press Ctrl+C to stop everything." -ForegroundColor DarkGray
+    Write-Host "  All services live in this window:" -ForegroundColor White
+    Write-Host "    [COMFY] ComfyUI :8199   [BACK] backend :8000   [VITE] frontend :5173" -ForegroundColor DarkGray
+    Write-Host "  Full logs in logs\*_live.log - press Ctrl+C to stop everything." -ForegroundColor DarkGray
     Write-Host ""
 
-    Set-Location $FrontDir
-    & npm run dev
+    # Pump service output until the frontend exits or Ctrl+C
+    $ColorMap = @{}; foreach ($s in $Services) { $ColorMap[$s.Tag] = $s.Color }
+    while ($true) {
+        $gotOutput = $false
+        foreach ($j in $TailJobs) {
+            $lines = Receive-Job -Job $j -ErrorAction SilentlyContinue
+            foreach ($line in $lines) {
+                if ($null -ne $line -and "$line" -ne "") {
+                    Write-Host "[$($j.Name)] " -NoNewline -ForegroundColor $ColorMap[$j.Name]
+                    Write-Host "$line"
+                    $gotOutput = $true
+                }
+            }
+        }
+        if ($ViteProc.HasExited) {
+            Write-Host "  Frontend exited (code $($ViteProc.ExitCode)) - shutting down." -ForegroundColor Yellow
+            break
+        }
+        if ($ComfyProc.HasExited -and $BackendProc.HasExited) {
+            Write-Host "  All services exited - shutting down." -ForegroundColor Yellow
+            break
+        }
+        if (-not $gotOutput) { Start-Sleep -Milliseconds 250 }
+    }
 
 } finally {
     Write-Host ""
     Write-Host "  Shutting down..." -ForegroundColor Yellow
-    if ($null -ne $ComfyProc -and -not $ComfyProc.HasExited) {
-        taskkill /F /T /PID $ComfyProc.Id 2>$null | Out-Null
-        Write-Host "  ComfyUI stopped." -ForegroundColor DarkGray
+    foreach ($p in @($ViteProc, $ComfyProc, $BackendProc)) {
+        if ($null -ne $p -and -not $p.HasExited) {
+            taskkill /F /T /PID $p.Id 2>$null | Out-Null
+        }
     }
-    if ($null -ne $BackendProc -and -not $BackendProc.HasExited) {
-        taskkill /F /T /PID $BackendProc.Id 2>$null | Out-Null
-        Write-Host "  Backend stopped." -ForegroundColor DarkGray
+    foreach ($j in $TailJobs) {
+        Stop-Job -Job $j -ErrorAction SilentlyContinue
+        Remove-Job -Job $j -Force -ErrorAction SilentlyContinue
     }
     Write-Host "  Done." -ForegroundColor Green
     Write-Host ""
