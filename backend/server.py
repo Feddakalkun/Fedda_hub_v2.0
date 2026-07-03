@@ -61,6 +61,9 @@ CORS_ORIGINS = os.environ.get(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
+    # Vite auto-increments its port when the default is taken, so accept any
+    # localhost/127.0.0.1 port rather than pinning the dev server to a list.
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
