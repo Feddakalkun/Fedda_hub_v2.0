@@ -1,0 +1,137 @@
+{
+  "1": {
+    "inputs": {
+      "download_links": "https://huggingface.co/lodestones/Chroma1-HD/resolve/main/Chroma1-HD.safetensors diffusion_models\nhttps://huggingface.co/silveroxides/flan-t5-xxl-encoder-only/resolve/main/flan-t5-xxl_float8_e4m3fn_scaled_stochastic.safetensors text_encoders\nhttps://huggingface.co/Comfy-Org/Lumina_Image_2.0_Repackaged/resolve/main/split_files/vae/ae.safetensors vae",
+      "auto_download": true,
+      "max_concurrent_downloads": 3,
+      "max_download_speed_mbps": 0,
+      "enable_resume": true,
+      "validate_files": false,
+      "enable_notifications": true,
+      "auto_organize": false,
+      "hf_token": ""
+    },
+    "class_type": "HuggingFaceDownloader",
+    "_meta": {
+      "title": "HuggingFace Model Downloader Pro"
+    }
+  },
+  "298": {
+    "inputs": {
+      "samples": ["747", 0],
+      "vae": ["710", 0]
+    },
+    "class_type": "VAEDecode"
+  },
+  "694": {
+    "inputs": {
+      "model": ["701", 0],
+      "positive": ["748", 0],
+      "negative": ["749", 0],
+      "cfg": 1.7
+    },
+    "class_type": "CFGGuider"
+  },
+  "700": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect"
+  },
+  "701": {
+    "inputs": {
+      "model": ["731", 0],
+      "shift": 1.0
+    },
+    "class_type": "ModelSamplingAuraFlow"
+  },
+  "710": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader"
+  },
+  "718": {
+    "inputs": {
+      "noise_seed": 243759308503783
+    },
+    "class_type": "RandomNoise"
+  },
+  "731": {
+    "inputs": {
+      "unet_name": "Chroma1-HD.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader"
+  },
+  "733": {
+    "inputs": {
+      "clip_name": "flan-t5-xxl_float8_e4m3fn_scaled_stochastic.safetensors",
+      "type": "chroma",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader"
+  },
+  "737": {
+    "inputs": {
+      "width": 1152,
+      "height": 1152,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage"
+  },
+  "740": {
+    "inputs": {
+      "images": ["298", 0],
+      "filename_prefix": "IMAGE/CHROMA/0"
+    },
+    "class_type": "SaveImage"
+  },
+  "741": {
+    "inputs": {
+      "clip": ["733", 0],
+      "min_padding": 0,
+      "min_length": 0
+    },
+    "class_type": "T5TokenizerOptions"
+  },
+  "747": {
+    "inputs": {
+      "noise": ["718", 0],
+      "guider": ["694", 0],
+      "sampler": ["700", 0],
+      "sigmas": ["751", 0],
+      "latent_image": ["737", 0]
+    },
+    "class_type": "SamplerCustomAdvanced"
+  },
+  "748": {
+    "inputs": {
+      "clip": ["741", 0],
+      "text": "This is a close-up photograph from a nature documentary capturing the right side of the face of a tiger. The photograph is sharp, detailed, and naturalistic."
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "749": {
+    "inputs": {
+      "clip": ["741", 0],
+      "text": "low quality, ugly, unfinished, out of focus, deformed, disfigure, blurry, smudged, restricted palette, flat colors, body horror, mutated creature, extra animal, fish, monster, malformed arms, deformed hands, fused anatomy, melted body, muddy skin artifacts, extra limbs, bad anatomy"
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Negative Prompt)"
+    }
+  },
+  "751": {
+    "inputs": {
+      "model": ["701", 0],
+      "steps": 40,
+      "alpha": 0.45,
+      "beta": 0.45
+    },
+    "class_type": "BetaSamplingScheduler"
+  }
+}

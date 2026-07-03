@@ -1,0 +1,16 @@
+.git
+*.bat
+*.ps1
+__pycache__
+*.pyc
+.DS_Store
+Thumbs.db
+*.log
+node_modules
+venv
+python_embeded
+node_embeded
+git_embeded
+ollama_embeded
+ComfyUI
+logs

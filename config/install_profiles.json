@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "default_profile": "full",
+  "profiles": {
+    "core": {
+      "label": "FEDDA Core Pack",
+      "description": "App shell, gallery, library, Ollama, and Z-Image txt2img only.",
+      "enabled_modules": [
+        "core-shell",
+        "z-image-core"
+      ]
+    },
+    "full": {
+      "label": "FEDDA Full Studio",
+      "description": "Core pack plus every booster module.",
+      "enabled_modules": [
+        "core-shell",
+        "z-image-core",
+        "z-image-advanced",
+        "sdxl-pack",
+        "qwen-image",
+        "chroma-image",
+        "firered-image",
+        "flux-klein",
+        "wan-video",
+        "ltx-video"
+      ]
+    }
+  }
+}

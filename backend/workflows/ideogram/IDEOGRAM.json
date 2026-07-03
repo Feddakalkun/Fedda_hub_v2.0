@@ -1,0 +1,502 @@
+﻿{
+  "226": {
+    "inputs": {
+      "download_links": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_fp8_scaled.safetensors diffusion_models\nhttps://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_unconditional_fp8_scaled.safetensors diffusion_models\nhttps://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/text_encoders/qwen3vl_8b_fp8_scaled.safetensors text_encoders\nhttps://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/vae/flux2-vae.safetensors vae",
+      "auto_download": true,
+      "max_concurrent_downloads": 3,
+      "max_download_speed_mbps": 0,
+      "enable_resume": true,
+      "validate_files": false,
+      "enable_notifications": true,
+      "auto_organize": false,
+      "hf_token": ""
+    },
+    "class_type": "HuggingFaceDownloader",
+    "_meta": {
+      "title": "HuggingFace Downloader"
+    }
+  },
+  "2": {
+    "inputs": {
+      "width": 1088,
+      "height": 1456,
+      "high_level_description": "A breathtaking view of Earth from space with the Sun illuminating one side of the planet. The Moon appears in the distance. A deep star field, subtle nebula clouds, and faint orbital grids fill the background. Clean scientific aesthetics are combined with premium print textures, subtle grain, ",
+      "background": "black bg",
+      "style": "none",
+      "aesthetics": "",
+      "lighting": "",
+      "medium": "",
+      "style_palette_data": "",
+      "elements_data": "[{\"type\":\"text\",\"text\":\"COSMIC\\\\nNUMBERS\",\"desc\":\"Large vertical title, bold modern sans-serif, white with subtle metallic texture.\",\"palette\":[],\"x\":0.06,\"y\":0.08,\"w\":0.592,\"h\":0.208},{\"type\":\"obj\",\"text\":\"\",\"desc\":\"photorealistic Earth viewed from orbit with visible atmosphere glow, Moon in the background, Sun partially visible at the edge of the frame.\",\"palette\":[],\"x\":0.198,\"y\":0.477,\"w\":0.619,\"h\":0.371},{\"type\":\"text\",\"text\":\"SUN DIAMETER\\\\n864,938 MILES\",\"desc\":\"Large data block, bold typography, golden accent.\",\"palette\":[],\"x\":0.675,\"y\":0.038,\"w\":0.311,\"h\":0.052},{\"type\":\"text\",\"text\":\"MOON DIAMETER\\\\n2,159 MILES\",\"desc\":\"Large data block, white typography.\",\"palette\":[],\"x\":0.673,\"y\":0.103,\"w\":0.313,\"h\":0.065},{\"type\":\"text\",\"text\":\"SPEED OF LIGHT\\\\n186,282 MILES/SECOND\",\"desc\":\"Most prominent statistic, futuristic typography, glowing accent treatment.\",\"palette\":[],\"x\":0.673,\"y\":0.268,\"w\":0.311,\"h\":0.057},{\"type\":\"text\",\"text\":\"EARTH AXIAL TILT\\\\n23.44°\",\"desc\":\"\",\"palette\":[],\"x\":0.675,\"y\":0.184,\"w\":0.309,\"h\":0.067},{\"type\":\"text\",\"text\":\"Seconds in one day 86400\",\"desc\":\"\",\"palette\":[],\"x\":0.677,\"y\":0.343,\"w\":0.308,\"h\":0.061},{\"type\":\"text\",\"text\":\"EARTH-MOON\\nDISTANCE\\n238,855 MILES\",\"desc\":\"Data block, clean sans-serif typography, silver accent.\",\"palette\":[],\"x\":0.05,\"y\":0.783,\"w\":0.392,\"h\":0.207},{\"type\":\"text\",\"text\":\"Light from Sun reaches Earth in 8 minutes\",\"desc\":\"Futuristic scientific caption, clean uppercase typography.\",\"palette\":[],\"x\":0.048,\"y\":0.674,\"w\":0.625,\"h\":0.075},{\"type\":\"text\",\"text\":\"carbon atom\\n6 protons 6 neutrons 6 electrons\",\"desc\":\"Futuristic scientific header, clean uppercase typography.\",\"palette\":[],\"x\":0.581,\"y\":0.818,\"w\":0.363,\"h\":0.078},{\"type\":\"text\",\"text\":\"process of photosynthesis at molecular level\",\"desc\":\"\",\"palette\":[],\"x\":0.588,\"y\":0.891,\"w\":0.382,\"h\":0.071},{\"type\":\"text\",\"text\":\"6CO₂ + 6H₂O + LIGHT → C₆H₁₂O₆ + 6O₂\",\"desc\":\"ain chemical equation of photosynthesis, centered, high emphasis, clean scientific font.\",\"palette\":[],\"x\":0.532,\"y\":0.931,\"w\":0.468,\"h\":0.069}]",
+      "bg_brightness": 13,
+      "import_mode": "when empty",
+      "output_format": "compact"
+    },
+    "class_type": "Ideogram4PromptBuilderKJ",
+    "_meta": {
+      "title": "Ideogram 4 Prompt Builder KJ"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text_0": "{\n    \"high_level_description\": \"A breathtaking view of Earth from space with the Sun illuminating one side of the planet. The Moon appears in the distance. A deep star field, subtle nebula clouds, and faint orbital grids fill the background. Clean scientific aesthetics are combined with premium print textures, subtle grain, \",\n    \"compositional_deconstruction\": {\n        \"background\": \"black bg\",\n        \"elements\": [\n            {\n                \"type\": \"text\",\n                \"bbox\": [80, 60, 288, 652],\n                \"text\": \"COSMIC\\\\nNUMBERS\",\n                \"desc\": \"Large vertical title, bold modern sans-serif, white with subtle metallic texture.\"\n            },\n            {\n                \"type\": \"obj\",\n                \"bbox\": [477, 198, 848, 817],\n                \"desc\": \"photorealistic Earth viewed from orbit with visible atmosphere glow, Moon in the background, Sun partially visible at the edge of the frame.\"\n            },\n            {\n                \"type\": \"text\",\n                \"bbox\": [38, 675, 90, 986],\n                \"text\": \"SUN DIAMETER\\\\n864,938 MILES\",\n                \"desc\": \"Large data block, bold typography, golden accent.\"\n            },\n            {\n                \"type\": \"text\",\n                \"bbox\": [103, 673, 168, 986],\n                \"text\": \"MOON DIAMETER\\\\n2,159 MILES\",\n                \"desc\": \"Large data block, white typography.\"\n            },\n            {\n                \"type\": \"text\",\n                \"bbox\": [268, 673, 325, 984],\n                \"text\": \"SPEED OF LIGHT\\\\n186,282 MILES/SECOND\",\n                \"desc\": \"Most prominent statistic, futuristic typography, glowing accent treatment.\"\n            },\n            {\n                \"type\": \"text\",\n                \"bbox\": [184, 675, 251, 984],\n                \"text\": \"EARTH AXIAL TILT\\\\n23.44°\",\n                \"desc\": \"\"\n            },\n            {\n                \"type\": \"text\",\n                \"bbox\": [343, 677, 404, 985],\n                \"text\": \"Seconds in one day 86400\",\n                \"desc\": \"\"\n            },\n            {\n                \"type\": \"text\",\n                \"bbox\": [783, 50, 990, 442],\n                \"text\": \"EARTH-MOON\\nDISTANCE\\n238,855 MILES\",\n                \"desc\": \"Futuristic scientific header, clean uppercase typography.\\n\"\n            },\n            {\n                \"type\": \"text\",\n                \"bbox\": [674, 48, 749, 673],\n                \"text\": \"Light from Sun reaches Earth in 8 minutes\",\n                \"desc\": \"Futuristic scientific header, clean uppercase typography.\"\n            },\n            {\n                \"type\": \"text\",\n                \"bbox\": [818, 581, 896, 944],\n                \"text\": \"carbon atom\\n6 protons 6 neutrons 6 electrons\",\n                \"desc\": \"Futuristic scientific header, clean uppercase typography.\"\n            },\n            {\n                \"type\": \"text\",\n                \"bbox\": [891, 588, 962, 970],\n                \"text\": \"process of photosynthesis at molecular level\",\n                \"desc\": \"\"\n            },\n            {\n                \"type\": \"text\",\n                \"bbox\": [931, 532, 1000, 1000],\n                \"text\": \"6CO₂ + 6H₂O + LIGHT → C₆H₁₂O₆ + 6O₂\",\n                \"desc\": \"ain chemical equation of photosynthesis, centered, high emphasis, clean scientific font.\"\n            }\n        ]\n    }\n}",
+      "text": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "183": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "184": {
+    "inputs": {
+      "conditioning": [
+        "190",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "ConditioningZeroOut"
+    }
+  },
+  "185": {
+    "inputs": {
+      "width": [
+        "194",
+        1
+      ],
+      "height": [
+        "195",
+        1
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "Empty Flux 2 Latent"
+    }
+  },
+  "186": {
+    "inputs": {
+      "noise": [
+        "208",
+        0
+      ],
+      "guider": [
+        "205",
+        0
+      ],
+      "sampler": [
+        "188",
+        0
+      ],
+      "sigmas": [
+        "209",
+        0
+      ],
+      "latent_image": [
+        "185",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "187": {
+    "inputs": {
+      "samples": [
+        "186",
+        0
+      ],
+      "vae": [
+        "183",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "188": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "189": {
+    "inputs": {
+      "unet_name": "ideogram4_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "190": {
+    "inputs": {
+      "text": [
+        "2",
+        0
+      ],
+      "clip": [
+        "191",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "191": {
+    "inputs": {
+      "clip_name": "qwen3vl_8b_fp8_scaled.safetensors",
+      "type": "ideogram4",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "192": {
+    "inputs": {
+      "value": [
+        "2",
+        3
+      ]
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "Int (Width)"
+    }
+  },
+  "193": {
+    "inputs": {
+      "value": [
+        "2",
+        4
+      ]
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "Int (Height)"
+    }
+  },
+  "194": {
+    "inputs": {
+      "expression": "max(((a + 15) // 16) * 16, 256)",
+      "values.a": [
+        "192",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "Math Expression"
+    }
+  },
+  "195": {
+    "inputs": {
+      "expression": "max(((a + 15) // 16) * 16, 256)",
+      "values.a": [
+        "193",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "Math Expression"
+    }
+  },
+  "196": {
+    "inputs": {
+      "value": [
+        "197",
+        0
+      ]
+    },
+    "class_type": "ComfyNumberConvert",
+    "_meta": {
+      "title": "Convert Number"
+    }
+  },
+  "197": {
+    "inputs": {
+      "json_string": [
+        "200",
+        0
+      ],
+      "key": "mu"
+    },
+    "class_type": "JsonExtractString",
+    "_meta": {
+      "title": "Extract Text from JSON"
+    }
+  },
+  "198": {
+    "inputs": {
+      "value": [
+        "202",
+        0
+      ]
+    },
+    "class_type": "ComfyNumberConvert",
+    "_meta": {
+      "title": "Convert Number"
+    }
+  },
+  "199": {
+    "inputs": {
+      "json_string": "{\n  \"Quality\": {\n    \"num_steps\": 48,\n    \"mu\": 0.0,\n    \"std\": 1.5,\n    \"preset_id\": \"V4_QUALITY_48\"\n  },\n  \"Default\": {\n    \"num_steps\": 20,\n    \"mu\": 0.0,\n    \"std\": 1.75,\n    \"preset_id\": \"V4_DEFAULT_20\"\n  },\n  \"Turbo\": {\n    \"num_steps\": 12,\n    \"mu\": 0.5,\n    \"std\": 1.75,\n    \"preset_id\": \"V4_TURBO_12\"\n  }\n}",
+      "key": [
+        "217",
+        0
+      ]
+    },
+    "class_type": "JsonExtractString",
+    "_meta": {
+      "title": "Extract Text from JSON"
+    }
+  },
+  "200": {
+    "inputs": {
+      "string": [
+        "199",
+        0
+      ],
+      "find": "'",
+      "replace": "\""
+    },
+    "class_type": "StringReplace",
+    "_meta": {
+      "title": "Replace Text"
+    }
+  },
+  "201": {
+    "inputs": {
+      "json_string": [
+        "200",
+        0
+      ],
+      "key": "num_steps"
+    },
+    "class_type": "JsonExtractString",
+    "_meta": {
+      "title": "Extract Text from JSON"
+    }
+  },
+  "202": {
+    "inputs": {
+      "json_string": [
+        "200",
+        0
+      ],
+      "key": "std"
+    },
+    "class_type": "JsonExtractString",
+    "_meta": {
+      "title": "Extract Text from JSON"
+    }
+  },
+  "203": {
+    "inputs": {
+      "value": [
+        "201",
+        0
+      ]
+    },
+    "class_type": "ComfyNumberConvert",
+    "_meta": {
+      "title": "Convert Number"
+    }
+  },
+  "204": {
+    "inputs": {
+      "unet_name": "ideogram4_unconditional_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "205": {
+    "inputs": {
+      "cfg": 7,
+      "model": [
+        "207",
+        0
+      ],
+      "positive": [
+        "190",
+        0
+      ],
+      "model_negative": [
+        "204",
+        0
+      ],
+      "negative": [
+        "184",
+        0
+      ]
+    },
+    "class_type": "DualModelGuider",
+    "_meta": {
+      "title": "Dual Model CFG Guider"
+    }
+  },
+  "207": {
+    "inputs": {
+      "cfg": 3,
+      "start_percent": 0.7,
+      "end_percent": 1,
+      "model": [
+        "189",
+        0
+      ]
+    },
+    "class_type": "CFGOverride",
+    "_meta": {
+      "title": "CFG Override"
+    }
+  },
+  "208": {
+    "inputs": {
+      "noise_seed": 774552318322048
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "209": {
+    "inputs": {
+      "steps": [
+        "203",
+        1
+      ],
+      "width": [
+        "194",
+        1
+      ],
+      "height": [
+        "195",
+        1
+      ],
+      "mu": [
+        "196",
+        0
+      ],
+      "std": [
+        "198",
+        0
+      ]
+    },
+    "class_type": "Ideogram4Scheduler",
+    "_meta": {
+      "title": "Ideogram 4 Scheduler"
+    }
+  },
+  "213": {
+    "inputs": {
+      "filename_prefix": "IMAGE/IDEOGRAM/0",
+      "images": [
+        "187",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "216": {
+    "inputs": {
+      "UNKNOWN": "[false,true]"
+    },
+    "_meta": {}
+  },
+  "217": {
+    "inputs": {
+      "select": 1,
+      "sel_mode": false,
+      "input1": [
+        "218",
+        0
+      ],
+      "input2": [
+        "216",
+        0
+      ],
+      "input3": [
+        "219",
+        0
+      ]
+    },
+    "class_type": "ImpactSwitch",
+    "_meta": {
+      "title": "Switch (Any)"
+    }
+  },
+  "218": {
+    "inputs": {
+      "UNKNOWN": "[false,true]"
+    },
+    "_meta": {}
+  },
+  "219": {
+    "inputs": {
+      "UNKNOWN": "[false,true]"
+    },
+    "_meta": {}
+  },
+  "224": {
+    "inputs": {
+      "download_links": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_fp8_scaled.safetensors diffusion_models\nhttps://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_unconditional_fp8_scaled.safetensors diffusion_models\nhttps://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/text_encoders/qwen3vl_8b_fp8_scaled.safetensors text_encoders\nhttps://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/vae/flux2-vae.safetensors vae",
+      "auto_download": true,
+      "max_concurrent_downloads": 3,
+      "max_download_speed_mbps": 0,
+      "enable_resume": true,
+      "validate_files": false,
+      "enable_notifications": true,
+      "auto_organize": false,
+      "hf_token": ""
+    },
+    "class_type": "HuggingFaceDownloader",
+    "_meta": {
+      "title": "🤗 HuggingFace Model Downloader Pro"
+    }
+  },
+  "225": {
+    "inputs": {
+      "anything": [
+        "224",
+        0
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "Show Any"
+    }
+  }
+}

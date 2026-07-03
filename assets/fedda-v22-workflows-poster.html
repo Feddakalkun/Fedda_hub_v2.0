@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FEDDAKALKUN v22 • Workflows</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+    
+    :root {
+      --teal: #14b8a6;
+      --cyan: #67f6ff;
+    }
+    
+    body {
+      font-family: 'Inter', system_ui, sans-serif;
+    }
+    
+    .title-font {
+      font-family: 'Space Grotesk', 'Inter', system_ui, sans-serif;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+    }
+
+    .section-header {
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      color: #14b8a6;
+    }
+
+    .workflow-item {
+      font-size: 15px;
+      line-height: 1.5;
+      color: #e0f0f0;
+    }
+
+    .poster {
+      background: #05080f;
+      background-image: 
+        radial-gradient(circle at 25% 20%, rgba(20, 184, 166, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 75% 80%, rgba(103, 246, 255, 0.05) 0%, transparent 50%);
+    }
+
+    .holo-border {
+      border: 1px solid rgba(20, 184, 166, 0.2);
+      box-shadow: 0 0 0 1px rgba(20, 184, 166, 0.1) inset;
+    }
+
+    .teal-glow {
+      text-shadow: 0 0 10px rgba(20, 184, 166, 0.5);
+    }
+
+    .workflow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 28px;
+    }
+
+    .brand-accent {
+      color: #67f6ff;
+    }
+  </style>
+</head>
+<body class="bg-[#05080f] text-white p-8 md:p-12">
+  <div class="max-w-[1200px] mx-auto">
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-10">
+      <div>
+        <div class="flex items-center gap-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#14b8a6] to-[#67f6ff] flex items-center justify-center">
+            <span class="text-[#05080f] text-3xl font-bold tracking-tighter">F</span>
+          </div>
+          <div>
+            <h1 class="title-font text-6xl md:text-7xl font-semibold tracking-[-2.5px]">FEDDAKALKUN</h1>
+            <div class="flex items-baseline gap-x-3 -mt-2">
+              <span class="text-5xl md:text-6xl font-semibold tracking-[-2px] brand-accent">v22</span>
+              <span class="text-3xl text-[#14b8a6] font-medium tracking-tight">Workflows</span>
+            </div>
+          </div>
+        </div>
+        <p class="mt-4 text-2xl text-[#a3b8c0] font-light tracking-[-0.3px]">
+          Complete Creative Suite • One Installer
+        </p>
+      </div>
+      
+      <div class="hidden md:block text-right">
+        <div class="inline-flex items-center rounded-full border border-[#14b8a6]/30 px-4 py-1 text-xs tracking-[2px] font-medium text-[#14b8a6]">
+          COMMERCIAL READY
+        </div>
+        <div class="mt-1 text-xs text-[#5e6b78]">All features included</div>
+      </div>
+    </div>
+
+    <!-- Workflow Sections -->
+    <div class="workflow-grid">
+      
+      <!-- CORE -->
+      <div class="holo-border bg-[#0a101c] rounded-3xl p-7">
+        <div class="section-header mb-3 flex items-center gap-x-2">
+          <div class="w-1.5 h-1.5 bg-[#14b8a6] rounded-full"></div>
+          CORE
+        </div>
+        <div class="space-y-[9px]">
+          <div class="workflow-item">Image Studio</div>
+          <div class="workflow-item">Video Studio</div>
+          <div class="workflow-item">Gallery</div>
+          <div class="workflow-item">LoRA &amp; Character</div>
+          <div class="workflow-item">Ollama Models</div>
+          <div class="workflow-item">Venice.ai</div>
+          <div class="workflow-item">Grok</div>
+          <div class="workflow-item">Zonos TTS</div>
+          <div class="workflow-item">Companion</div>
+        </div>
+      </div>
+
+      <!-- IMAGE GENERATION -->
+      <div class="holo-border bg-[#0a101c] rounded-3xl p-7">
+        <div class="section-header mb-3 flex items-center gap-x-2">
+          <div class="w-1.5 h-1.5 bg-[#14b8a6] rounded-full"></div>
+          IMAGE GENERATION
+        </div>
+        <div class="space-y-[9px]">
+          <div class="workflow-item">Z-Image Txt2Img</div>
+          <div class="workflow-item">Z-Image Dual LoRA</div>
+          <div class="workflow-item">Chroma1-HD</div>
+          <div class="workflow-item">Chroma Simple</div>
+          <div class="workflow-item">FLUX2-KLEIN</div>
+          <div class="workflow-item">FLUX KLEIN UNCENSORED</div>
+          <div class="workflow-item">IDEOGRAM</div>
+          <div class="workflow-item">FireRed Edit</div>
+          <div class="workflow-item">Qwen Image</div>
+          <div class="workflow-item">Qwen Reference</div>
+          <div class="workflow-item">Qwen Rapid Edit</div>
+          <div class="workflow-item">Qwen Multi Angle</div>
+          <div class="workflow-item">SDXL Automask Inpaint</div>
+          <div class="workflow-item">SDXL Outpaint</div>
+        </div>
+      </div>
+
+      <!-- PRECISION &amp; CONTROL -->
+      <div class="holo-border bg-[#0a101c] rounded-3xl p-7">
+        <div class="section-header mb-3 flex items-center gap-x-2">
+          <div class="w-1.5 h-1.5 bg-[#14b8a6] rounded-full"></div>
+          PRECISION &amp; CONTROL
+        </div>
+        <div class="space-y-[9px]">
+          <div class="workflow-item">SDXL ControlNet Depth</div>
+          <div class="workflow-item">SDXL ControlNet OpenPose</div>
+        </div>
+        
+        <div class="mt-8 pt-6 border-t border-white/10">
+          <div class="text-[10px] tracking-[1.5px] text-[#14b8a6] font-medium mb-1.5">POWERED BY</div>
+          <div class="text-[#a3b8c0] text-sm leading-tight">
+            ComfyUI • Custom Nodes<br>
+            Advanced Model Support
+          </div>
+        </div>
+      </div>
+
+      <!-- VIDEO &amp; MOTION -->
+      <div class="holo-border bg-[#0a101c] rounded-3xl p-7">
+        <div class="section-header mb-3 flex items-center gap-x-2">
+          <div class="w-1.5 h-1.5 bg-[#14b8a6] rounded-full"></div>
+          VIDEO &amp; MOTION
+        </div>
+        <div class="space-y-[9px]">
+          <div class="workflow-item">WAN 2.2 Img2Vid</div>
+          <div class="workflow-item">WAN 2.2 Vid2Vid</div>
+          <div class="workflow-item">WAN Story</div>
+          <div class="workflow-item">Steady Dancer</div>
+          <div class="workflow-item">SCAIL-2</div>
+          <div class="workflow-item">LTX Img2Vid</div>
+          <div class="workflow-item">LTX First / Last Frame</div>
+        </div>
+        
+        <div class="mt-8 pt-6 border-t border-white/10 text-xs text-[#5e6b78]">
+          All video workflows include full frame control,<br>
+          motion transfer, and story sequencing.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-10 flex flex-col md:flex-row md:items-center justify-between gap-y-3 text-[#5e6b78] text-sm">
+      <div>
+        <span class="font-medium text-[#a3b8c0]">FEDDAKALKUN v22</span> — One powerful installer. Every workflow included.
+      </div>
+      <div class="flex items-center gap-x-5 text-xs tracking-widest">
+        <div>IMAGE</div>
+        <div class="text-[#14b8a6]">•</div>
+        <div>VIDEO</div>
+        <div class="text-[#14b8a6]">•</div>
+        <div>EDITING</div>
+        <div class="text-[#14b8a6]">•</div>
+        <div>AI TOOLS</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

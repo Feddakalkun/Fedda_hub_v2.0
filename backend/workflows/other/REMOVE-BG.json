@@ -1,0 +1,45 @@
+{
+  "32": {
+    "inputs": {
+      "image": "pose5.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "43": {
+    "inputs": {
+      "model": "INSPYRENET",
+      "sensitivity": 1,
+      "process_res": 2016,
+      "mask_blur": 0,
+      "mask_offset": 0,
+      "invert_output": "Alpha",
+      "refine_foreground": false,
+      "background": "default",
+      "background_color": "#222222",
+      "image": [
+        "32",
+        0
+      ]
+    },
+    "class_type": "RMBG",
+    "_meta": {
+      "title": "Remove Background (RMBG)"
+    }
+  },
+  "68": {
+    "inputs": {
+      "filename_prefix": "REMOVE BG/0",
+      "images": [
+        "43",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  }
+}

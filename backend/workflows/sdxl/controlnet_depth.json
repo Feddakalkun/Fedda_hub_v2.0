@@ -1,0 +1,492 @@
+{
+  "149": {
+    "inputs": {
+      "image": "woman.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "150": {
+    "inputs": {
+      "filename_prefix": "IMAGE/XXX/0",
+      "images": [
+        "165",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "151": {
+    "inputs": {
+      "rgthree_comparer": {
+        "images": [
+          {
+            "name": "A",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_sykzd_00001_.png&type=temp&subfolder=&rand=0.29178641760326474"
+          },
+          {
+            "name": "B",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_sykzd_00002_.png&type=temp&subfolder=&rand=0.401738975707406"
+          }
+        ]
+      },
+      "image_a": [
+        "165",
+        0
+      ],
+      "image_b": [
+        "164",
+        0
+      ]
+    },
+    "class_type": "Image Comparer (rgthree)",
+    "_meta": {
+      "title": "Image Comparer (rgthree)"
+    }
+  },
+  "153": {
+    "inputs": {
+      "styles": "Photography | Portrait"
+    },
+    "class_type": "Load Styles CSV",
+    "_meta": {
+      "title": "CHOOSE STYLE"
+    }
+  },
+  "154": {
+    "inputs": {
+      "text_0": "WOMAN, portrait photography, capturing emotion, personality, flattering lighting, professional, engaging, compelling composition",
+      "text": [
+        "161",
+        0
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "155": {
+    "inputs": {
+      "text": "",
+      "speak_and_recognation": {
+        "__value__": [
+          false,
+          true
+        ]
+      },
+      "clip": [
+        "423",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "NEGATIVE PROMPT"
+    }
+  },
+  "158": {
+    "inputs": {
+      "control_net_name": "controlnet-union-sdxl-1.0.safetensors"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "Load ControlNet Model"
+    }
+  },
+  "159": {
+    "inputs": {
+      "model_name": "bbox/face_yolov8m.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider",
+    "_meta": {
+      "title": "UltralyticsDetectorProvider"
+    }
+  },
+  "160": {
+    "inputs": {
+      "model_name": "sam_vit_b_01ec64.pth",
+      "device_mode": "AUTO"
+    },
+    "class_type": "SAMLoader",
+    "_meta": {
+      "title": "SAMLoader (Impact)"
+    }
+  },
+  "161": {
+    "inputs": {
+      "delimiter": ", ",
+      "clean_whitespace": "true",
+      "text_a": [
+        "444",
+        0
+      ],
+      "text_b": [
+        "153",
+        0
+      ]
+    },
+    "class_type": "Text Concatenate",
+    "_meta": {
+      "title": "Text Concatenate"
+    }
+  },
+  "162": {
+    "inputs": {
+      "images": [
+        "179",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "163": {
+    "inputs": {
+      "strength": 0.5,
+      "conditioning": [
+        "166",
+        0
+      ],
+      "control_net": [
+        "350",
+        0
+      ],
+      "image": [
+        "179",
+        0
+      ]
+    },
+    "class_type": "ControlNetApply",
+    "_meta": {
+      "title": "Apply ControlNet (OLD)"
+    }
+  },
+  "164": {
+    "inputs": {
+      "samples": [
+        "170",
+        0
+      ],
+      "vae": [
+        "168",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "165": {
+    "inputs": {
+      "guide_size": 1152,
+      "guide_size_for": true,
+      "max_size": 1152,
+      "seed": 365,
+      "steps": 20,
+      "cfg": 1,
+      "sampler_name": "lcm",
+      "scheduler": "karras",
+      "denoise": 0.4,
+      "feather": 4,
+      "noise_mask": "enabled",
+      "force_inpaint": false,
+      "bbox_threshold": 0.5,
+      "bbox_dilation": 8,
+      "bbox_crop_factor": 1.5,
+      "sam_detection_hint": "center-1",
+      "sam_dilation": 0,
+      "sam_threshold": 0.93,
+      "sam_bbox_expansion": 0,
+      "sam_mask_hint_threshold": 0.7,
+      "sam_mask_hint_use_negative": "False",
+      "drop_size": 10,
+      "wildcard": "",
+      "cycle": 1,
+      "inpaint_model": false,
+      "noise_mask_feather": 2,
+      "tiled_encode": {
+        "__value__": [
+          false,
+          true
+        ]
+      },
+      "tiled_decode": false,
+      "speak_and_recognation": {
+        "__value__": [
+          false,
+          true
+        ]
+      },
+      "image": [
+        "164",
+        0
+      ],
+      "model": [
+        "423",
+        0
+      ],
+      "clip": [
+        "423",
+        1
+      ],
+      "vae": [
+        "168",
+        2
+      ],
+      "positive": [
+        "166",
+        0
+      ],
+      "negative": [
+        "155",
+        0
+      ],
+      "bbox_detector": [
+        "159",
+        0
+      ],
+      "sam_model_opt": [
+        "160",
+        0
+      ]
+    },
+    "class_type": "FaceDetailer",
+    "_meta": {
+      "title": "FaceDetailer (Output)"
+    }
+  },
+  "166": {
+    "inputs": {
+      "text": [
+        "161",
+        0
+      ],
+      "speak_and_recognation": {
+        "__value__": [
+          false,
+          true
+        ]
+      },
+      "clip": [
+        "423",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive Prompt from Styles"
+    }
+  },
+  "168": {
+    "inputs": {
+      "ckpt_name": "realism-sdxl.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "169": {
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "170": {
+    "inputs": {
+      "seed": 312,
+      "steps": 20,
+      "cfg": 1,
+      "sampler_name": "lcm",
+      "scheduler": "karras",
+      "denoise": 1,
+      "model": [
+        "423",
+        0
+      ],
+      "positive": [
+        "163",
+        0
+      ],
+      "negative": [
+        "155",
+        0
+      ],
+      "latent_image": [
+        "169",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "175": {
+    "inputs": {
+      "model": "lotus-depth-g-v2-0.safetensors",
+      "precision": "fp16"
+    },
+    "class_type": "LoadLotusModel",
+    "_meta": {
+      "title": "Load Lotus Model"
+    }
+  },
+  "176": {
+    "inputs": {
+      "seed": 321,
+      "per_batch": 1,
+      "keep_model_loaded": false,
+      "lotus_unet": [
+        "175",
+        0
+      ],
+      "samples": [
+        "177",
+        0
+      ]
+    },
+    "class_type": "LotusSampler",
+    "_meta": {
+      "title": "Lotus Sampler"
+    }
+  },
+  "177": {
+    "inputs": {
+      "pixels": [
+        "149",
+        0
+      ],
+      "vae": [
+        "178",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "178": {
+    "inputs": {
+      "vae_name": "vae-ft-mse-840000-ema-pruned.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "179": {
+    "inputs": {
+      "samples": [
+        "176",
+        0
+      ],
+      "vae": [
+        "178",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "350": {
+    "inputs": {
+      "type": "depth",
+      "control_net": [
+        "158",
+        0
+      ]
+    },
+    "class_type": "SetUnionControlNetType",
+    "_meta": {
+      "title": "SetUnionControlNetType"
+    }
+  },
+  "423": {
+    "inputs": {
+      "PowerLoraLoaderHeaderWidget": {
+        "type": "PowerLoraLoaderHeaderWidget"
+      },
+      "lora_1": {
+        "on": true,
+        "lora": "None",
+        "strength": 1
+      },
+      "lora_2": {
+        "on": true,
+        "lora": "personal\\Sara_SDXL\\v2_rtx6000\\sara-sdxl-fast-rtx6000.safetensors",
+        "strength": 1
+      },
+      "➕ Add Lora": "",
+      "model": [
+        "168",
+        0
+      ],
+      "clip": [
+        "168",
+        1
+      ]
+    },
+    "class_type": "Power Lora Loader (rgthree)",
+    "_meta": {
+      "title": "Power Lora Loader (rgthree)"
+    }
+  },
+  "444": {
+    "inputs": {
+      "string": "WOMAN",
+      "speak_and_recognation": {
+        "__value__": [
+          false,
+          true
+        ]
+      }
+    },
+    "class_type": "String Literal",
+    "_meta": {
+      "title": "POSITIVE PROMPT"
+    }
+  },
+  "466": {
+    "inputs": {
+      "download_links": "https://huggingface.co/comfyuistudio/realism-sdxl/resolve/main/realism-sdxl.safetensors checkpoints\nhttps://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/main/diffusion_pytorch_model_promax.safetensors controlnet controlnet-union-sdxl-1.0.safetensors\nhttps://huggingface.co/alexgenovese/reica_models/resolve/021e192bd744c48a85f8ae1832662e77beb9aac7/realvisxlV40_v40LightningBakedvae.safetensors checkpoints\nhttps://huggingface.co/MaziyarPanahi/Mistral-7B-Instruct-v0.3-GGUF/resolve/main/Mistral-7B-Instruct-v0.3.Q4_K_M.gguf llm_gguf\nhttps://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/sams/sam_vit_b_01ec64.pth sams\nhttps://huggingface.co/stabilityai/sd-vae-ft-mse-original/resolve/main/vae-ft-mse-840000-ema-pruned.safetensors vae\nhttps://huggingface.co/jingheya/lotus-depth-g-v2-0-disparity/resolve/main/unet/diffusion_pytorch_model.safetensors unet lotus-depth-g-v2-0.safetensors\nhttps://huggingface.co/lllyasviel/fooocus_inpaint/resolve/main/fooocus_inpaint_head.pth inpaint\nhttps://huggingface.co/lllyasviel/fooocus_inpaint/resolve/main/inpaint_v26.fooocus.patch inpaint\nhttps://huggingface.co/outfly/face_yolov8m/resolve/main/face_yolov8m.pt ultralytics/bbox",
+      "auto_download": true,
+      "max_concurrent_downloads": 1,
+      "max_download_speed_mbps": 0,
+      "enable_resume": true,
+      "validate_files": false,
+      "enable_notifications": true,
+      "auto_organize": false,
+      "hf_token": "",
+      "speak_and_recognation": {
+        "__value__": [
+          false,
+          true
+        ]
+      }
+    },
+    "class_type": "HuggingFaceDownloader",
+    "_meta": {
+      "title": "🤗 HuggingFace Model Downloader Pro"
+    }
+  }
+}

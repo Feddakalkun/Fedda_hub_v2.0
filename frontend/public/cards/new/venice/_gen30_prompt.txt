@@ -1,0 +1,19 @@
+You are the card graphics worker. ONLY generate video — do not edit any scripts or code.
+
+Use image_to_video on the existing poster at H:\Fedda-Hub\Fedda_hub_v22\repo\frontend\public\cards\new\venice\30.jpeg
+
+Animation prompt (6 seconds, subtle hover preview like venice cards 28/29):
+- Very slow cinematic camera push-in
+- Teal elf woman's long turquoise hair flowing gently to the right
+- Silver dress fabric and sheer train billowing softly
+- Glowing cyan particles drifting and pulsing in the air
+- Soft ripples on the Venetian canal water
+- Holographic SCAIL-2 UI panel with gentle cyan glow pulse
+- Keep character face and UI text stable — animate hair, fabric, particles, water, light only
+
+Match the motion quality of 28.mp4 and 29.mp4 in the same folder.
+
+Save the final file exactly as:
+H:\Fedda-Hub\Fedda_hub_v22\repo\frontend\public\cards\new\venice\30.mp4
+
+Overwrite the bad existing 30.mp4. Report the final file path and size when done.

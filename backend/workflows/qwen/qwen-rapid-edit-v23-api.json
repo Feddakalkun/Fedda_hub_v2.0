@@ -1,0 +1,92 @@
+{
+  "100": {
+    "inputs": {
+      "download_links": "https://huggingface.co/Phr00t/Qwen-Image-Edit-Rapid-AIO/resolve/main/v23/Qwen-Rapid-AIO-NSFW-v23.safetensors checkpoints",
+      "auto_download": true,
+      "max_concurrent_downloads": 3,
+      "max_download_speed_mbps": 0,
+      "enable_resume": true,
+      "validate_files": false,
+      "enable_notifications": true,
+      "auto_organize": false,
+      "hf_token": ""
+    },
+    "class_type": "HuggingFaceDownloader",
+    "_meta": {
+      "title": "HuggingFace Model Downloader Pro"
+    }
+  },
+  "1": {
+    "inputs": {
+      "ckpt_name": "Qwen-Rapid-AIO-NSFW-v23.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple"
+  },
+  "2": {
+    "inputs": {
+      "seed": 65454653,
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "sa_solver",
+      "scheduler": "beta",
+      "denoise": 1,
+      "model": ["1", 0],
+      "positive": ["3", 0],
+      "negative": ["4", 0],
+      "latent_image": ["9", 0]
+    },
+    "class_type": "KSampler"
+  },
+  "3": {
+    "inputs": {
+      "prompt": "Edit the image naturally while preserving identity, pose, composition, and lighting.",
+      "clip": ["1", 1],
+      "vae": ["1", 2],
+      "image1": ["7", 0],
+      "image2": ["8", 0]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus"
+  },
+  "4": {
+    "inputs": {
+      "prompt": "",
+      "clip": ["1", 1],
+      "vae": ["1", 2]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus"
+  },
+  "5": {
+    "inputs": {
+      "samples": ["2", 0],
+      "vae": ["1", 2]
+    },
+    "class_type": "VAEDecode"
+  },
+  "6": {
+    "inputs": {
+      "images": ["5", 0],
+      "filename_prefix": "IMAGE/QWEN-RAPID/0"
+    },
+    "class_type": "SaveImage"
+  },
+  "7": {
+    "inputs": {
+      "image": "fedda_placeholder.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "8": {
+    "inputs": {
+      "image": "fedda_placeholder.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "9": {
+    "inputs": {
+      "width": 768,
+      "height": 768,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage"
+  }
+}

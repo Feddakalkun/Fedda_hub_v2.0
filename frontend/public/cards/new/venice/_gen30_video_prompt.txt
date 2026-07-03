@@ -1,0 +1,10 @@
+Call image_to_video on H:/Fedda-Hub/Fedda_hub_v22/repo/frontend/public/cards/new/venice/30.jpeg.
+
+Prompt: very slow cinematic push-in, teal elf hair and silver dress flowing gently to the right, cyan particles drifting and pulsing, soft canal water ripples, holographic UI panels glow pulse. Keep face and UI text stable.
+
+Duration: 6 seconds
+Resolution: 720p
+
+Save output overwriting: H:/Fedda-Hub/Fedda_hub_v22/repo/frontend/public/cards/new/venice/30.mp4
+
+Graphics only. No code changes.

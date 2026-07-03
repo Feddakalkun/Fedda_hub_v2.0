@@ -1,0 +1,238 @@
+{
+  "1": {
+    "inputs": {
+      "download_links": "https://huggingface.co/Kijai/HunyuanVideo_comfy/resolve/main/hunyuan_video_i2v_720_cfgdistill_fp8_scaled.safetensors diffusion_models\nhttps://huggingface.co/Kijai/HunyuanVideo_comfy/resolve/main/hunyuan_video_vae_bf16.safetensors vae\nhttps://huggingface.co/Kijai/HunyuanVideo_comfy/resolve/main/llava_llama3_fp8_scaled.safetensors text_encoders\nhttps://huggingface.co/Comfy-Org/HunyuanVideo/resolve/main/clip_l.safetensors text_encoders\nhttps://huggingface.co/openai/clip-vit-large-patch14/resolve/main/model.safetensors clip_vision clip-vit-large-patch14.safetensors",
+      "auto_download": true,
+      "max_concurrent_downloads": 3,
+      "max_download_speed_mbps": 0,
+      "enable_resume": true,
+      "validate_files": false,
+      "enable_notifications": true,
+      "auto_organize": false,
+      "hf_token": "",
+      "speak_and_recognation": {
+        "__value__": [false, true]
+      }
+    },
+    "class_type": "HuggingFaceDownloader",
+    "_meta": {
+      "title": "🤗 HunyuanVideo I2V Model Downloader"
+    }
+  },
+  "2": {
+    "inputs": {
+      "text": "=== DOWNLOAD REPORT ===\nRun workflow once to trigger model downloads.",
+      "anything": ["1", 0]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "Download Status"
+    }
+  },
+  "3": {
+    "inputs": {
+      "unet_name": "hunyuan_video_i2v_720_cfgdistill_fp8_scaled.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNETLoader"
+    }
+  },
+  "4": {
+    "inputs": {
+      "PowerLoraLoaderHeaderWidget": {
+        "type": "PowerLoraLoaderHeaderWidget"
+      },
+      "➕ Add Lora": "",
+      "model": ["3", 0],
+      "clip": ["5", 0]
+    },
+    "class_type": "Power Lora Loader (rgthree)",
+    "_meta": {
+      "title": "Power Lora Loader (rgthree)"
+    }
+  },
+  "5": {
+    "inputs": {
+      "clip_name1": "llava_llama3_fp8_scaled.safetensors",
+      "clip_name2": "clip_l.safetensors",
+      "type": "hunyuan_video",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "DualCLIPLoader"
+    }
+  },
+  "6": {
+    "inputs": {
+      "vae_name": "hunyuan_video_vae_bf16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "VAELoader"
+    }
+  },
+  "7": {
+    "inputs": {
+      "clip_name": "clip-vit-large-patch14.safetensors"
+    },
+    "class_type": "CLIPVisionLoader",
+    "_meta": {
+      "title": "CLIPVisionLoader"
+    }
+  },
+  "8": {
+    "inputs": {
+      "image": "example.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "9": {
+    "inputs": {
+      "crop": "center",
+      "clip_vision": ["7", 0],
+      "image": ["8", 0]
+    },
+    "class_type": "CLIPVisionEncode",
+    "_meta": {
+      "title": "CLIPVisionEncode"
+    }
+  },
+  "10": {
+    "inputs": {
+      "prompt": "",
+      "image_interleave": 2,
+      "clip": ["4", 1],
+      "clip_vision_output": ["9", 0]
+    },
+    "class_type": "TextEncodeHunyuanVideo_ImageToVideo",
+    "_meta": {
+      "title": "TextEncodeHunyuanVideo_ImageToVideo"
+    }
+  },
+  "11": {
+    "inputs": {
+      "text": "",
+      "clip": ["4", 1]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Negative)"
+    }
+  },
+  "12": {
+    "inputs": {
+      "positive": ["10", 0],
+      "vae": ["6", 0],
+      "width": ["17", 1],
+      "height": ["17", 2],
+      "length": ["18", 0],
+      "batch_size": 1,
+      "guidance_type": "v2 (replace)",
+      "start_image": ["8", 0]
+    },
+    "class_type": "HunyuanImageToVideo",
+    "_meta": {
+      "title": "HunyuanImageToVideo"
+    }
+  },
+  "13": {
+    "inputs": {
+      "value": 0
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "14": {
+    "inputs": {
+      "add_noise": "enable",
+      "noise_seed": ["13", 0],
+      "steps": 30,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "start_at_step": 0,
+      "end_at_step": 10000,
+      "return_with_leftover_noise": "disable",
+      "model": ["4", 0],
+      "positive": ["12", 0],
+      "negative": ["11", 0],
+      "latent_image": ["12", 1]
+    },
+    "class_type": "KSamplerAdvanced",
+    "_meta": {
+      "title": "KSamplerAdvanced"
+    }
+  },
+  "15": {
+    "inputs": {
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 32,
+      "temporal_overlap": 8,
+      "samples": ["14", 0],
+      "vae": ["6", 0]
+    },
+    "class_type": "VAEDecodeTiled",
+    "_meta": {
+      "title": "VAEDecodeTiled"
+    }
+  },
+  "16": {
+    "inputs": {
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "VIDEO/HY/0",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": ["15", 0]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "VHS_VideoCombine"
+    }
+  },
+  "17": {
+    "inputs": {
+      "width": 848,
+      "height": 480,
+      "aspect_ratio": "16:9",
+      "direction": "Horizontal"
+    },
+    "class_type": "AspectRatioImageSize",
+    "_meta": {
+      "title": "Aspect Ratio"
+    }
+  },
+  "18": {
+    "inputs": {
+      "value": 77
+    },
+    "class_type": "easy int",
+    "_meta": {
+      "title": "LENGTH IN FRAMES"
+    }
+  },
+  "19": {
+    "inputs": {
+      "text": "0",
+      "anything": ["13", 0]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "Show Seed"
+    }
+  }
+}

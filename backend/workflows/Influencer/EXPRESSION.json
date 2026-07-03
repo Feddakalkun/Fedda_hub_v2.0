@@ -1,0 +1,316 @@
+{
+  "1": {
+    "inputs": {
+      "image": "01_upscaled_15generated-image-1762185366738-1-face-upscale-3.4x.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "4": {
+    "inputs": {
+      "rotate_pitch": [
+        "9",
+        0
+      ],
+      "rotate_yaw": [
+        "20",
+        0
+      ],
+      "rotate_roll": [
+        "11",
+        0
+      ],
+      "blink": [
+        "6",
+        0
+      ],
+      "eyebrow": [
+        "12",
+        0
+      ],
+      "wink": [
+        "13",
+        0
+      ],
+      "pupil_x": [
+        "14",
+        0
+      ],
+      "pupil_y": [
+        "15",
+        0
+      ],
+      "aaa": [
+        "16",
+        0
+      ],
+      "eee": [
+        "17",
+        0
+      ],
+      "woo": [
+        "18",
+        0
+      ],
+      "smile": [
+        "19",
+        0
+      ],
+      "src_ratio": 0,
+      "sample_ratio": 0,
+      "sample_parts": "OnlyRotation",
+      "crop_factor": 1.7,
+      "src_image": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "ExpressionEditor",
+    "_meta": {
+      "title": "Expression Editor"
+    }
+  },
+  "5": {
+    "inputs": {
+      "images": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "6": {
+    "inputs": {
+      "value": -1
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Open and Close Eyes"
+    }
+  },
+  "9": {
+    "inputs": {
+      "value": 0
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Look Up and Down"
+    }
+  },
+  "11": {
+    "inputs": {
+      "value": 0
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Roll head Left or Right"
+    }
+  },
+  "12": {
+    "inputs": {
+      "value": 2.5
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Eyebrow Up and Down"
+    }
+  },
+  "13": {
+    "inputs": {
+      "value": 0
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Wink One Eye"
+    }
+  },
+  "14": {
+    "inputs": {
+      "value": -9.5
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Pupil Left and Right"
+    }
+  },
+  "15": {
+    "inputs": {
+      "value": -5
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Pupil Up and Down"
+    }
+  },
+  "16": {
+    "inputs": {
+      "value": -5
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Mouth Open And Close"
+    }
+  },
+  "17": {
+    "inputs": {
+      "value": -3
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Show Theeth"
+    }
+  },
+  "18": {
+    "inputs": {
+      "value": 17.5
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Pucker Lips"
+    }
+  },
+  "19": {
+    "inputs": {
+      "value": 1
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Smile"
+    }
+  },
+  "20": {
+    "inputs": {
+      "value": 0
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Turn head Left or Right"
+    }
+  },
+  "25": {
+    "inputs": {
+      "model": "seedvr2_ema_3b_fp8_e4m3fn.safetensors",
+      "device": "cuda:0",
+      "blocks_to_swap": 0,
+      "swap_io_components": false,
+      "offload_device": "none",
+      "cache_model": false,
+      "attention_mode": "sdpa"
+    },
+    "class_type": "SeedVR2LoadDiTModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load DiT Model"
+    }
+  },
+  "26": {
+    "inputs": {
+      "model": "ema_vae_fp16.safetensors",
+      "device": "cuda:0",
+      "encode_tiled": false,
+      "encode_tile_size": 1024,
+      "encode_tile_overlap": 128,
+      "decode_tiled": false,
+      "decode_tile_size": 1024,
+      "decode_tile_overlap": 128,
+      "tile_debug": "false",
+      "offload_device": "none",
+      "cache_model": false
+    },
+    "class_type": "SeedVR2LoadVAEModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load VAE Model"
+    }
+  },
+  "27": {
+    "inputs": {
+      "rgthree_comparer": {
+        "images": [
+          {
+            "name": "A",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_obypy_00001_.png&type=temp&subfolder=&rand=0.33417295914475764"
+          },
+          {
+            "name": "B",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_obypy_00002_.png&type=temp&subfolder=&rand=0.6261090415689156"
+          }
+        ]
+      },
+      "image_a": [
+        "29",
+        0
+      ],
+      "image_b": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "Image Comparer (rgthree)",
+    "_meta": {
+      "title": "Image Comparer (rgthree)"
+    }
+  },
+  "28": {
+    "inputs": {
+      "filename_prefix": "IMAGE/SEEDVR2/0",
+      "images": [
+        "29",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "29": {
+    "inputs": {
+      "seed": [
+        "30",
+        0
+      ],
+      "resolution": 2000,
+      "max_resolution": 0,
+      "batch_size": 1,
+      "uniform_batch_size": false,
+      "color_correction": "lab",
+      "temporal_overlap": 0,
+      "prepend_frames": 0,
+      "input_noise_scale": 0,
+      "latent_noise_scale": 0,
+      "offload_device": "cpu",
+      "enable_debug": false,
+      "image": [
+        "4",
+        0
+      ],
+      "dit": [
+        "25",
+        0
+      ],
+      "vae": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "SeedVR2VideoUpscaler",
+    "_meta": {
+      "title": "SeedVR2 Video Upscaler (v2.5.24)"
+    }
+  },
+  "30": {
+    "inputs": {
+      "value": 2000
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "UPSCALE SIZE"
+    }
+  }
+}

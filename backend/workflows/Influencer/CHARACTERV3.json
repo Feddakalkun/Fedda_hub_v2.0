@@ -1,0 +1,595 @@
+{
+  "3": {
+    "inputs": {
+      "image": "woman.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Subject face"
+    }
+  },
+  "4": {
+    "inputs": {
+      "model_name": "sam_vit_b_01ec64.pth",
+      "device_mode": "AUTO"
+    },
+    "class_type": "SAMLoader",
+    "_meta": {
+      "title": "SAMLoader (Impact)"
+    }
+  },
+  "5": {
+    "inputs": {
+      "model_name": "bbox/face_yolov8m.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider",
+    "_meta": {
+      "title": "UltralyticsDetectorProvider"
+    }
+  },
+  "7": {
+    "inputs": {
+      "width": 1200,
+      "height": 1200,
+      "batch_size": 15
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "8": {
+    "inputs": {
+      "filename_prefix": "CHARACTER V3/0",
+      "images": [
+        "23",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "10": {
+    "inputs": {
+      "provider": "CPU"
+    },
+    "class_type": "InstantIDFaceAnalysis",
+    "_meta": {
+      "title": "InstantID Face Analysis"
+    }
+  },
+  "14": {
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "upscale_method": "lanczos",
+      "keep_proportion": true,
+      "divisible_by": 1,
+      "crop": 0,
+      "image": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJ",
+    "_meta": {
+      "title": "Resize Image (deprecated)"
+    }
+  },
+  "15": {
+    "inputs": {
+      "ckpt_name": "realvisxlV40_v40LightningBakedvae.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "16": {
+    "inputs": {
+      "weight": 1,
+      "start_at": 0,
+      "end_at": 1,
+      "instantid": [
+        "22",
+        0
+      ],
+      "insightface": [
+        "10",
+        0
+      ],
+      "control_net": [
+        "26",
+        0
+      ],
+      "image": [
+        "24",
+        0
+      ],
+      "model": [
+        "15",
+        0
+      ],
+      "positive": [
+        "68",
+        0
+      ],
+      "negative": [
+        "71",
+        0
+      ],
+      "image_kps": [
+        "59",
+        0
+      ]
+    },
+    "class_type": "ApplyInstantID",
+    "_meta": {
+      "title": "Apply InstantID"
+    }
+  },
+  "21": {
+    "inputs": {
+      "samples": [
+        "28",
+        0
+      ],
+      "vae": [
+        "15",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "22": {
+    "inputs": {
+      "instantid_file": "ip-adapter.bin"
+    },
+    "class_type": "InstantIDModelLoader",
+    "_meta": {
+      "title": "Load InstantID Model"
+    }
+  },
+  "23": {
+    "inputs": {
+      "guide_size": 1024,
+      "guide_size_for": true,
+      "max_size": 1024,
+      "seed": 24,
+      "steps": 10,
+      "cfg": 2,
+      "sampler_name": "ddpm",
+      "scheduler": "exponential",
+      "denoise": 0.4,
+      "feather": 4,
+      "noise_mask": "enabled",
+      "force_inpaint": false,
+      "bbox_threshold": 0.5,
+      "bbox_dilation": 8,
+      "bbox_crop_factor": 1.5,
+      "sam_detection_hint": "center-1",
+      "sam_dilation": 0,
+      "sam_threshold": 0.93,
+      "sam_bbox_expansion": 0,
+      "sam_mask_hint_threshold": 0.7,
+      "sam_mask_hint_use_negative": "False",
+      "drop_size": 10,
+      "wildcard": "",
+      "cycle": 1,
+      "inpaint_model": false,
+      "noise_mask_feather": 2,
+      "tiled_encode": false,
+      "tiled_decode": false,
+      "speak_and_recognation": {
+        "__value__": [
+          false,
+          true
+        ]
+      },
+      "image": [
+        "21",
+        0
+      ],
+      "model": [
+        "15",
+        0
+      ],
+      "clip": [
+        "15",
+        1
+      ],
+      "vae": [
+        "15",
+        2
+      ],
+      "positive": [
+        "16",
+        1
+      ],
+      "negative": [
+        "16",
+        2
+      ],
+      "bbox_detector": [
+        "5",
+        0
+      ],
+      "sam_model_opt": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "FaceDetailer",
+    "_meta": {
+      "title": "FaceDetailer (Output)"
+    }
+  },
+  "24": {
+    "inputs": {
+      "number_of_faces": 1,
+      "scale_factor": 3.1,
+      "shift_factor": 0.5,
+      "start_index": 0,
+      "max_faces_per_image": 1,
+      "aspect_ratio": "1:1",
+      "image": [
+        "14",
+        0
+      ]
+    },
+    "class_type": "AutoCropFaces",
+    "_meta": {
+      "title": "Auto Crop Faces"
+    }
+  },
+  "26": {
+    "inputs": {
+      "control_net_name": "diffusion_pytorch_model.safetensors"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "Load ControlNet Model"
+    }
+  },
+  "28": {
+    "inputs": {
+      "seed": 127,
+      "steps": 10,
+      "cfg": 2,
+      "sampler_name": "ddpm",
+      "scheduler": "exponential",
+      "denoise": 1,
+      "model": [
+        "16",
+        0
+      ],
+      "positive": [
+        "16",
+        1
+      ],
+      "negative": [
+        "16",
+        2
+      ],
+      "latent_image": [
+        "7",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "29": {
+    "inputs": {
+      "image": "2000PX LATENT UPSCALE_00004_.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "36": {
+    "inputs": {
+      "image": "4xupscale.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "43": {
+    "inputs": {
+      "image": "EXPRESSION.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "44": {
+    "inputs": {
+      "image": "MAN-FASHION.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "45": {
+    "inputs": {
+      "image": "MV.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "RETOUCH.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "47": {
+    "inputs": {
+      "image": "aliceDelish.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "48": {
+    "inputs": {
+      "image": "art.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "49": {
+    "inputs": {
+      "image": "bride2.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "50": {
+    "inputs": {
+      "image": "bride3.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "51": {
+    "inputs": {
+      "image": "fashion-model.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "groom2.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "53": {
+    "inputs": {
+      "image": "japan-woman.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "54": {
+    "inputs": {
+      "image": "man.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "55": {
+    "inputs": {
+      "image": "pose.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Pose"
+    }
+  },
+  "59": {
+    "inputs": {
+      "inputcount": 15,
+      "Update inputs": null,
+      "image_1": [
+        "29",
+        0
+      ],
+      "image_2": [
+        "36",
+        0
+      ],
+      "image_3": [
+        "43",
+        0
+      ],
+      "image_4": [
+        "44",
+        0
+      ],
+      "image_5": [
+        "45",
+        0
+      ],
+      "image_6": [
+        "46",
+        0
+      ],
+      "image_7": [
+        "47",
+        0
+      ],
+      "image_8": [
+        "48",
+        0
+      ],
+      "image_9": [
+        "49",
+        0
+      ],
+      "image_10": [
+        "50",
+        0
+      ],
+      "image_11": [
+        "51",
+        0
+      ],
+      "image_12": [
+        "52",
+        0
+      ],
+      "image_13": [
+        "53",
+        0
+      ],
+      "image_14": [
+        "54",
+        0
+      ],
+      "image_15": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "ImageBatchMulti",
+    "_meta": {
+      "title": "Image Batch Multi"
+    }
+  },
+  "65": {
+    "inputs": {
+      "styles": "No Style"
+    },
+    "class_type": "Load Styles CSV",
+    "_meta": {
+      "title": "CHOOSE STYLE"
+    }
+  },
+  "66": {
+    "inputs": {
+      "text": "YOUNG WOMAN beauty elegant CLOTHES, elegant hairstyle, italy, ",
+      "speak_and_recognation": {
+        "__value__": [
+          false,
+          true
+        ]
+      }
+    },
+    "class_type": "Textbox",
+    "_meta": {
+      "title": "POSITIVE PROMPT"
+    }
+  },
+  "68": {
+    "inputs": {
+      "text": [
+        "69",
+        0
+      ],
+      "speak_and_recognation": {
+        "__value__": [
+          false,
+          true
+        ]
+      },
+      "clip": [
+        "15",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive Prompt from Styles"
+    }
+  },
+  "69": {
+    "inputs": {
+      "delimiter": ", ",
+      "clean_whitespace": "true",
+      "text_a": [
+        "66",
+        0
+      ],
+      "text_b": [
+        "65",
+        0
+      ]
+    },
+    "class_type": "Text Concatenate",
+    "_meta": {
+      "title": "Text Concatenate"
+    }
+  },
+  "70": {
+    "inputs": {
+      "text": "hat",
+      "speak_and_recognation": {
+        "__value__": [
+          false,
+          true
+        ]
+      }
+    },
+    "class_type": "Textbox",
+    "_meta": {
+      "title": "NEGATIVE PROMPT"
+    }
+  },
+  "71": {
+    "inputs": {
+      "text": [
+        "70",
+        0
+      ],
+      "speak_and_recognation": {
+        "__value__": [
+          false,
+          true
+        ]
+      },
+      "clip": [
+        "15",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative Prompt from Styles"
+    }
+  }
+}

@@ -1,0 +1,296 @@
+{
+  "version": 2,
+  "generated_for": "FEDDA Hub v21",
+  "active_profile": "full",
+  "policy": {
+    "default_enabled": true,
+    "missing_module_behavior": "hide UI entrypoints, keep core app running",
+    "install_strategy": "core modules install first; booster modules can be installed independently later"
+  },
+  "modules": [
+    {
+      "id": "core-shell",
+      "label": "Core Shell",
+      "pack": "core",
+      "area": "core",
+      "enabled": true,
+      "tabs": ["home", "gallery", "library", "ollama", "venice", "grok", "zonos-tts", "companion"],
+      "workflows": [],
+      "custom_nodes": [
+        "ComfyUI-Manager",
+        "rgthree-comfy",
+        "ComfyUI-VideoHelperSuite",
+        "was-node-suite-comfyui",
+        "ComfyUI_essentials",
+        "ComfyUI-Easy-Use",
+        "ComfyUI-Custom-Scripts",
+        "ComfyUI-Studio-nodes",
+        "Derfuu_ComfyUI_ModdedNodes",
+        "ComfyUI-KJNodes",
+        "ComfyUI_LayerStyle",
+        "ComfyUI_LayerStyle_Advance"
+      ],
+      "models": [],
+      "notes": "Shared app shell, media plumbing, gallery, LoRA library, Ollama, integrations, and common ComfyUI helpers."
+    },
+    {
+      "id": "z-image-core",
+      "label": "Z-Image Core",
+      "pack": "core",
+      "area": "image",
+      "enabled": true,
+      "tabs": ["image", "z-image", "z-image-txt2img"],
+      "workflows": ["z-image"],
+      "custom_nodes": [
+        "rgthree-comfy",
+        "ComfyUI-Styles_CSV_Loader",
+        "ComfyUI-KJNodes"
+      ],
+      "models": [
+        "z_image_turbo_bf16.safetensors",
+        "qwen_3_4b.safetensors",
+        "z-image-vae.safetensors"
+      ],
+      "notes": "Core Z-Image Turbo text-to-image. Minimum viable image generation pack."
+    },
+    {
+      "id": "z-image-advanced",
+      "label": "Z-Image Advanced",
+      "pack": "booster",
+      "area": "image",
+      "enabled": true,
+      "tabs": ["z-image-dual-lora", "z-image-controlnet-pose"],
+      "workflows": [
+        "z-image-dual-lora",
+        "z-image-dual-base",
+        "z-image-dual-detail",
+        "z-image-controlnet-pose"
+      ],
+      "custom_nodes": [
+        "comfyui_controlnet_aux",
+        "ComfyUI-Impact-Pack",
+        "ComfyUI-Impact-Subpack"
+      ],
+      "models": [
+        "Z-Image-Turbo-Fun-Controlnet-Union.safetensors"
+      ],
+      "notes": "Dual LoRA refinement and Z-Image ControlNet pose helper used by Steady Dancer."
+    },
+    {
+      "id": "sdxl-pack",
+      "label": "SDXL Booster Pack",
+      "pack": "booster",
+      "area": "image",
+      "enabled": true,
+      "tabs": [
+        "sdxl-inpaint-automask",
+        "sdxl-outpaint",
+        "sdxl-controlnet-depth",
+        "sdxl-controlnet-openpose"
+      ],
+      "workflows": [
+        "sdxl-inpaint-automask",
+        "sdxl-outpaint",
+        "sdxl-controlnet-depth",
+        "sdxl-controlnet-openpose"
+      ],
+      "custom_nodes": [
+        "comfyui_controlnet_aux",
+        "ComfyUI-Impact-Pack",
+        "ComfyUI-Impact-Subpack",
+        "ComfyUI_LayerStyle",
+        "ComfyUI_LayerStyle_Advance",
+        "ComfyUI-Lotus",
+        "ComfyUI-Inpaint-CropAndStitch",
+        "ComfyUI-KJNodes"
+      ],
+      "models": [
+        "controlnet-union-sdxl-1.0.safetensors",
+        "realism-sdxl.safetensors",
+        "lotus-depth-g-v2-0.safetensors"
+      ],
+      "notes": "SDXL inpaint, outpaint, and ControlNet depth/openpose workflows."
+    },
+    {
+      "id": "qwen-image",
+      "label": "Qwen Image Tools",
+      "pack": "booster",
+      "area": "image",
+      "enabled": true,
+      "tabs": [
+        "qwen",
+        "qwen-txt2img",
+        "qwen-image-ref",
+        "qwen-rapid-edit-v23",
+        "qwen-multi-angle"
+      ],
+      "workflows": [
+        "qwen-rapid-edit-v23",
+        "qwen-edit-2509-image-reference",
+        "qwen-edit-2512",
+        "qwen-multi-angles",
+        "qwen-multi-angles-fast"
+      ],
+      "custom_nodes": [
+        "ComfyUI-qwenmultiangle",
+        "ComfyUI-Florence2",
+        "ComfyUI-segment-anything-2",
+        "ComfyUI-Image-Selector"
+      ],
+      "models": [
+        "Qwen image/edit model family",
+        "Qwen-Rapid-AIO-NSFW-v23.safetensors",
+        "Florence2 grounding models",
+        "SAM2 segmentation models"
+      ],
+      "notes": "Qwen image editing, Rapid AIO v23, reference-image generation, and multi-angle views."
+    },
+    {
+      "id": "chroma-image",
+      "label": "Chroma Image",
+      "pack": "booster",
+      "area": "image",
+      "enabled": true,
+      "tabs": ["chroma", "chroma-txt2img", "chroma-simple-txt2img"],
+      "workflows": [
+        "chroma1-hd-txt2img",
+        "chroma-simple-txt2img"
+      ],
+      "custom_nodes": [
+        "ComfyUI-Studio-nodes"
+      ],
+      "models": [
+        "Chroma1-HD.safetensors",
+        "flan-t5-xxl_float8_e4m3fn_scaled_stochastic.safetensors",
+        "ae.safetensors"
+      ],
+      "notes": "Chroma1-HD base plus native Comfy comparison graph with softer defaults."
+    },
+    {
+      "id": "firered-image",
+      "label": "FireRed Image Edit",
+      "pack": "booster",
+      "area": "image",
+      "enabled": true,
+      "tabs": ["firered-image-edit"],
+      "workflows": [
+        "firered-image-edit"
+      ],
+      "custom_nodes": [
+        "ComfyUI-Studio-nodes"
+      ],
+      "models": [
+        "FireRed-Image-Edit-1.1-transformer.safetensors",
+        "FireRed-Image-Edit-1.0-Lightning-8steps-v1.1.safetensors",
+        "qwen2.5vl-7b-bf16.safetensors",
+        "qwen_image_vae.safetensors"
+      ],
+      "notes": "FireRed 1.1 image edit workflow with workflow-owned HuggingFaceDownloader bootstrap."
+    },
+    {
+      "id": "wan-video",
+      "label": "WAN Video Tools",
+      "pack": "booster",
+      "area": "video",
+      "enabled": true,
+      "tabs": [
+        "video",
+        "wan22-vid2vid",
+        "wan22-img2vid",
+        "wan22-img2vid-6frames",
+        "wan21-steady-dancer",
+        "wan21-scail2"
+      ],
+      "workflows": [
+        "wan21-steady-dancer",
+        "wan21-scail2",
+        "wan22-vid2vid",
+        "wan22-img2vid",
+        "wan22-img2vid-6frames"
+      ],
+      "custom_nodes": [
+        "ComfyUI-WanVideoWrapper",
+        "ComfyUI-WanAnimatePreprocess",
+        "ComfyUI-VideoHelperSuite",
+        "ComfyUI-Frame-Interpolation",
+        "ComfyUI-GGUF",
+        "ComfyMath",
+        "comfy_mtb"
+      ],
+      "models": [
+        "clip_vision_h.safetensors",
+        "vitpose-l-wholebody.onnx",
+        "yolov10m.onnx",
+        "Kijai WanVideo Comfy model bundle"
+      ],
+      "notes": "WAN motion transfer, Steady Dancer, img2vid, vid2vid, and story workflows."
+    },
+    {
+      "id": "ltx-video",
+      "label": "LTX Video Tools",
+      "pack": "booster",
+      "area": "video",
+      "enabled": true,
+      "tabs": ["ltx", "ltx-img2vid", "ltx-flf"],
+      "workflows": [
+        "ltx-flf",
+        "ltx-img2vid"
+      ],
+      "custom_nodes": [
+        "ComfyUI-LTXVideo",
+        "ComfyMath",
+        "comfy_mtb",
+        "ComfyUI-VideoHelperSuite"
+      ],
+      "models": [
+        "LTX 2.3 model family"
+      ],
+      "notes": "LTX first/last-frame and image-to-video workflows."
+    },
+    {
+      "id": "flux-klein",
+      "label": "FLUX2 Klein",
+      "pack": "booster",
+      "area": "image",
+      "enabled": true,
+      "tabs": ["flux", "flux-txt2img"],
+      "workflows": [
+        "flux2klein-txt2img"
+      ],
+      "custom_nodes": [
+        "rgthree-comfy",
+        "ComfyUI-Styles_CSV_Loader",
+        "ComfyUI_essentials"
+      ],
+      "models": [
+        "FLUX2 Klein model family"
+      ],
+      "notes": "FLUX2 Klein txt2img workflow with stricter LoRA safety filtering."
+    },
+    {
+      "id": "ideogram",
+      "label": "Ideogram",
+      "pack": "booster",
+      "area": "image",
+      "enabled": true,
+      "tabs": ["ideogram", "ideogram-txt2img"],
+      "workflows": [
+        "ideogram-txt2img"
+      ],
+      "custom_nodes": [
+        "ComfyUI-KJNodes",
+        "ComfyLiterals",
+        "ComfyMath",
+        "ComfyUI-Impact-Pack",
+        "ComfyUI-Studio-nodes"
+      ],
+      "models": [
+        "ideogram4_fp8_scaled.safetensors",
+        "ideogram4_unconditional_fp8_scaled.safetensors",
+        "qwen3vl_8b_fp8_scaled.safetensors",
+        "flux2-vae.safetensors"
+      ],
+      "notes": "Local Ideogram 4 text-to-image with precise text/object placement via KJNodes prompt builder."
+    }
+  ]
+}

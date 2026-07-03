@@ -1,0 +1,318 @@
+{
+  "192": {
+    "inputs": {
+      "image": "art.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "193": {
+    "inputs": {
+      "left": 512,
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "feathering": 60,
+      "image": [
+        "192",
+        0
+      ]
+    },
+    "class_type": "ImagePadForOutpaintMasked",
+    "_meta": {
+      "title": "Image Pad For Outpaint Masked"
+    }
+  },
+  "194": {
+    "inputs": {
+      "filename_prefix": "IMAGE/XXX/0",
+      "images": [
+        "209",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "195": {
+    "inputs": {
+      "styles": "No Style"
+    },
+    "class_type": "Load Styles CSV",
+    "_meta": {
+      "title": "STYLE"
+    }
+  },
+  "196": {
+    "inputs": {
+      "value": "BRICK WALL"
+    },
+    "class_type": "easy string",
+    "_meta": {
+      "title": "PROMPT"
+    }
+  },
+  "197": {
+    "inputs": {
+      "text": [
+        "201",
+        0
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "198": {
+    "inputs": {
+      "ckpt_name": "realism-sdxl.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "199": {
+    "inputs": {
+      "head": "fooocus_inpaint_head.pth",
+      "patch": "inpaint_v26.fooocus.patch"
+    },
+    "class_type": "INPAINT_LoadFooocusInpaint",
+    "_meta": {
+      "title": "Load Fooocus Inpaint"
+    }
+  },
+  "200": {
+    "inputs": {
+      "text": [
+        "195",
+        1
+      ],
+      "speak_and_recognation": {
+        "__value__": [
+          false,
+          true
+        ]
+      },
+      "clip": [
+        "198",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative Prompt from Styles"
+    }
+  },
+  "201": {
+    "inputs": {
+      "delimiter": ", ",
+      "clean_whitespace": "true",
+      "text_a": [
+        "196",
+        0
+      ],
+      "text_b": [
+        "195",
+        0
+      ]
+    },
+    "class_type": "Text Concatenate",
+    "_meta": {
+      "title": "Text Concatenate"
+    }
+  },
+  "202": {
+    "inputs": {
+      "fill": "telea",
+      "falloff": 0,
+      "image": [
+        "193",
+        0
+      ],
+      "mask": [
+        "193",
+        1
+      ]
+    },
+    "class_type": "INPAINT_MaskedFill",
+    "_meta": {
+      "title": "Fill Masked Area"
+    }
+  },
+  "203": {
+    "inputs": {
+      "text": [
+        "201",
+        0
+      ],
+      "speak_and_recognation": {
+        "__value__": [
+          false,
+          true
+        ]
+      },
+      "clip": [
+        "198",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive Prompt from Styles"
+    }
+  },
+  "204": {
+    "inputs": {
+      "blur": 40,
+      "falloff": 0,
+      "image": [
+        "202",
+        0
+      ],
+      "mask": [
+        "193",
+        1
+      ]
+    },
+    "class_type": "INPAINT_MaskedBlur",
+    "_meta": {
+      "title": "Blur Masked Area"
+    }
+  },
+  "205": {
+    "inputs": {
+      "positive": [
+        "203",
+        0
+      ],
+      "negative": [
+        "200",
+        0
+      ],
+      "vae": [
+        "198",
+        2
+      ],
+      "pixels": [
+        "204",
+        0
+      ],
+      "mask": [
+        "193",
+        1
+      ]
+    },
+    "class_type": "INPAINT_VAEEncodeInpaintConditioning",
+    "_meta": {
+      "title": "VAE Encode & Inpaint Conditioning"
+    }
+  },
+  "206": {
+    "inputs": {
+      "model": [
+        "198",
+        0
+      ],
+      "patch": [
+        "199",
+        0
+      ],
+      "latent": [
+        "205",
+        2
+      ]
+    },
+    "class_type": "INPAINT_ApplyFooocusInpaint",
+    "_meta": {
+      "title": "Apply Fooocus Inpaint"
+    }
+  },
+  "207": {
+    "inputs": {
+      "strength": 1,
+      "model": [
+        "206",
+        0
+      ]
+    },
+    "class_type": "DifferentialDiffusion",
+    "_meta": {
+      "title": "Differential Diffusion"
+    }
+  },
+  "208": {
+    "inputs": {
+      "seed": 327,
+      "steps": 20,
+      "cfg": 1,
+      "sampler_name": "lcm",
+      "scheduler": "karras",
+      "denoise": 1,
+      "model": [
+        "207",
+        0
+      ],
+      "positive": [
+        "205",
+        0
+      ],
+      "negative": [
+        "205",
+        1
+      ],
+      "latent_image": [
+        "205",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "209": {
+    "inputs": {
+      "samples": [
+        "208",
+        0
+      ],
+      "vae": [
+        "198",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "466": {
+    "inputs": {
+      "download_links": "https://huggingface.co/comfyuistudio/realism-sdxl/resolve/main/realism-sdxl.safetensors checkpoints\nhttps://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/main/diffusion_pytorch_model_promax.safetensors controlnet controlnet-union-sdxl-1.0.safetensors\nhttps://huggingface.co/alexgenovese/reica_models/resolve/021e192bd744c48a85f8ae1832662e77beb9aac7/realvisxlV40_v40LightningBakedvae.safetensors checkpoints\nhttps://huggingface.co/MaziyarPanahi/Mistral-7B-Instruct-v0.3-GGUF/resolve/main/Mistral-7B-Instruct-v0.3.Q4_K_M.gguf llm_gguf\nhttps://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/sams/sam_vit_b_01ec64.pth sams\nhttps://huggingface.co/stabilityai/sd-vae-ft-mse-original/resolve/main/vae-ft-mse-840000-ema-pruned.safetensors vae\nhttps://huggingface.co/jingheya/lotus-depth-g-v2-0-disparity/resolve/main/unet/diffusion_pytorch_model.safetensors unet lotus-depth-g-v2-0.safetensors\nhttps://huggingface.co/lllyasviel/fooocus_inpaint/resolve/main/fooocus_inpaint_head.pth inpaint\nhttps://huggingface.co/lllyasviel/fooocus_inpaint/resolve/main/inpaint_v26.fooocus.patch inpaint\nhttps://huggingface.co/outfly/face_yolov8m/resolve/main/face_yolov8m.pt ultralytics/bbox",
+      "auto_download": true,
+      "max_concurrent_downloads": 1,
+      "max_download_speed_mbps": 0,
+      "enable_resume": true,
+      "validate_files": false,
+      "enable_notifications": true,
+      "auto_organize": false,
+      "hf_token": "",
+      "speak_and_recognation": {
+        "__value__": [
+          false,
+          true
+        ]
+      }
+    },
+    "class_type": "HuggingFaceDownloader",
+    "_meta": {
+      "title": "🤗 HuggingFace Model Downloader Pro"
+    }
+  }
+}
