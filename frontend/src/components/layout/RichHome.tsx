@@ -60,14 +60,14 @@ export const RichHome = ({ onSelect }: RichHomeProps) => {
 
   return (
     <div className="h-full overflow-y-auto custom-scrollbar bg-[#050506]">
-      <div className="mx-auto flex min-h-full w-full max-w-[1500px] flex-col px-8 py-8 pt-4">
+      <div className="flex min-h-full w-full flex-col px-8 py-8 pt-4">
         <section className="space-y-4">
-          <div className="mx-auto grid max-w-[980px] gap-4 md:grid-cols-2">
+          <div className="grid w-full gap-4 md:grid-cols-2">
             {topCards.map((module) => (
               <HomeCard key={module.id} module={module} onSelect={onSelect} />
             ))}
           </div>
-          <div className="mx-auto grid max-w-[980px] gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid w-full gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {bottomCards.map((module) => (
               <HomeCard key={module.id} module={module} onSelect={onSelect} />
             ))}
