@@ -211,3 +211,18 @@ This file is the running trail for v20/v21. Add a new dated entry after every me
 - BREADCRUMBS.md + HANDOFF.md carried over intact (full v18->v2.0 history preserved).
 - New outer installer: install\FEDDA_v2.0_Installer.bat (single file, local only, NOT in git) — clones https://github.com/Feddakalkun/Fedda_hub_v2.0.git into install\app\, runs inner scripts\install.bat, creates thin run.bat + update.bat.
 - Carries over all v22 content: 33 workflow pages, TikTok/Media Downloader + Send to Workflow system, Ollama prompt coverage, all workflow JSONs and cards.
+
+
+## 2026-07-03 - v2.0 First Install Verified + Adaptive CUDA Channel
+
+- FEDDA_v2.0_Installer.bat first full run: PASSED end-to-end in 10m 38s, exit 0 (RTX 3090, 96 GB RAM, Win11).
+  - 30/30 custom nodes installed, 0 failed (incl. LayerStyle_Advance, Impact-Pack, WanVideoWrapper).
+  - All 3 compat patches applied (WanAnimate preprocess, LTXVideo Kornia, KJNodes LTX audio VAE).
+  - Z-Image auto-download correctly skipped (permanent rule honored).
+  - Smoke test: PyTorch 2.6.0+cu124, CUDA True. Embedded Python 3.11.9.
+- Installer hardened for all NVIDIA generations (`e5b4049`): install.ps1 now picks the CUDA wheel channel per GPU —
+  RTX 50xx (Blackwell, sm_120) -> cu128; everything else -> cu124 unchanged.
+  Reason: cu124 torch wheels have no Blackwell kernels; a 5080/5090 install completed but failed at first GPU use.
+  Detection mirrors the existing SageAttention 40/50-series check (WMI name match, no nvidia-smi dependency).
+- Confirmed generic: GPU detection is any-NVIDIA WMI match, no VRAM gating, no card-specific assumptions elsewhere.
+  Supported: RTX 20/30/40 (cu124), RTX 50 (cu128). GTX 10-series installs but lacks VRAM for the workflows.
