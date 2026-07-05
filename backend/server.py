@@ -2040,16 +2040,24 @@ async def ollama_generate_prompt(req: OllamaPromptRequest):
     if not model:
         raise HTTPException(status_code=503, detail="No Ollama text model available. Pull a model with: ollama pull llama3.2")
 
-    # === AWESOME BIBLE-POWERED ENHANCER ===
-    # Uses advanced model-family specific recipes from ollama-bible.md
-    system, user_msg = _get_enhancer_messages(req)
-    memory_context = _workflow_memory_prompt_context(req.workflow_id)
-    if memory_context:
-        user_msg = f"{memory_context}\n\n{user_msg}"
-
-    # Keep enhance more deterministic than inspire.
     mode = req.mode
-    temp = 0.45 if mode == "enhance" else 0.8
+    if mode == "influencer":
+        # Random influencer prompt: server rolls a photo brief from curated
+        # attribute tables (real variety), Ollama weaves it into one prompt.
+        import influencer_prompts
+        brief = influencer_prompts.roll_brief()
+        system, user_msg = influencer_prompts.build_messages(brief, req.context)
+        temp = 0.85
+    else:
+        # === AWESOME BIBLE-POWERED ENHANCER ===
+        # Uses advanced model-family specific recipes from ollama-bible.md
+        system, user_msg = _get_enhancer_messages(req)
+        memory_context = _workflow_memory_prompt_context(req.workflow_id)
+        if memory_context:
+            user_msg = f"{memory_context}\n\n{user_msg}"
+
+        # Keep enhance more deterministic than inspire.
+        temp = 0.45 if mode == "enhance" else 0.8
     max_tokens = 240 if req.context == "zimage" else 190
 
     payload = {

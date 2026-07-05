@@ -16,7 +16,7 @@
 
 import { useRef, useState, useCallback } from 'react';
 import type { DragEvent, ClipboardEvent } from 'react';
-import { Wand2, Sparkles, Loader2, ImageIcon, X } from 'lucide-react';
+import { Wand2, Sparkles, Loader2, ImageIcon, X, Dices } from 'lucide-react';
 import { BACKEND_API } from '../../config/api';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -147,7 +147,7 @@ export const PromptAssistant = ({
   }, []);
 
   // ── Stream trigger ──────────────────────────────────────────────────────────
-  const runStream = useCallback(async (reqMode: 'enhance' | 'inspire') => {
+  const runStream = useCallback(async (reqMode: 'enhance' | 'inspire' | 'influencer') => {
     abortRef.current?.abort();
     abortRef.current = new AbortController();
     setMode(reqMode);
@@ -287,6 +287,10 @@ export const PromptAssistant = ({
                 className={`p-1 rounded-lg bg-black/60 border border-white/10 text-white/25 transition-all ${ACCENT_BTN[accent]}`}>
                 <Sparkles className="w-3 h-3" />
               </button>
+              <button onClick={() => runStream('influencer')} title="Random influencer prompt"
+                className={`p-1 rounded-lg bg-black/60 border border-white/10 text-white/25 transition-all ${ACCENT_BTN[accent]}`}>
+                <Dices className="w-3 h-3" />
+              </button>
             </>
           )}
         </div>
@@ -345,6 +349,15 @@ export const PromptAssistant = ({
                   text-[9px] font-black uppercase tracking-widest text-white/25 transition-all ${ACCENT_BTN[accent]}`}
               >
                 <Sparkles className="w-2.5 h-2.5" /> Generate
+              </button>
+              {/* Random influencer button */}
+              <button
+                onClick={() => runStream('influencer')}
+                title="Random influencer prompt - rolls a random scene, outfit, lighting and mood"
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/[0.03] border border-white/8
+                  text-[9px] font-black uppercase tracking-widest text-white/25 transition-all ${ACCENT_BTN[accent]}`}
+              >
+                <Dices className="w-2.5 h-2.5" /> Influencer
               </button>
               {/* Char count */}
               <span className="text-white/10 font-mono text-[10px] ml-1">{value.length}</span>
