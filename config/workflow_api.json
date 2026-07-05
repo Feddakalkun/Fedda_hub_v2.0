@@ -2271,6 +2271,12 @@
         "input_key": "resize_type.width",
         "type": "number",
         "label": "Target Width"
+      },
+      "duration": {
+        "node_id": "5778",
+        "input_key": "end_time",
+        "type": "number",
+        "label": "Use First N Seconds (0 = full clip)"
       }
     }
   }

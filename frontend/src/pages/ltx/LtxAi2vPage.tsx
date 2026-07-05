@@ -20,6 +20,7 @@ export const LtxAi2vPage = () => {
   const [negative, setNegative] = usePersistentState('ltx_ai2v_negative', DEFAULT_NEGATIVE);
   const [seed, setSeed] = usePersistentState('ltx_ai2v_seed', -1);
   const [steps, setSteps] = usePersistentState('ltx_ai2v_steps', 4);
+  const [duration, setDuration] = usePersistentState('ltx_ai2v_duration', 5);
   const [width, setWidth] = usePersistentState('ltx_ai2v_width', '1024');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -122,6 +123,7 @@ export const LtxAi2vPage = () => {
       seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
       steps,
       width: parseInt(width, 10),
+      duration,
     });
   };
 
@@ -235,6 +237,15 @@ export const LtxAi2vPage = () => {
               <Field label="Target Width — height follows the image's aspect ratio">
                 <ChipGroup options={WIDTH_PRESETS} value={width} onChange={setWidth} />
               </Field>
+              <SliderField
+                label="Video Length"
+                value={duration}
+                onChange={setDuration}
+                min={0}
+                max={30}
+                step={1}
+                format={(v) => (v === 0 ? 'full audio clip' : `first ${v}s of audio`)}
+              />
               <SliderField
                 label="Steps"
                 value={steps}
