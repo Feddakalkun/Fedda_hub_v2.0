@@ -3,13 +3,15 @@ setlocal EnableExtensions EnableDelayedExpansion
 title FEDDA Model Downloader
 
 :: ============================================================================
-:: FEDDA per-workflow model downloader (resumable).
+:: FEDDA per-workflow model + custom node downloader (resumable).
 :: Usage:  download_models.bat <workflow-id>   e.g. download_models.bat ltx-img2vid
-::         download_models.bat                 (interactive - lists manifests)
+::         download_models.bat                 (interactive numbered list)
 ::         download_models.bat ALL-MODELS      (everything, ~large!)
+:: Downloads the workflow's models (curl -C - resume, 5 retries) AND installs
+:: its non-core custom nodes (git clone + pip requirements). Core nodes ship
+:: with the installer. Restart FEDDA after new nodes are installed.
 :: Manifests live in config\model_manifests\ (regenerate with
 :: scripts\generate_model_manifests.py after workflow changes).
-:: Downloads resume where they left off (curl -C -) and retry 5 times.
 :: NOTE: user-initiated only - never call this from install or update scripts
 :: (Z-Image core models must never auto-download).
 :: Set HF_TOKEN env var for gated HuggingFace repos.
@@ -39,9 +41,26 @@ if "%WFID%"=="" (
     echo.
     echo Available workflow manifests:
     echo -----------------------------
-    for %%F in ("%MANIFEST_DIR%\*.txt") do echo   %%~nF
+    set /a IDX=0
+    for %%F in ("%MANIFEST_DIR%\*.txt") do (
+        set "NM=%%~nF"
+        if /i not "!NM:~-6!"==".nodes" (
+            set /a IDX+=1
+            set "OPT_!IDX!=%%~nF"
+            echo   [!IDX!] %%~nF
+        )
+    )
     echo.
-    set /p "WFID=Enter workflow id (or ALL-MODELS): "
+    set /p "PICK=Enter number or workflow id: "
+    if defined PICK (
+        set "ISNUM=1"
+        for /f "delims=0123456789" %%c in ("!PICK!") do set "ISNUM="
+        if defined ISNUM (
+            for %%v in ("!PICK!") do set "WFID=!OPT_%%~v!"
+        ) else (
+            set "WFID=!PICK!"
+        )
+    )
 )
 if "%WFID%"=="" ( echo Nothing selected. & pause & exit /b 1 )
 
@@ -88,10 +107,47 @@ for /f "usebackq delims=" %%A in ("%MANIFEST%") do (
     )
 )
 
+:: --- Install this workflow's custom nodes (non-core, lazy install) ---
+set "NODES_MANIFEST=%MANIFEST_DIR%\%WFID%.nodes.txt"
+set /a NODES_INSTALLED=0
+if exist "%NODES_MANIFEST%" (
+    echo.
+    echo ============================================================
+    echo   Installing custom nodes for: %WFID%
+    echo ============================================================
+    set "CUSTOM_NODES_DIR=%APP_DIR%\ComfyUI\custom_nodes"
+    set "EMB_PY=%APP_DIR%\python_embeded\python.exe"
+    for /f "usebackq delims=" %%A in ("%NODES_MANIFEST%") do (
+        set "NLINE=%%A"
+        if not "!NLINE!"=="" if not "!NLINE:~0,1!"=="#" (
+            set "NFOLDER=" & set "NURL="
+            for /f "tokens=1,2" %%a in ("!NLINE!") do (
+                set "NFOLDER=%%a"
+                set "NURL=%%b"
+            )
+            if exist "!CUSTOM_NODES_DIR!\!NFOLDER!" (
+                echo   [!NFOLDER!] already installed
+            ) else (
+                echo   [!NFOLDER!] Cloning...
+                git clone --depth 1 "!NURL!" "!CUSTOM_NODES_DIR!\!NFOLDER!"
+                if exist "!CUSTOM_NODES_DIR!\!NFOLDER!\requirements.txt" (
+                    echo   [!NFOLDER!] Installing Python deps - this can take a while...
+                    "!EMB_PY!" -m pip install -r "!CUSTOM_NODES_DIR!\!NFOLDER!\requirements.txt" --no-warn-script-location
+                )
+                set /a NODES_INSTALLED+=1
+            )
+        )
+    )
+)
+
 echo.
 echo ============================================================
 echo   DONE - %TOTAL% files processed, %FAILED% failed.
 if %FAILED% gtr 0 echo   Re-run this script to resume failed downloads.
+if %NODES_INSTALLED% gtr 0 (
+    echo   %NODES_INSTALLED% new custom node package^(s^) installed.
+    echo   RESTART FEDDA ^(close consoles, run run.bat^) to load them.
+)
 echo ============================================================
 pause
 exit /b %FAILED%

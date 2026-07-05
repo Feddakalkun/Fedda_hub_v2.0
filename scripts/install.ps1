@@ -569,18 +569,17 @@ try {
 Write-Step "All Python dependencies installed." "Green"
 
 # ============================================================================
-# 4. CUSTOM NODES
+# 4. CUSTOM NODES (core set only - workflow nodes install lazily)
 # ============================================================================
-Write-Header "STEP 4/7 - Custom Nodes (module-aware config)"
+Write-Header "STEP 4/7 - Custom Nodes (core set)"
 
-$ModuleNodeScript = Join-Path $RootPath "scripts\module_nodes.ps1"
-if (Test-Path $ModuleNodeScript) {
-    . $ModuleNodeScript
-    $NodesConfig = Get-FeddaNodeConfig -RootPath $RootPath -Logger { param($Message, $Color) Write-Step $Message $Color }
-} else {
-    Write-Step "Module node helper missing; installing all nodes from nodes.json." "Yellow"
-    $NodesConfig = Get-Content (Join-Path $RootPath "config\nodes.json") | ConvertFrom-Json
-}
+# Only nodes flagged "core" in config/nodes.json install here (the ~9 packages
+# used by nearly every workflow). Workflow-specific heavy nodes (Impact-Pack,
+# LayerStyle, WanVideoWrapper, ...) install on demand via download_models.bat
+# alongside that workflow's models. This keeps the base install fast.
+$AllNodesConfig = Get-Content (Join-Path $RootPath "config\nodes.json") | ConvertFrom-Json
+$NodesConfig = @($AllNodesConfig | Where-Object { $_.core -eq $true })
+Write-Step "Core nodes: $($NodesConfig.Count) of $($AllNodesConfig.Count) configured (rest install per-workflow via download_models.bat)"
 $CustomNodesDir = Join-Path $ComfyDir "custom_nodes"
 if (-not (Test-Path $CustomNodesDir)) { New-Item -ItemType Directory -Path $CustomNodesDir | Out-Null }
 
