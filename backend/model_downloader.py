@@ -104,6 +104,12 @@ class ModelDownloader:
                 "timestamp": time.time()
             }
 
+    def start_url_download(self, url: str, dest_path: Path, filename: str,
+                           min_bytes: int = 10240, headers: Optional[dict] = None) -> str:
+        """Public entry: begin a background download unless the file is already valid.
+        Returns "completed" or "downloading"."""
+        return self._start_download_if_needed(filename, dest_path, url, min_bytes, headers=headers)
+
     def download_direct(self, url: str, dest_path: Path, filename: str, headers: Optional[dict] = None):
         """Standard HTTP download with progress tracking.
 
@@ -173,7 +179,8 @@ class ModelDownloader:
             return self.root_dir / spec["root_relative_path"]
         return self.comfy_models_dir / spec["relative_dir"] / filename
 
-    def _start_download_if_needed(self, filename: str, dest_path: Path, url: str, min_bytes: int) -> str:
+    def _start_download_if_needed(self, filename: str, dest_path: Path, url: str, min_bytes: int,
+                                  headers: Optional[dict] = None) -> str:
         if self._is_valid_file(dest_path, min_bytes=min_bytes):
             self._update_progress(filename, "completed", 100)
             return "completed"
@@ -193,7 +200,7 @@ class ModelDownloader:
 
             t = threading.Thread(
                 target=self.download_direct,
-                args=(url, dest_path, filename),
+                args=(url, dest_path, filename, headers),
                 daemon=True,
             )
             self._active_downloads[filename] = t

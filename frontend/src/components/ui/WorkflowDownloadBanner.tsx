@@ -10,10 +10,11 @@ function fmtBytes(bytes: number): string {
 
 export const WorkflowDownloadBanner = ({ workflowId }: { workflowId: string }) => {
   const { isDownloaderNode } = useComfyExecution();
-  const { preflight, liveFiles, missingCount, checked } = useWorkflowDownloadStatus(workflowId);
+  const { preflight, liveFiles, missingCount, checked, manualDownloading, startDownload } =
+    useWorkflowDownloadStatus(workflowId);
 
-  // Active download — full-width live progress panel
-  if (isDownloaderNode && liveFiles.length > 0) {
+  // Active download (workflow run or manual pre-download) — live progress panel
+  if ((isDownloaderNode || manualDownloading) && liveFiles.length > 0) {
     const completed = liveFiles.filter((f) => f.exists).length;
     return (
       <div className="border-b border-amber-500/20 bg-amber-500/[0.06] px-5 py-3 space-y-2">
@@ -54,22 +55,32 @@ export const WorkflowDownloadBanner = ({ workflowId }: { workflowId: string }) =
         </div>
 
         <p className="text-[10px] text-zinc-600">
-          Runs automatically when downloads complete.
+          {isDownloaderNode
+            ? 'Runs automatically when downloads complete.'
+            : 'Pre-downloading — you can keep working, generation is ready when this finishes.'}
         </p>
       </div>
     );
   }
 
   // Pre-flight — missing models warning bar
-  if (checked && missingCount > 0 && !isDownloaderNode) {
+  if (checked && missingCount > 0 && !isDownloaderNode && !manualDownloading) {
     const missing = preflight.filter((f) => !f.exists);
     return (
       <div className="border-b border-amber-500/15 bg-amber-500/[0.04] px-5 py-2.5 space-y-1.5">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-3.5 w-3.5 text-amber-500/80 flex-shrink-0" />
           <span className="text-[11px] font-semibold text-amber-400/90">
-            {missingCount} model{missingCount !== 1 ? 's' : ''} will auto-download on first run
+            {missingCount} model{missingCount !== 1 ? 's' : ''} missing for this workflow
           </span>
+          <button
+            type="button"
+            onClick={() => { void startDownload(); }}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-300 transition hover:bg-amber-500/20"
+          >
+            <DownloadCloud className="h-3 w-3" />
+            Download models
+          </button>
         </div>
 
         <div className="flex flex-wrap gap-x-4 gap-y-0.5 pl-5">
@@ -81,7 +92,7 @@ export const WorkflowDownloadBanner = ({ workflowId }: { workflowId: string }) =
         </div>
 
         <p className="text-[10px] text-zinc-600 pl-5">
-          Click Generate — the app downloads and runs automatically.
+          Download now, or just click Generate — the app downloads and runs automatically.
         </p>
       </div>
     );

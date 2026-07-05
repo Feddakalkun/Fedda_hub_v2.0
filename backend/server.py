@@ -3055,6 +3055,43 @@ async def get_workflow_download_live_progress(workflow_id: str):
         return {"files": [], "error": str(e)}
 
 
+@app.post("/api/workflow/download-models/{workflow_id}")
+async def start_workflow_model_downloads(workflow_id: str):
+    """Pre-download all missing models for a workflow without running it.
+    Uses the same download list as model-status; progress is visible via the
+    existing download-live-progress endpoint. HF token from settings is only
+    attached to huggingface.co URLs."""
+    try:
+        mappings = workflow_service.load_mapping()
+        if workflow_id not in mappings:
+            raise HTTPException(status_code=404, detail=f"Unknown workflow '{workflow_id}'")
+        mapping = mappings[workflow_id]
+        path = workflow_service.get_workflow_path(mapping.get("filename", ""))
+        if not path:
+            raise HTTPException(status_code=404, detail="Workflow file not found")
+        with open(path, "r", encoding="utf-8-sig") as f:
+            workflow = json.load(f)
+
+        hf_token = (load_settings().get("hf_token") or "").strip()
+        started, already = [], []
+        for item in _parse_workflow_download_links(workflow):
+            url = str(item.get("url") or "")
+            filename = str(item.get("filename") or "")
+            dest = item.get("path")
+            if not url or not filename or not dest:
+                continue
+            headers = None
+            if hf_token and "huggingface.co" in url:
+                headers = {"Authorization": f"Bearer {hf_token}"}
+            state = model_downloader.start_url_download(url, Path(str(dest)), filename, headers=headers)
+            (already if state == "completed" else started).append(filename)
+        return {"success": True, "started": started, "already_present": already}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/generate")
 async def generate(req: GenerateRequest):
     """

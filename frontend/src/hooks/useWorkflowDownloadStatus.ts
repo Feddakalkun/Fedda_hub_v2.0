@@ -22,6 +22,8 @@ export interface WorkflowDownloadState {
   missingCount: number;
   allReady: boolean;
   checked: boolean;
+  manualDownloading: boolean;
+  startDownload: () => Promise<void>;
 }
 
 export function useWorkflowDownloadStatus(workflowId: string): WorkflowDownloadState {
@@ -29,6 +31,7 @@ export function useWorkflowDownloadStatus(workflowId: string): WorkflowDownloadS
   const [preflight, setPreflight] = useState<PreflightFileStatus[]>([]);
   const [liveFiles, setLiveFiles] = useState<DownloadFileStatus[]>([]);
   const [checked, setChecked] = useState(false);
+  const [manualDownloading, setManualDownloading] = useState(false);
   const wasDownloadingRef = useRef(false);
 
   const fetchPreflight = useCallback(async () => {
@@ -65,9 +68,24 @@ export function useWorkflowDownloadStatus(workflowId: string): WorkflowDownloadS
     }
   }, [isDownloaderNode, fetchPreflight]);
 
+  // Start a manual pre-download (no generation) of all missing models
+  const startDownload = useCallback(async () => {
+    try {
+      const resp = await fetch(
+        `${BACKEND_API.BASE_URL}/api/workflow/download-models/${encodeURIComponent(workflowId)}`,
+        { method: 'POST' }
+      );
+      if (resp.ok) setManualDownloading(true);
+    } catch {
+      // Network unavailable — leave state unchanged
+    }
+  }, [workflowId]);
+
   // Poll live file sizes while the HuggingFaceDownloader node is executing
+  // or a manual pre-download is in flight
+  const pollingActive = isDownloaderNode || manualDownloading;
   useEffect(() => {
-    if (!isDownloaderNode) {
+    if (!pollingActive) {
       setLiveFiles([]);
       return;
     }
@@ -80,14 +98,18 @@ export function useWorkflowDownloadStatus(workflowId: string): WorkflowDownloadS
         if (!resp.ok || !mounted) return;
         const data: { files?: Array<{ filename?: unknown; folder?: unknown; exists?: unknown; currentBytes?: unknown }> } = await resp.json();
         if (!mounted) return;
-        setLiveFiles(
-          (data.files ?? []).map((f) => ({
-            filename: String(f.filename ?? ''),
-            folder: String(f.folder ?? ''),
-            exists: Boolean(f.exists),
-            currentBytes: Number(f.currentBytes ?? 0),
-          }))
-        );
+        const files = (data.files ?? []).map((f) => ({
+          filename: String(f.filename ?? ''),
+          folder: String(f.folder ?? ''),
+          exists: Boolean(f.exists),
+          currentBytes: Number(f.currentBytes ?? 0),
+        }));
+        setLiveFiles(files);
+        // Manual pre-download finishes when every file is on disk
+        if (manualDownloading && files.length > 0 && files.every((f) => f.exists)) {
+          setManualDownloading(false);
+          fetchPreflight();
+        }
       } catch {
         // Silent — polling failures don't matter
       }
@@ -98,7 +120,7 @@ export function useWorkflowDownloadStatus(workflowId: string): WorkflowDownloadS
       mounted = false;
       clearInterval(id);
     };
-  }, [isDownloaderNode, workflowId]);
+  }, [pollingActive, manualDownloading, workflowId, fetchPreflight]);
 
   const missingCount = preflight.filter((f) => !f.exists).length;
 
@@ -108,5 +130,7 @@ export function useWorkflowDownloadStatus(workflowId: string): WorkflowDownloadS
     missingCount,
     allReady: checked && missingCount === 0,
     checked,
+    manualDownloading,
+    startDownload,
   };
 }
