@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Loader2, Play, Upload } from 'lucide-react';
+import { Loader2, Music, Play, Upload } from 'lucide-react';
 import { cn, inputBase } from '../../lib/styles';
 import { FeddaButton } from './FeddaPrimitives';
 
@@ -103,7 +103,8 @@ interface UploadSlotProps {
   label?: string;
   hint?: string;
   height?: number;
-  previewKind?: 'image' | 'video';
+  previewKind?: 'image' | 'video' | 'audio';
+  filename?: string;
 }
 
 /** Click/drag-drop upload slot with preview (generalized from the LTX reference slot). */
@@ -117,6 +118,7 @@ export const UploadSlot = ({
   hint = 'Click or drop file',
   height = 150,
   previewKind = 'image',
+  filename,
 }: UploadSlotProps) => {
   const ref = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -143,7 +145,19 @@ export const UploadSlot = ({
       )}
       style={{ height }}
     >
-      {preview ? (
+      {preview && previewKind === 'audio' ? (
+        <div className="flex h-full flex-col items-center justify-center gap-2 p-3">
+          <Music className="h-6 w-6 text-emerald-400/70" />
+          <span className="max-w-full truncate text-[10px] font-semibold text-white/60">{filename || label}</span>
+          <audio
+            src={preview}
+            controls
+            onClick={(e) => e.stopPropagation()}
+            className="h-7 w-full max-w-[220px]"
+          />
+          <span className="text-[9px] uppercase tracking-[0.16em] text-white/25">Click elsewhere to replace</span>
+        </div>
+      ) : preview ? (
         <>
           {previewKind === 'video' ? (
             <video src={preview} muted loop autoPlay playsInline className="absolute inset-0 h-full w-full object-cover" />

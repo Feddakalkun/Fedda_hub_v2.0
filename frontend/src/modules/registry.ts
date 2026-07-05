@@ -494,6 +494,20 @@ export const FEDDA_MODULES: FeddaModule[] = [
     Icon: Film,
     card: veniceCard(23),
   },
+  {
+    id: 'ltx-audio-img2vid',
+    sourceModuleId: 'ltx-video',
+    label: 'LTX Audio + Image2Video',
+    description: 'Animate a reference image driven by an audio clip — motion follows the sound.',
+    area: 'video',
+    pack: 'booster',
+
+    tabs: ['ltx-ai2v'],
+    workflows: ['ltx-ai2v'],
+    defaultTab: 'ltx-ai2v',
+    Icon: Film,
+    card: { poster: '/cards/new/venice/34.jpeg' },
+  },
 ];
 
 export const HOME_MODULE_CANDIDATES = FEDDA_MODULES.filter(

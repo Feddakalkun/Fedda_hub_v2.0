@@ -14,7 +14,16 @@
       "pack": "core",
       "area": "core",
       "enabled": true,
-      "tabs": ["home", "gallery", "library", "ollama", "venice", "grok", "zonos-tts", "companion"],
+      "tabs": [
+        "home",
+        "gallery",
+        "library",
+        "ollama",
+        "venice",
+        "grok",
+        "zonos-tts",
+        "companion"
+      ],
       "workflows": [],
       "custom_nodes": [
         "ComfyUI-Manager",
@@ -39,8 +48,14 @@
       "pack": "core",
       "area": "image",
       "enabled": true,
-      "tabs": ["image", "z-image", "z-image-txt2img"],
-      "workflows": ["z-image"],
+      "tabs": [
+        "image",
+        "z-image",
+        "z-image-txt2img"
+      ],
+      "workflows": [
+        "z-image"
+      ],
       "custom_nodes": [
         "rgthree-comfy",
         "ComfyUI-Styles_CSV_Loader",
@@ -59,7 +74,10 @@
       "pack": "booster",
       "area": "image",
       "enabled": true,
-      "tabs": ["z-image-dual-lora", "z-image-controlnet-pose"],
+      "tabs": [
+        "z-image-dual-lora",
+        "z-image-controlnet-pose"
+      ],
       "workflows": [
         "z-image-dual-lora",
         "z-image-dual-base",
@@ -151,7 +169,11 @@
       "pack": "booster",
       "area": "image",
       "enabled": true,
-      "tabs": ["chroma", "chroma-txt2img", "chroma-simple-txt2img"],
+      "tabs": [
+        "chroma",
+        "chroma-txt2img",
+        "chroma-simple-txt2img"
+      ],
       "workflows": [
         "chroma1-hd-txt2img",
         "chroma-simple-txt2img"
@@ -172,7 +194,9 @@
       "pack": "booster",
       "area": "image",
       "enabled": true,
-      "tabs": ["firered-image-edit"],
+      "tabs": [
+        "firered-image-edit"
+      ],
       "workflows": [
         "firered-image-edit"
       ],
@@ -231,16 +255,23 @@
       "pack": "booster",
       "area": "video",
       "enabled": true,
-      "tabs": ["ltx", "ltx-img2vid", "ltx-flf"],
+      "tabs": [
+        "ltx",
+        "ltx-img2vid",
+        "ltx-flf",
+        "ltx-ai2v"
+      ],
       "workflows": [
         "ltx-flf",
-        "ltx-img2vid"
+        "ltx-img2vid",
+        "ltx-ai2v"
       ],
       "custom_nodes": [
         "ComfyUI-LTXVideo",
         "ComfyMath",
         "comfy_mtb",
-        "ComfyUI-VideoHelperSuite"
+        "ComfyUI-VideoHelperSuite",
+        "WhatDreamsCost-ComfyUI"
       ],
       "models": [
         "LTX 2.3 model family"
@@ -253,7 +284,10 @@
       "pack": "booster",
       "area": "image",
       "enabled": true,
-      "tabs": ["flux", "flux-txt2img"],
+      "tabs": [
+        "flux",
+        "flux-txt2img"
+      ],
       "workflows": [
         "flux2klein-txt2img"
       ],
@@ -273,7 +307,10 @@
       "pack": "booster",
       "area": "image",
       "enabled": true,
-      "tabs": ["ideogram", "ideogram-txt2img"],
+      "tabs": [
+        "ideogram",
+        "ideogram-txt2img"
+      ],
       "workflows": [
         "ideogram-txt2img"
       ],

@@ -1617,6 +1617,7 @@ def _build_prompt_user_message(context: str, mode: str, current_prompt: str) -> 
         "wan": "Focus on MOTION + CAMERA first. Describe only physically plausible movement that can happen from the reference. Always include stability constraints (keep face/outfit/lighting/background consistent). Prefer short, grounded language.",
         "wan-i2v": "WAN Img2Vid NSFW: Motion + camera first, fully explicit when requested. Subject state → exact physical motion → camera → what stays stable. Be direct and physically grounded.",
         "ltx": "Focus on TEMPORAL CONTINUITY and smooth transitions. Describe the motion path between frames. Keep camera movement minimal and identity stable. Ground everything in visible elements.",
+        "ltx-lipsync": "LTX audio-driven video: focus on speaking energy, natural head/eye movement, breathing, and expressive presence that would sync with an audio track. Keep camera movement minimal and identity stable.",
         "chroma": "Use rich, natural, slightly verbose prose. Describe subject + pose + lighting + atmosphere + textures. Cinematic but conversational. Repetition of key ideas is often helpful.",
         "z_image": "Scene-first. Strong composition, subject placement, lighting direction/quality, materials, and polished cinematic finish. Be specific and visual.",
         "zimage": "Scene-first. Strong composition, subject placement, lighting direction/quality, materials, and polished cinematic finish. Be specific and visual.",

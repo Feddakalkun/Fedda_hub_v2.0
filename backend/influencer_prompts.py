@@ -1,32 +1,23 @@
-"""Random influencer prompt generator.
-
-Rolls a random photo brief from curated attribute tables, then hands it to
-Ollama to weave into one coherent photorealistic prompt. Server-side
-randomization is what keeps output varied — LLMs sampled repeatedly at the
-same temperature converge on the same few scenes.
-
-The realism recipe (amateur phone photo, real skin texture, imperfect
-framing) comes from the proven consistent-influencer pipeline.
-"""
 import random
+from typing import Dict, Tuple
 
 SUBJECTS = [
     "a young woman in her early twenties with long honey-blonde waves",
-    "a woman in her mid twenties with a dark sleek bob and sharp cheekbones",
+    "a woman in her mid-twenties with a dark sleek bob and sharp cheekbones",
     "a young woman in her twenties with auburn curls and light freckles",
     "a woman in her late twenties with jet-black hair in a loose bun",
     "a young woman in her twenties with platinum hair and grown-out roots",
     "a woman in her early thirties with shoulder-length brunette hair",
     "a young woman in her twenties with a curly afro and gold hoops",
-    "a woman in her mid twenties with a high copper ponytail",
+    "a woman in her mid-twenties with a high copper ponytail",
     "a young woman in her twenties with braided dark hair",
     "a Scandinavian woman in her twenties with ash-blonde hair and blue-grey eyes",
     "a Mediterranean woman in her late twenties with dark wavy hair",
     "a young East Asian woman in her twenties with long straight black hair",
-    "a Latina woman in her mid twenties with caramel balayage waves",
+    "a Latina woman in her mid-twenties with caramel balayage waves",
 ]
 
-SETTINGS = [
+SCENES = [
     "her bedroom with an unmade bed and fairy lights",
     "a bright modern kitchen mid-morning",
     "a cozy cafe window table with a latte",
@@ -70,7 +61,7 @@ OUTFITS = [
     "a turtleneck and gold hoops",
 ]
 
-ACTIVITIES = [
+ACTIONS = [
     "taking a casual mirror selfie with her phone",
     "caught mid-laugh looking away from the camera",
     "sipping a drink and glancing at the lens",
@@ -106,6 +97,8 @@ CAMERA = [
     "photo taken by a friend, casual framing, mild motion blur",
     "mirror selfie with the phone visible",
     "close-up phone portrait with natural depth of field",
+    "wide accidental snapshot with lots of negative space",
+    "mid-distance candid shot, imperfect crop, natural perspective",
 ]
 
 MOODS = [
@@ -116,57 +109,109 @@ MOODS = [
     "sun-drunk and happy",
     "focused and casual",
     "flirty with a knowing look",
+    "reserved and thoughtful",
+    "bright and slightly chaotic",
 ]
 
-REALISM = (
-    "real skin texture with visible pores, natural imperfect skin, "
-    "no airbrush, no glamour retouching, believable everyday photo"
-)
+COLOR_PALETTES = [
+    "warm beige, cream, and soft brown tones",
+    "cool grey, black, and muted blue tones",
+    "soft pastel pinks and pale neutrals",
+    "deep navy, olive, and warm skin tones",
+    "high-contrast black and white with one accent color",
+    "sun-faded gold, sand, and dusty orange",
+    "clean white, silver, and cool daylight tones",
+]
 
+COMPOSITIONS = [
+    "tight portrait crop with shallow depth of field",
+    "off-center framing with empty space on one side",
+    "slightly elevated angle, casual and unposed",
+    "low angle that makes the scene feel candid and real",
+    "waist-up framing with a messy background",
+    "full-body framing with natural posture and context visible",
+    "three-quarter framing with strong foreground blur",
+    "mirror composition with imperfect reflections and edges",
+]
 
-def roll_brief(rng: random.Random | None = None) -> dict:
+LENS = [
+    "24mm wide-angle look",
+    "28mm casual phone-like perspective",
+    "35mm documentary-style framing",
+    "50mm natural portrait perspective",
+    "85mm compressed portrait look",
+]
+
+REALISM = [
+    "real skin texture with visible pores",
+    "natural imperfections, slight under-eye shadows, no airbrushing",
+    "believable everyday lighting, not studio-perfect",
+    "minor motion blur and slightly uneven framing",
+    "authentic phone-camera sharpness with soft edges",
+    "unretouched, spontaneous, lived-in photo feel",
+]
+
+NEGATIVES = [
+    "no plastic skin",
+    "no over-smoothed face",
+    "no glam magazine lighting",
+    "no cinematic fantasy look",
+    "no symmetrical studio pose",
+    "no heavy makeup emphasis",
+    "no fashion-ad editorial polish",
+]
+
+def roll_brief(rng: random.Random | None = None) -> Dict[str, str]:
     r = rng or random.Random()
     return {
         "subject": r.choice(SUBJECTS),
-        "setting": r.choice(SETTINGS),
+        "scene": r.choice(SCENES),
         "outfit": r.choice(OUTFITS),
-        "activity": r.choice(ACTIVITIES),
+        "action": r.choice(ACTIONS),
         "lighting": r.choice(LIGHTING),
         "camera": r.choice(CAMERA),
         "mood": r.choice(MOODS),
+        "palette": r.choice(COLOR_PALETTES),
+        "composition": r.choice(COMPOSITIONS),
+        "lens": r.choice(LENS),
+        "realism": r.choice(REALISM),
+        "negative": r.choice(NEGATIVES),
     }
 
-
-def build_messages(brief: dict, context: str = "zimage") -> tuple[str, str]:
-    """Return (system, user) messages for Ollama."""
+def build_messages(brief: Dict[str, str], context: str = "zimage") -> Tuple[str, str]:
     is_video = any(k in (context or "").lower() for k in ("wan", "ltx", "vid", "hunyuan"))
 
     system = (
         "You are a prompt writer for photorealistic AI image generation. "
-        "You write prompts for believable adult social-media influencer photos - "
-        "the subject is always an adult woman in her twenties or thirties. "
-        "Combine ALL the given elements into ONE flowing, natural-language prompt. "
-        "Keep the amateur-photo realism language intact - that is what makes results believable. "
-        "Do not add camera brand names, watermark text, or hashtags. "
-        "Output ONLY the final prompt text, 60-110 words, nothing else."
+        "Write prompts for believable adult social-media influencer photos, always an adult woman. "
+        "Turn the brief into one fluent prompt that feels specific, varied, and visually grounded. "
+        "Prioritize composition, camera behavior, lighting, and scene detail over generic beauty language. "
+        "Avoid repetitive phrasing and avoid falling back to the same pose or selfie structure. "
+        "Do not mention camera brands, hashtags, watermark text, or prompt-analysis language. "
+        "Output only the final prompt text, 90-150 words, nothing else."
     )
 
     motion = (
-        " End with one short sentence describing subtle natural motion "
-        "(hair moving, breathing, small gestures, gentle camera drift)."
+        " End with one short sentence describing subtle natural motion, like hair shifting, a small breath, "
+        "a tiny hand movement, or gentle camera drift."
         if is_video else ""
     )
 
     user = (
-        f"Elements for this photo:\n"
+        f"Create one photorealistic prompt from these elements:\n"
         f"- Subject: {brief['subject']}\n"
-        f"- Setting: {brief['setting']}\n"
+        f"- Scene: {brief['scene']}\n"
         f"- Outfit: {brief['outfit']}\n"
-        f"- Doing: {brief['activity']}\n"
+        f"- Action: {brief['action']}\n"
         f"- Lighting: {brief['lighting']}\n"
-        f"- Camera style: {brief['camera']}\n"
+        f"- Camera: {brief['camera']}\n"
+        f"- Lens: {brief['lens']}\n"
+        f"- Composition: {brief['composition']}\n"
         f"- Mood: {brief['mood']}\n"
-        f"- Realism requirements: {REALISM}\n"
-        f"Write the single final prompt now.{motion}"
+        f"- Color palette: {brief['palette']}\n"
+        f"- Realism notes: {brief['realism']}\n"
+        f"- Negative constraint: {brief['negative']}\n"
+        f"Vary the sentence structure and avoid reusing stock influencer phrasing.{motion}"
     )
+
     return system, user

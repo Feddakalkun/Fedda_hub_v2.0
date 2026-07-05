@@ -4,4 +4,5 @@
 ComfyUI-LTXVideo https://github.com/Lightricks/ComfyUI-LTXVideo.git
 ComfyMath https://github.com/evanspearman/ComfyMath.git
 comfy_mtb https://github.com/melMass/comfy_mtb.git
+WhatDreamsCost-ComfyUI https://github.com/WhatDreamsCost/WhatDreamsCost-ComfyUI.git
 ComfyLiterals https://github.com/M1kep/ComfyLiterals.git

@@ -1,5 +1,11 @@
 [
     {
+        "name":  "WhatDreamsCost-ComfyUI",
+        "url":  "https://github.com/WhatDreamsCost/WhatDreamsCost-ComfyUI.git",
+        "folder":  "WhatDreamsCost-ComfyUI",
+        "note":  "LoadAudioUI — audio-conditioned video (LTX 2.3 audio+image2video)"
+    },
+    {
         "name":  "ComfyUI-Manager",
         "url":  "https://github.com/Comfy-Org/ComfyUI-Manager.git",
         "folder":  "ComfyUI-Manager",
