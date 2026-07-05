@@ -74,18 +74,36 @@ $BackendProc = $null
 $ViteProc    = $null
 $TailJobs    = @()
 
+# Kill stale FEDDA services from a previous session (e.g. launcher window was
+# closed with X, which couldn't tear down its children). Only touches
+# processes that belong to THIS install tree.
+foreach ($StalePort in 8199, 8000) {
+    $Conns = Get-NetTCPConnection -LocalPort $StalePort -State Listen -ErrorAction SilentlyContinue
+    foreach ($Conn in $Conns) {
+        $Proc = Get-Process -Id $Conn.OwningProcess -ErrorAction SilentlyContinue
+        if ($Proc -and $Proc.Path -like "$RootPath*") {
+            Write-Host "  Cleaning up stale $($Proc.ProcessName) (PID $($Proc.Id)) on port $StalePort from a previous session..." -ForegroundColor Yellow
+            taskkill /F /T /PID $Proc.Id 2>$null | Out-Null
+        } elseif ($Proc) {
+            Write-Host "  [WARN] Port $StalePort is held by $($Proc.ProcessName) (PID $($Proc.Id)) - not a FEDDA process, leaving it. Startup may fail." -ForegroundColor Yellow
+        }
+    }
+}
+
 try {
+    # -NoNewWindow keeps services attached to THIS console, so closing the
+    # window (X) takes them down with it instead of orphaning hidden children.
     Write-Host "  [1/3] Starting ComfyUI on port 8199..." -ForegroundColor White
     $ComfyProc = Start-Process -FilePath $Python `
         -ArgumentList "-s", $ComfyMain, "--windows-standalone-build", "--port", "8199" `
-        -PassThru -WindowStyle Hidden `
+        -PassThru -NoNewWindow `
         -RedirectStandardOutput $Services[0].Out -RedirectStandardError $Services[0].Err
 
     Write-Host "  [2/3] Starting backend on port 8000..." -ForegroundColor White
     $BackendProc = Start-Process -FilePath $Python `
         -ArgumentList $BackendPy `
         -WorkingDirectory (Split-Path $BackendPy -Parent) `
-        -PassThru -WindowStyle Hidden `
+        -PassThru -NoNewWindow `
         -RedirectStandardOutput $Services[1].Out -RedirectStandardError $Services[1].Err
 
     $comfyOk   = Wait-Port -Port 8199 -Name "ComfyUI (this can take ~30s)" -Proc $ComfyProc -TimeoutSec 120
@@ -102,7 +120,7 @@ try {
     $NpmCmd = "cd /d `"$FrontDir`" && npm run dev"
     $ViteProc = Start-Process -FilePath "cmd.exe" `
         -ArgumentList "/c", $NpmCmd `
-        -PassThru -WindowStyle Hidden `
+        -PassThru -NoNewWindow `
         -RedirectStandardOutput $Services[2].Out -RedirectStandardError $Services[2].Err
 
     # Tail all service logs back into this window
