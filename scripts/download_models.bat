@@ -70,8 +70,16 @@ if not exist "%MANIFEST%" (
     pause & exit /b 1
 )
 
+:: HF token: env var wins, otherwise reuse the token saved via the FEDDA UI
+:: (config\runtime_settings.json -> hf_token).
+if not defined HF_TOKEN if exist "%APP_DIR%\config\runtime_settings.json" (
+    for /f "usebackq delims=" %%T in (`powershell -NoProfile -Command "try { $t = (Get-Content '%APP_DIR%\config\runtime_settings.json' -Raw | ConvertFrom-Json).hf_token; if ($t) { $t.Trim() } } catch {}"`) do set "HF_TOKEN=%%T"
+)
 set "AUTH_ARGS="
-if defined HF_TOKEN set "AUTH_ARGS=-H "Authorization: Bearer %HF_TOKEN%""
+if defined HF_TOKEN (
+    set "AUTH_ARGS=-H "Authorization: Bearer %HF_TOKEN%""
+    echo   HuggingFace token found - will be used for huggingface.co downloads.
+)
 
 echo.
 echo ============================================================
@@ -156,8 +164,11 @@ exit /b %FAILED%
 set "DL_URL=%~1"
 set "DL_OUT=%~2"
 set /a RETRIES=0
+:: Only send the HF token to huggingface.co - never leak it to other hosts.
+set "DL_AUTH="
+echo %DL_URL% | findstr /i "huggingface.co" >nul && set "DL_AUTH=%AUTH_ARGS%"
 :Retry
-curl -L --connect-timeout 30 -C - %AUTH_ARGS% -o "%DL_OUT%" "%DL_URL%"
+curl -L --connect-timeout 30 -C - %DL_AUTH% -o "%DL_OUT%" "%DL_URL%"
 if errorlevel 1 (
     set /a RETRIES+=1
     if !RETRIES! LSS %MAX_RETRIES% (
