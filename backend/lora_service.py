@@ -7,6 +7,7 @@ Preview images: prefers /lora-previews/<pack_key>/<Basename>.jpg stored in GitHu
 falls back to the HuggingFace-hosted image if not present locally.
 """
 
+import os
 import threading
 import time
 import uuid
@@ -262,18 +263,38 @@ class LoRAService:
     # ─── Install scanning ───────────────────────────────────────────────────
 
     def get_installed(self) -> Dict[str, Any]:
-        """Recursively scan the loras directory and return {filename: info}."""
+        """Recursively scan the loras directory and return {filename: info}.
+
+        Junction/symlink-loop safe: users link external LoRA stashes into the
+        loras dir (symlink_loras.bat), and a bad link can create an infinite
+        directory cycle that made pathlib.rglob crash with WinError 1921.
+        We walk manually and prune any directory whose real path was already
+        visited."""
         result: Dict[str, Any] = {}
         if not self.lora_dir.exists():
             return result
-        for f in self.lora_dir.rglob("*.safetensors"):
+        seen_real: set = set()
+        for root, dirs, files in os.walk(self.lora_dir):
             try:
-                result[f.name] = {
-                    "path":    str(f.relative_to(self.lora_dir)),
-                    "size_mb": round(f.stat().st_size / (1024 * 1024), 1),
-                }
-            except Exception:
-                pass
+                real = os.path.realpath(root)
+            except OSError:
+                dirs[:] = []
+                continue
+            if real in seen_real:
+                dirs[:] = []  # loop detected - do not descend
+                continue
+            seen_real.add(real)
+            for name in files:
+                if not name.lower().endswith(".safetensors"):
+                    continue
+                f = Path(root) / name
+                try:
+                    result[f.name] = {
+                        "path":    str(f.relative_to(self.lora_dir)),
+                        "size_mb": round(f.stat().st_size / (1024 * 1024), 1),
+                    }
+                except Exception:
+                    pass
         return result
 
     def list_lora_names(self) -> List[str]:
