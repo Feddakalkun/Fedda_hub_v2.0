@@ -19,14 +19,28 @@ if (-not (Test-Path $NodeFile)) {
 $Content = Get-Content -LiteralPath $NodeFile -Raw
 
 $New = @'
-        # FEDDA patch: core ComfyUI VAE() detects LTX audio VAEs natively now.
+        # FEDDA patch v2: core ComfyUI VAE() detects LTX audio VAEs natively now.
+        # Audio VAEs are fp32-only in core (working_dtypes=[float32]); a forced
+        # bf16/fp16 dtype from this node's widget crashes the encode with an
+        # input/bias dtype mismatch, so let core pick the dtype for them.
+        if "vocoder.resblocks.0.convs1.0.weight" in sd or "vocoder.vocoder.resblocks.0.convs1.0.weight" in sd:
+            dtype = None
         vae = VAE(sd=sd, device=device, dtype=dtype, metadata=metadata)
         if hasattr(vae, "throw_exception_if_invalid"):
             vae.throw_exception_if_invalid()
 '@
 
-if ($Content.Contains("FEDDA patch: core ComfyUI VAE() detects LTX audio VAEs natively")) {
+if ($Content.Contains("FEDDA patch v2: core ComfyUI VAE() detects LTX audio VAEs natively")) {
     Write-Host "  [KJNodes] LTX audio VAE compatibility patch already applied." -ForegroundColor Green
+    exit 0
+}
+
+# Upgrade path: replace the v1 FEDDA patch block if present.
+$V1Pattern = '(?s)        # FEDDA patch: core ComfyUI VAE\(\) detects LTX audio VAEs natively now\.\s*\n        vae = VAE\(sd=sd, device=device, dtype=dtype, metadata=metadata\)\s*\n        if hasattr\(vae, "throw_exception_if_invalid"\):\s*\n            vae\.throw_exception_if_invalid\(\)'
+if ([regex]::IsMatch($Content, $V1Pattern)) {
+    $Content = [regex]::Replace($Content, $V1Pattern, [System.Text.RegularExpressions.MatchEvaluator]{ param($m) $New }, 1)
+    Set-Content -LiteralPath $NodeFile -Value $Content -Encoding UTF8
+    Write-Host "  [KJNodes] Upgraded LTX audio VAE patch v1 -> v2 (fp32 dtype guard)." -ForegroundColor Green
     exit 0
 }
 
