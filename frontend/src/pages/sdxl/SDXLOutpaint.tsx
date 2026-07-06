@@ -12,7 +12,8 @@ export const SDXLOutpaint = () => {
     <Txt2ImgPage
       storageKey="sdxl_outpaint"
       workflowId="sdxl-outpaint"
-      familyLabel="SDXL OUTPAINT"
+      familyLabel="SDXL"
+      capabilityLabel="Outpaint"
       promptContext="sdxl-outpaint"
       accent="emerald"
       loraPrefixes={['sdxl/']}

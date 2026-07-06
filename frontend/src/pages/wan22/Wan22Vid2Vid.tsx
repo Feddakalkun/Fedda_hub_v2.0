@@ -312,8 +312,8 @@ export const Wan22Vid2Vid = () => {
 
   return (
     <WorkflowShell
-      title="WAN 2.2 Vid2Vid"
-      eyebrow="WAN Video"
+      title="Video to Video"
+      eyebrow="WAN 2.2"
       description="Transform and extend a source clip with scene prompts, resize controls and LoRA loaders."
       icon={Video}
       isGenerating={isGenerating}

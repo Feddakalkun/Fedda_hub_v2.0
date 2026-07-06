@@ -12,7 +12,8 @@ export const SDXLInpaintAutomask = () => {
     <Txt2ImgPage
       storageKey="sdxl_inpaint_automask"
       workflowId="sdxl-inpaint-automask"
-      familyLabel="SDXL INPAINT AUTOMASK"
+      familyLabel="SDXL"
+      capabilityLabel="Inpaint (Auto-Mask)"
       promptContext="sdxl-inpaint"
       accent="emerald"
       loraPrefixes={['sdxl/']}

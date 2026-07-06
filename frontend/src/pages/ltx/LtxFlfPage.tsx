@@ -117,8 +117,8 @@ export const LtxFlfPage = () => {
 
   return (
     <WorkflowShell
-      title="LTX First / Last Frame"
-      eyebrow="LTX Video 2.3"
+      title="First / Last Frame"
+      eyebrow="LTX 2.3"
       description="Generate motion between two keyframes with controlled duration and direction."
       icon={Play}
       isGenerating={run.isGenerating}

@@ -410,8 +410,8 @@ export function Wan21Scail2Page() {
 
   return (
     <WorkflowShell
-      title="WAN 2.1 SCAIL-2"
-      eyebrow="Motion transfer · GGUF"
+      title="Motion Transfer"
+      eyebrow="WAN 2.1 SCAIL"
       description="Animate a reference image using a pose/dance video. SCAIL-2 transfers the exact motion while preserving the subject's appearance."
       icon={Film}
       isGenerating={isGenerating}

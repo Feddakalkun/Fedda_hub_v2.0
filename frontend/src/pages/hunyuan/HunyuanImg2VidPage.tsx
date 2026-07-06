@@ -156,8 +156,8 @@ export const HunyuanImg2VidPage = () => {
 
   return (
     <WorkflowShell
-      title="HunyuanVideo I2V"
-      eyebrow="HunyuanVideo fp8"
+      title="Image to Video"
+      eyebrow="HunyuanVideo"
       description="Animate a reference image into video using HunyuanVideo I2V 720p fp8."
       icon={Play}
       isGenerating={run.isGenerating}

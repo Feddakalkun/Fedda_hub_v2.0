@@ -42,6 +42,7 @@ interface Txt2ImgPageConfig {
   storageKey?: string;
   workflowId?: string;
   familyLabel?: string;
+  capabilityLabel?: string;
   promptContext?: PromptContext;
   accent?: 'emerald' | 'violet';
   loraPrefixes?: string[];
@@ -125,6 +126,7 @@ export const Txt2ImgPage = ({
   storageKey = 'zimage',
   workflowId = 'z-image',
   familyLabel = 'Z-Image',
+  capabilityLabel = 'Text to Image',
   promptLabel = 'Prompt',
   promptContext = 'zimage',
   accent = 'violet',
@@ -654,8 +656,8 @@ export const Txt2ImgPage = ({
 
   return (
     <WorkflowShell
-      title={familyLabel}
-      eyebrow="Image workflow"
+      title={capabilityLabel}
+      eyebrow={familyLabel}
       description={(
         <div className="flex flex-wrap items-center gap-2">
           <span>

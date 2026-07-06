@@ -212,8 +212,8 @@ export const Wan22Img2Vid = () => {
 
   return (
     <WorkflowShell
-      title="WAN 2.2 Img2Vid"
-      eyebrow="WAN Video"
+      title="Image to Video"
+      eyebrow="WAN 2.2"
       description="Animate a still image with three optional scene expansions."
       icon={Video}
       isGenerating={isGenerating}

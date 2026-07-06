@@ -95,7 +95,8 @@ export const QwenRapidEditPage = () => {
     <Txt2ImgPage
       storageKey="qwen_rapid_edit_v23"
       workflowId="qwen-rapid-edit-v23"
-      familyLabel="Qwen Rapid Edit"
+      familyLabel="Qwen"
+      capabilityLabel="Rapid Edit"
       promptContext="qwen"
       accent="emerald"
       loraPrefixes={[]}

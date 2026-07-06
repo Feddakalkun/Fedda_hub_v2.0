@@ -12,7 +12,8 @@ export const SDXLControlNetDepth = () => {
     <Txt2ImgPage
       storageKey="sdxl_controlnet_depth"
       workflowId="sdxl-controlnet-depth"
-      familyLabel="SDXL ControlNet Depth"
+      familyLabel="SDXL"
+      capabilityLabel="ControlNet Depth"
       promptContext="sdxl-depth"
       accent="violet"
       loraPrefixes={['sdxl/']}

@@ -5,7 +5,8 @@ export const FluxTxt2Img = () => {
     <Txt2ImgPage
       storageKey="flux_txt2img"
       workflowId="flux2klein-txt2img"
-      familyLabel="FLUX2-KLEIN"
+      familyLabel="FLUX"
+      capabilityLabel="Text to Image"
       promptContext="flux2-klein"
       accent="violet"
       // Only allow LoRAs specifically trained for FLUX.2-klein.

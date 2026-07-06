@@ -364,8 +364,8 @@ export function IdeogramTxt2ImgPage() {
 
   return (
     <WorkflowShell
-      title="Ideogram 4"
-      eyebrow="Txt2Img · Local"
+      title="Text to Image"
+      eyebrow="Ideogram 4"
       description="Generate images with structured text and object placement using a local Ideogram 4 model."
       icon={ImageIcon}
       isGenerating={isGenerating}

@@ -450,8 +450,8 @@ export const QwenMultiAnglesPage = () => {
   return (
     <>
       <WorkflowShell
-        title="Qwen Multi Angle"
-        eyebrow="Image workflow"
+        title="Multi-Angle"
+        eyebrow="Qwen"
         description="Generate up to six camera-angle variants from one reference image."
         icon={Camera}
         isGenerating={isGenerating}

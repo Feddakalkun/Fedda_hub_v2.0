@@ -800,8 +800,8 @@ export function Wan21SteadyDancerPage() {
 
   return (
     <WorkflowShell
-      title="WAN 2.1 Steady Dancer"
-      eyebrow="Advanced motion transfer"
+      title="Steady Dancer"
+      eyebrow="WAN 2.1"
       description="Build the clip in stages, approve the generated start image, then run the final dance transfer."
       icon={Film}
       isGenerating={isGenerating}

@@ -15,7 +15,8 @@ export const QwenImageReferencePage = () => {
     <Txt2ImgPage
       storageKey="qwen_image_ref"
       workflowId="qwen-edit-2509-image-reference"
-      familyLabel="Qwen Image Reference"
+      familyLabel="Qwen"
+      capabilityLabel="Reference Edit"
       promptContext="qwen"
       accent="emerald"
       loraPrefixes={['qwen/']}

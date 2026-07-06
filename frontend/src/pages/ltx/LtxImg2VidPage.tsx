@@ -142,8 +142,8 @@ export const LtxImg2VidPage = () => {
 
   return (
     <WorkflowShell
-      title="LTX Img2Vid"
-      eyebrow="LTX Video 2.3"
+      title="Image to Video"
+      eyebrow="LTX 2.3"
       description="Animate one reference image into a cinematic motion clip."
       icon={Play}
       isGenerating={run.isGenerating}

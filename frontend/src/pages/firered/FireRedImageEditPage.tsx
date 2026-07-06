@@ -11,7 +11,8 @@ export const FireRedImageEditPage = () => {
     <Txt2ImgPage
       storageKey="firered_image_edit"
       workflowId="firered-image-edit"
-      familyLabel="FireRed Edit"
+      familyLabel="FireRed"
+      capabilityLabel="Image Edit"
       promptContext="firered"
       accent="emerald"
       loraPrefixes={[]}

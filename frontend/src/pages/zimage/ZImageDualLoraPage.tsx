@@ -424,8 +424,8 @@ export const ZImageDualLoraPage = () => {
 
   return (
     <WorkflowShell
-      title="Z-Image Dual LoRA"
-      eyebrow="Image workflow"
+      title="Dual LoRA"
+      eyebrow="Z-Image"
       description="Create a two-person image, choose one person, then refine that person with the second LoRA."
       icon={CircleDot}
       isGenerating={isRunning}

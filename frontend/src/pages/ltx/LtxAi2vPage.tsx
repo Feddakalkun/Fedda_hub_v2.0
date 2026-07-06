@@ -131,8 +131,8 @@ export const LtxAi2vPage = () => {
 
   return (
     <WorkflowShell
-      title="LTX 2.3 Audio + Image2Video"
-      eyebrow="LTX Video 2.3 · Audio-conditioned"
+      title="Audio to Video"
+      eyebrow="LTX 2.3"
       description="Animate a reference image driven by an audio clip — motion and expression follow the audio track."
       icon={Music}
       isGenerating={run.isGenerating}

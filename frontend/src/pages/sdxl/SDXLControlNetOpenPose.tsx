@@ -12,7 +12,8 @@ export const SDXLControlNetOpenPose = () => {
     <Txt2ImgPage
       storageKey="sdxl_controlnet_openpose"
       workflowId="sdxl-controlnet-openpose"
-      familyLabel="SDXL ControlNet OpenPose"
+      familyLabel="SDXL"
+      capabilityLabel="ControlNet OpenPose"
       promptContext="sdxl-openpose"
       accent="violet"
       loraPrefixes={['sdxl/']}

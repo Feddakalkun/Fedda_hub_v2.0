@@ -133,8 +133,8 @@ export const Wan22XxxImg2VidPage = () => {
 
   return (
     <WorkflowShell
-      title="WAN 2.2 XXX Img2Vid"
-      eyebrow="WAN 2.2 14B fp8"
+      title="Image to Video"
+      eyebrow="WAN 2.2 XXX"
       description="Dual high/low noise pass with NSFW UMT5 encoder and Power LoRA slots."
       icon={Play}
       isGenerating={run.isGenerating}

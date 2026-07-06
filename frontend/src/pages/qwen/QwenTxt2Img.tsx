@@ -18,6 +18,7 @@ export const QwenTxt2Img = () => {
       storageKey="qwen_txt2img"
       workflowId="qwen-edit-2512"
       familyLabel="Qwen"
+      capabilityLabel="Text to Image"
       promptContext="qwen"
       accent="emerald"
       loraPrefixes={['qwen/']}
