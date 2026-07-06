@@ -31,27 +31,35 @@ export const WorkflowDownloadBanner = ({ workflowId }: { workflowId: string }) =
         </div>
 
         <div className="space-y-1.5">
-          {liveFiles.map((f) => (
-            <div key={`${f.folder}/${f.filename}`} className="space-y-1">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[10px] text-zinc-300 truncate min-w-0 font-mono">{f.filename}</span>
-                <span className="text-[10px] font-mono text-zinc-500 flex-shrink-0">
-                  {f.exists
-                    ? '✓ Done'
-                    : f.currentBytes > 0
-                      ? fmtBytes(f.currentBytes)
-                      : 'Waiting…'}
-                </span>
+          {liveFiles.map((f) => {
+            const pct = f.exists ? 100 : f.totalBytes > 0 ? Math.min(99, Math.floor((f.currentBytes / f.totalBytes) * 100)) : 0;
+            const hasTotal = f.totalBytes > 0;
+            return (
+              <div key={`${f.folder}/${f.filename}`} className="space-y-1">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[10px] text-zinc-300 truncate min-w-0 font-mono">{f.filename}</span>
+                  <span className="text-[10px] font-mono text-zinc-500 flex-shrink-0">
+                    {f.exists
+                      ? '✓ Done'
+                      : f.currentBytes > 0
+                        ? hasTotal
+                          ? `${pct}% · ${fmtBytes(f.currentBytes)} / ${fmtBytes(f.totalBytes)}`
+                          : fmtBytes(f.currentBytes)
+                        : 'Waiting…'}
+                  </span>
+                </div>
+                <div className="h-[3px] w-full bg-white/5 rounded-full overflow-hidden">
+                  {f.exists ? (
+                    <div className="h-full bg-emerald-500" style={{ width: '100%' }} />
+                  ) : hasTotal && f.currentBytes > 0 ? (
+                    <div className="h-full bg-amber-400 transition-all duration-500" style={{ width: `${pct}%` }} />
+                  ) : f.currentBytes > 0 ? (
+                    <div className="h-full bg-amber-400/60 animate-pulse w-2/3" />
+                  ) : null}
+                </div>
               </div>
-              <div className="h-[2px] w-full bg-white/5 rounded-full overflow-hidden">
-                {f.exists ? (
-                  <div className="h-full bg-emerald-500 w-full" />
-                ) : f.currentBytes > 0 ? (
-                  <div className="h-full bg-amber-400/60 animate-pulse w-2/3" />
-                ) : null}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <p className="text-[10px] text-zinc-600">

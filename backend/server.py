@@ -3016,10 +3016,32 @@ async def get_workflow_model_status(workflow_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Cache remote Content-Length per URL so the progress bar can show true % without
+# a HEAD request on every 2 s poll. Populated lazily; HF resolve URLs are stable.
+_remote_size_cache: Dict[str, int] = {}
+
+def _remote_content_length(url: str, hf_token: str = "") -> int:
+    if url in _remote_size_cache:
+        return _remote_size_cache[url]
+    total = 0
+    try:
+        headers = {}
+        if hf_token and "huggingface.co" in url:
+            headers["Authorization"] = f"Bearer {hf_token}"
+        # allow_redirects so HF's CDN 302 is followed to the real object
+        resp = requests.head(url, headers=headers, allow_redirects=True, timeout=15)
+        total = int(resp.headers.get("content-length", 0) or 0)
+    except Exception:
+        total = 0
+    if total > 0:
+        _remote_size_cache[url] = total
+    return total
+
+
 @app.get("/api/workflow/download-live-progress/{workflow_id}")
 async def get_workflow_download_live_progress(workflow_id: str):
-    """Return current on-disk byte counts for each file the workflow's HuggingFaceDownloader will fetch.
-    The frontend polls this every 2 s while the downloader node is executing to show live progress."""
+    """Return current + total byte counts for each file the workflow will download.
+    The frontend polls this every 2 s during a download to render real progress bars."""
     try:
         mappings = workflow_service.load_mapping()
         if workflow_id not in mappings:
@@ -3030,6 +3052,7 @@ async def get_workflow_download_live_progress(workflow_id: str):
             return {"files": []}
         with open(path, "r", encoding="utf-8-sig") as f:
             workflow = json.load(f)
+        hf_token = (load_settings().get("hf_token") or "").strip()
         result = []
         for item in _parse_workflow_download_links(workflow):
             target = Path(item["path"])
@@ -3053,11 +3076,13 @@ async def get_workflow_download_live_progress(workflow_id: str):
                         pass
             except OSError:
                 pass
+            total_bytes = _remote_content_length(str(item.get("url") or ""), hf_token)
             result.append({
                 "filename": item["filename"],
                 "folder": item["folder"],
                 "exists": is_complete,
                 "currentBytes": current_bytes,
+                "totalBytes": total_bytes,
             })
         return {"files": result}
     except Exception as e:

@@ -7,6 +7,7 @@ export interface DownloadFileStatus {
   folder: string;
   exists: boolean;
   currentBytes: number;
+  totalBytes: number;
 }
 
 export interface PreflightFileStatus {
@@ -96,13 +97,14 @@ export function useWorkflowDownloadStatus(workflowId: string): WorkflowDownloadS
           `${BACKEND_API.BASE_URL}/api/workflow/download-live-progress/${encodeURIComponent(workflowId)}`
         );
         if (!resp.ok || !mounted) return;
-        const data: { files?: Array<{ filename?: unknown; folder?: unknown; exists?: unknown; currentBytes?: unknown }> } = await resp.json();
+        const data: { files?: Array<{ filename?: unknown; folder?: unknown; exists?: unknown; currentBytes?: unknown; totalBytes?: unknown }> } = await resp.json();
         if (!mounted) return;
         const files = (data.files ?? []).map((f) => ({
           filename: String(f.filename ?? ''),
           folder: String(f.folder ?? ''),
           exists: Boolean(f.exists),
           currentBytes: Number(f.currentBytes ?? 0),
+          totalBytes: Number(f.totalBytes ?? 0),
         }));
         setLiveFiles(files);
         // Manual pre-download finishes when every file is on disk
