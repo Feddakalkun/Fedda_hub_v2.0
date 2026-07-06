@@ -12,7 +12,7 @@ import { WorkflowVideoPreviewStrip } from '../../components/layout/WorkflowVideo
 import { ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
 import { cn, inputBase } from '../../lib/styles';
 
-const WIDTH_PRESETS = ['768', '1024', '1280'] as const;
+const WIDTH_PRESETS = ['512', '640', '768', '1024', '1280'] as const;
 const DEFAULT_NEGATIVE = 'blurry, low quality, still frame, frames, watermark, overlay, titles, has blurbox, has subtitles';
 
 export const LtxAi2vPage = () => {
