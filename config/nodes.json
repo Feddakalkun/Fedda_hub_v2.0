@@ -175,7 +175,8 @@
         "url": "https://github.com/SeargeDP/ComfyUI_Searge_LLM.git",
         "folder": "ComfyUI_Searge_LLM",
         "note": "LLM integrations for prompts",
-        "core": true
+        "core": true,
+        "skip_req_update": true
     },
     {
         "name": "mikey_nodes",

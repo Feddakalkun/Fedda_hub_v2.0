@@ -535,6 +535,13 @@ Venv-Pip "install cmake ninja Cython"
 Write-Step "Installing insightface..."
 Venv-Pip "install insightface --prefer-binary --no-build-isolation"
 
+# llama-cpp-python from a prebuilt wheel (Searge LLM needs it). Source build
+# requires MSVC + scikit-build-core; the abetlen CPU wheel index has ready
+# wheels for every platform/GPU, so we install it here BEFORE custom nodes -
+# Searge's own requirements.txt then sees it satisfied and skips the build.
+Write-Step "Installing llama-cpp-python (prebuilt wheel, for Searge LLM)..."
+Venv-Pip "install llama-cpp-python --prefer-binary --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu"
+
 # Comprehensive deps (same as portable)
 Write-Step "Installing comprehensive dependencies..."
 $Deps = @(
@@ -595,7 +602,7 @@ foreach ($Node in $NodesConfig) {
     if (-not (Test-Path $NodeDir)) {
         Write-Step "  [$($Node.name)] Cloning..." "White"
         $ErrorActionPreference = "Continue"
-        $out = & git clone --depth 1 $Node.url "$NodeDir" 2>&1 | Out-String
+        $out = & git clone --depth 1 --recurse-submodules $Node.url "$NodeDir" 2>&1 | Out-String
         $ErrorActionPreference = "Stop"
 
         if ($LASTEXITCODE -eq 0) {

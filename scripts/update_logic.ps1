@@ -207,7 +207,7 @@ if ($NeedNodeUpdate -or $HasMissing) {
                     if (Test-Path $ReqFile) {
                         Write-Host "  [$($Node.name)] Installing dependencies..." -ForegroundColor Gray
                         Write-Host "    (this can take a LONG time for heavy nodes like LayerStyle_Advance - mediapipe, onnxruntime, transformers etc.)" -ForegroundColor DarkGray
-                        $SkipPkgs = @('^\s*insightface','^\s*byaldi','^\s*nano-graphrag','^\s*kaleido','^\s*qwen-vl-utils','^\s*fastparquet')
+                        $SkipPkgs = @('^\s*insightface','^\s*byaldi','^\s*nano-graphrag','^\s*kaleido','^\s*qwen-vl-utils','^\s*fastparquet','^\s*llama-cpp-python','^\s*llama_cpp_python')
                         $ReqContent = Get-Content $ReqFile
                         $Filtered = $ReqContent
                         foreach ($p in $SkipPkgs) { $Filtered = $Filtered | Where-Object { $_ -notmatch $p } }
@@ -351,6 +351,16 @@ if ($NeedsTransformersUpgrade) {
     Write-Host "  transformers upgraded OK" -ForegroundColor Green
 } else {
     Write-Host "  transformers OK ($TransformersVersion)" -ForegroundColor Green
+}
+
+# llama-cpp-python for Searge LLM - prebuilt wheel (source build needs MSVC).
+& $PyExe -c "import llama_cpp" 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  Installing llama-cpp-python (prebuilt, for Searge LLM)..." -ForegroundColor White
+    & $PyExe -m pip install llama-cpp-python --prefer-binary --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu --no-warn-script-location 2>&1
+    Write-Host "  llama-cpp-python installed OK" -ForegroundColor Green
+} else {
+    Write-Host "  llama-cpp-python OK" -ForegroundColor Green
 }
 
 # ============================================================================
