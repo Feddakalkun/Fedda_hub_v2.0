@@ -37,7 +37,12 @@
         "Derfuu_ComfyUI_ModdedNodes",
         "ComfyUI-KJNodes",
         "ComfyUI_LayerStyle",
-        "ComfyUI_LayerStyle_Advance"
+        "ComfyUI_LayerStyle_Advance",
+        "ComfyUI-DonutNodes",
+        "ComfyUI_Searge_LLM",
+        "comfy-image-saver",
+        "ComfyUI_UltimateSDUpscale",
+        "ComfyUI-SeedVR2_VideoUpscaler"
       ],
       "models": [],
       "notes": "Shared app shell, media plumbing, gallery, LoRA library, Ollama, integrations, and common ComfyUI helpers."

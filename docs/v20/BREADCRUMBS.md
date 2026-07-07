@@ -226,3 +226,62 @@ This file is the running trail for v20/v21. Add a new dated entry after every me
   Detection mirrors the existing SageAttention 40/50-series check (WMI name match, no nvidia-smi dependency).
 - Confirmed generic: GPU detection is any-NVIDIA WMI match, no VRAM gating, no card-specific assumptions elsewhere.
   Supported: RTX 20/30/40 (cu124), RTX 50 (cu128). GTX 10-series installs but lacks VRAM for the workflows.
+
+## 2026-07-05 - v2.0 Feature Sprint (single-window launcher through UI consistency)
+
+Large batch of work since the 07-03 bootstrap; catch-up entry.
+
+**Launcher / install**
+- Single-window launcher: run.ps1 runs ComfyUI/backend/vite hidden with output
+  tailed into one console as [COMFY]/[BACK]/[VITE] prefixed lines. Later fixed
+  X-close orphaning (services now -NoNewWindow, attached to console) + stale-port
+  self-heal on startup.
+- Lazy custom-node install: install.ps1 installs only nodes flagged core:true in
+  config/nodes.json (~9 base packages); the rest install per-workflow via
+  download_models.bat. update_logic.ps1 stays module-aware.
+- Per-workflow manifests: scripts/generate_model_manifests.py emits
+  config/model_manifests/<id>.txt (models) + <id>.nodes.txt (non-core nodes)
+  from HuggingFaceDownloader links + module/class-type map. ALL-MODELS.txt union.
+- download_models.bat: numbered interactive list; curl -C - resume + 5 retries;
+  installs the workflow's non-core nodes after models; reuses hf_token from
+  config/runtime_settings.json (huggingface.co only). Thin wrappers generated
+  at install root by the installer alongside run/update.
+- symlink_loras.bat: junction an external LoRA folder into models/loras
+  (mklink /J, no admin) with safe remove. Generated at install root too.
+- lora_service.get_installed(): loop-safe manual walk (a self-referencing
+  junction inside a linked stash sent rglob into WinError 1921, 500ing the pack
+  catalog + breaking Comfy lora listing).
+
+**Features**
+- In-UI "Download models" button in the workflow banner (POST
+  /api/workflow/download-models/{id}); background threads, live progress, and
+  now REAL per-file progress bars with % + totals via a cached HEAD
+  content-length lookup (download-live-progress returns totalBytes).
+- Random influencer prompt maker: dice button in PromptAssistant ->
+  /api/ollama/prompt mode=influencer; server rolls a brief from curated tables
+  in backend/influencer_prompts.py, Ollama weaves it. Video contexts get a
+  motion sentence.
+- LTX 2.3 Audio+Image2Video: new workflow (ltx/ltx-23-ai2v.json), page
+  (LtxAi2vPage), video card #34, WhatDreamsCost-ComfyUI node (LoadAudioUI).
+  Cleaned downloader to 6 models, sage attention disabled by default, audio
+  trim + video-length slider, 512/640 low-res presets. KJNodes audio-VAE patch
+  rewritten for current core (native VAE dispatch + fp32 dtype guard).
+- Media Downloader card wired (venice #33).
+
+**UI consistency**
+- Header taxonomy standardized across all ~21 pages: eyebrow = model family,
+  title = capability (Text to Image / Image Edit / Image to Video / Audio to
+  Video / Video to Video / ControlNet ...). Txt2ImgPage gained capabilityLabel.
+- 6 Workbench pages migrated to WorkflowShell + shared WorkflowControls kit
+  (ChipGroup/SliderField/SeedField/UploadSlot/GenerateButton). Only WorkflowShell
+  remains as the workflow layout; WorkflowWorkbench retired from workflow pages.
+- CORS: backend allows any localhost/127.0.0.1 port (vite drifts ports).
+
+**Node additions (07-05)**
+- Flagged core + added to core-shell module so installer AND update install them:
+  ComfyUI-DonutNodes, ComfyUI_Searge_LLM, comfy-image-saver,
+  ComfyUI_UltimateSDUpscale, ComfyUI-SeedVR2_VideoUpscaler.
+
+**Open / queued**: real Qwen txt2img workflow + de-dupe Qwen cards; character
+description tool (image -> appearance-only sheet saved per LoRA); preview strips
+on all image pages with removable-but-kept thumbnails; simplify SDXL inpaint.
