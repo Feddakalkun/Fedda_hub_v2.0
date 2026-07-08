@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2, Music, Wand2 } from 'lucide-react';
+import { Loader2, Music, Volume2, Wand2 } from 'lucide-react';
 import { PromptAssistant } from '../../components/ui/PromptAssistant';
 import { useToast } from '../../components/ui/Toast';
 import { BACKEND_API } from '../../config/api';
@@ -30,6 +30,12 @@ export const LtxAi2vPage = () => {
   const [audioFilename, setAudioFilename] = usePersistentState<string | null>('ltx_ai2v_audio_file', null);
   const [audioUploading, setAudioUploading] = useState(false);
   const [referenceCaptioning, setReferenceCaptioning] = useState(false);
+
+  // In-page text-to-speech for the audio slot (Edge TTS, local)
+  const [ttsText, setTtsText] = usePersistentState('ltx_ai2v_tts_text', '');
+  const [ttsVoice, setTtsVoice] = usePersistentState('ltx_ai2v_tts_voice', 'en-US-AvaNeural');
+  const [ttsGenerating, setTtsGenerating] = useState(false);
+  const [edgeVoices, setEdgeVoices] = useState<Array<{ id: string; name: string }>>([]);
 
   const { toast } = useToast();
   const run = useWorkflowRun({
@@ -78,6 +84,37 @@ export const LtxAi2vPage = () => {
     } catch (err: any) {
       toast(err.message || 'Could not load file from URL', 'error');
       setUploading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetch(`${BACKEND_API.BASE_URL}/api/tts/edge-voices`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.voices)) setEdgeVoices(data.voices);
+      })
+      .catch(() => {});
+  }, []);
+
+  const generateVoiceClip = async () => {
+    if (!ttsText.trim() || ttsGenerating) return;
+    setTtsGenerating(true);
+    try {
+      const res = await fetch(`${BACKEND_API.BASE_URL}/api/chat/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: ttsText.trim(), tts_engine: 'edge', voice_name: ttsVoice }),
+      });
+      const data = await res.json();
+      if (!data.success || !data.audio_base64) throw new Error(data.error || 'Voice generation failed');
+      const bytes = Uint8Array.from(atob(data.audio_base64), (c) => c.charCodeAt(0));
+      const file = new File([bytes], 'tts-voice.mp3', { type: data.mime_type || 'audio/mpeg' });
+      await uploadTo(file, setAudioFilename, setAudioUploading);
+      toast('Voice clip generated and loaded', 'success');
+    } catch (err: any) {
+      toast(err.message || 'Voice generation failed', 'error');
+    } finally {
+      setTtsGenerating(false);
     }
   };
 
@@ -189,6 +226,37 @@ export const LtxAi2vPage = () => {
               previewKind="audio"
               filename={audioFilename ?? undefined}
             />
+            <div className="mt-3 space-y-2 rounded-lg border border-white/10 bg-black/20 p-2.5">
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/25">Or generate voice from text</p>
+              <textarea
+                value={ttsText}
+                onChange={(e) => setTtsText(e.target.value)}
+                placeholder="Write what she should say..."
+                rows={2}
+                className={cn(inputBase, 'min-h-[52px] resize-y text-[12px]')}
+              />
+              <div className="flex gap-2">
+                <select
+                  value={ttsVoice}
+                  onChange={(e) => setTtsVoice(e.target.value)}
+                  className={cn(inputBase, 'flex-1 text-[11px]')}
+                >
+                  {edgeVoices.length === 0 && <option value="en-US-AvaNeural">en-US-Ava (default)</option>}
+                  {edgeVoices.map((v) => (
+                    <option key={v.id} value={v.id}>{v.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={generateVoiceClip}
+                  disabled={!ttsText.trim() || ttsGenerating}
+                  className="flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-violet-300 transition-all hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {ttsGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Volume2 className="h-3 w-3" />}
+                  Voice
+                </button>
+              </div>
+            </div>
           </WorkflowSection>
         </div>
 
