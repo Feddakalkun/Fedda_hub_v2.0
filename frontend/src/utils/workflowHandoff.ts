@@ -13,11 +13,11 @@ const HANDOFF_TTL = 5_000;
 
 interface HandoffPayload {
   url: string;
-  kind: 'image' | 'video';
+  kind: 'image' | 'video' | 'audio';
   ts: number;
 }
 
-export function setHandoff(url: string, kind: 'image' | 'video'): void {
+export function setHandoff(url: string, kind: 'image' | 'video' | 'audio'): void {
   try {
     const payload: HandoffPayload = { url, kind, ts: Date.now() };
     localStorage.setItem(HANDOFF_KEY, JSON.stringify(payload));
@@ -25,7 +25,7 @@ export function setHandoff(url: string, kind: 'image' | 'video'): void {
 }
 
 /** Consume and return the URL if a fresh handoff of the given kind exists. */
-export function consumeHandoff(kind: 'image' | 'video'): string | null {
+export function consumeHandoff(kind: 'image' | 'video' | 'audio'): string | null {
   try {
     const raw = localStorage.getItem(HANDOFF_KEY);
     if (!raw) return null;

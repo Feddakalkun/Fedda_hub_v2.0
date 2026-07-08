@@ -309,3 +309,20 @@ on all image pages with removable-but-kept thumbnails; simplify SDXL inpaint.
 **Open / queued**: character description tool (image -> appearance-only sheet
 saved per LoRA); preview strips on all image pages with removable-but-kept
 thumbnails; simplify SDXL inpaint/outpaint; Chroma higher-res presets (optional).
+
+## 2026-07-08 - Edge TTS engine + text-to-voice-to-video chain
+
+- TTS page (zonos-tts tab, card now labeled "Text to Speech") gained an engine
+  toggle: Edge TTS (default - local, free, edge-tts pip package already in the
+  install, no server) vs Zonos 2 (voice cloning, needs the WSL server).
+- Backend: _edge_tts() in server.py (engine "edge" in /api/chat/tts, returns
+  audio_base64/audio/mpeg like the other engines) + GET /api/tts/edge-voices
+  (cached full voice list, incl. Norwegian nb-NO-*). Rate/pitch sliders map to
+  edge-tts +N% / +NHz.
+- Chain to video: "Send to Audio2Video" button on the TTS result hands the clip
+  to the LTX AI2V page via workflowHandoff (new "audio" kind); LtxAi2vPage
+  consumes it on mount and auto-uploads into the Audio Clip slot.
+  Flow: write text -> generate voice -> lands in Audio to Video -> lipsync.
+- Also: LoRA dropdowns now match family token anywhere in the path (subfolder
+  LoRAs like loras/app/Aurora/aurora-zimage.safetensors show up) - Txt2ImgPage
+  filter + ZImageDualLoraPage copy.

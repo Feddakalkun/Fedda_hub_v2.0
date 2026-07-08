@@ -1,13 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FeddaButton, FeddaPanel } from '../components/ui/FeddaPrimitives';
 import { useToast } from '../components/ui/Toast';
-import { Volume2, Upload, Play, Download, Loader2 } from 'lucide-react';
-import { triggerMediaDownload, saveAudioToGallery } from '../utils/mediaStore';
+import { Volume2, Upload, Play, Download, Loader2, Clapperboard } from 'lucide-react';
+import { saveAudioToGallery } from '../utils/mediaStore';
+import { setHandoff, navigateToTab } from '../utils/workflowHandoff';
+
+type TtsEngine = 'edge' | 'zonos';
+
+interface EdgeVoice {
+  id: string;
+  name: string;
+  locale: string;
+}
 
 export function ZonosTTSPage() {
   const { toast } = useToast();
-  const [text, setText] = useState('Hello, this is Zonos 2 speaking with natural expressiveness.');
+  const [engine, setEngine] = useState<TtsEngine>('edge');
+  const [text, setText] = useState('Hello, this is a locally generated voice speaking with natural expressiveness.');
   const [voiceName, setVoiceName] = useState('');
+  const [edgeVoices, setEdgeVoices] = useState<EdgeVoice[]>([]);
+  const [edgeVoice, setEdgeVoice] = useState('en-US-AvaNeural');
   const [useClone, setUseClone] = useState(false);
   const [referenceAudio, setReferenceAudio] = useState('');
   const [referenceText, setReferenceText] = useState('');
@@ -20,6 +32,15 @@ export function ZonosTTSPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [audioUrl, setAudioUrl] = useState('');
   const [audioBase64, setAudioBase64] = useState('');
+
+  useEffect(() => {
+    fetch('/api/tts/edge-voices')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.voices)) setEdgeVoices(data.voices);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -48,9 +69,9 @@ export function ZonosTTSPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: text.trim(),
-          voice_name: voiceName,
-          tts_engine: 'zonos',
-          use_voice_clone: useClone,
+          voice_name: engine === 'edge' ? edgeVoice : voiceName,
+          tts_engine: engine,
+          use_voice_clone: engine === 'zonos' && useClone,
           reference_audio: referenceAudio,
           reference_text: referenceText,
           speaking_rate: speakingRate,
@@ -59,7 +80,6 @@ export function ZonosTTSPage() {
           temperature: temperature,
           top_p: topP,
           cfg_scale: cfgScale,
-          // Additional params can be passed if backend supports
         }),
       });
       const data = await res.json();
@@ -68,19 +88,24 @@ export function ZonosTTSPage() {
       }
       if (data.audio_url) {
         setAudioUrl(data.audio_url);
-        saveAudioToGallery(data.audio_url, 'zonos');
-        toast('Zonos 2 audio generated!', 'success');
+        saveAudioToGallery(data.audio_url, data.provider || engine);
+        toast('Audio generated!', 'success');
       } else if (data.audio_base64) {
         const mime = data.mime_type || 'audio/wav';
         const full = `data:${mime};base64,${data.audio_base64}`;
         setAudioBase64(full);
-        saveAudioToGallery(full, 'zonos');
-        toast('Zonos 2 audio generated!', 'success');
+        saveAudioToGallery(full, data.provider || engine);
+        toast('Audio generated!', 'success');
       } else {
-        throw new Error('No audio returned from Zonos');
+        throw new Error('No audio returned');
       }
     } catch (e: any) {
-      toast(e.message || 'Failed to generate with Zonos 2. Ensure the WSL installer is set up and server running.', 'error');
+      toast(
+        e.message || (engine === 'zonos'
+          ? 'Failed to generate with Zonos 2. Ensure the WSL installer is set up and server running.'
+          : 'Failed to generate with Edge TTS.'),
+        'error',
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -99,9 +124,17 @@ export function ZonosTTSPage() {
     if (url) {
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'zonos2_output.wav';
+      a.download = engine === 'edge' ? 'edge_tts_output.mp3' : 'zonos2_output.wav';
       a.click();
     }
+  };
+
+  const sendToAudio2Video = () => {
+    const url = audioUrl || audioBase64;
+    if (!url) return;
+    setHandoff(url, 'audio');
+    navigateToTab('ltx-ai2v');
+    toast('Voice clip sent to Audio to Video', 'success');
   };
 
   return (
@@ -111,8 +144,38 @@ export function ZonosTTSPage() {
           <div className="flex items-center gap-3">
             <Volume2 className="h-6 w-6 text-violet-300" />
             <div>
-              <div className="font-semibold text-lg">Zonos 2 TTS</div>
-              <div className="text-[10px] text-white/40">High-fidelity voice cloning &amp; expressive speech (via WSL)</div>
+              <div className="font-semibold text-lg">Text to Speech</div>
+              <div className="text-[10px] text-white/40">Local Edge neural voices, or Zonos 2 voice cloning (via WSL)</div>
+            </div>
+          </div>
+
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Engine</div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setEngine('edge')}
+                className={`flex-1 rounded-xl border px-3 py-2.5 text-sm transition-all ${
+                  engine === 'edge'
+                    ? 'border-violet-500/40 bg-violet-500/15 text-violet-200'
+                    : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'
+                }`}
+              >
+                Edge TTS
+                <span className="block text-[9px] uppercase tracking-wider opacity-60">local · free · no setup</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEngine('zonos')}
+                className={`flex-1 rounded-xl border px-3 py-2.5 text-sm transition-all ${
+                  engine === 'zonos'
+                    ? 'border-violet-500/40 bg-violet-500/15 text-violet-200'
+                    : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'
+                }`}
+              >
+                Zonos 2
+                <span className="block text-[9px] uppercase tracking-wider opacity-60">voice cloning · WSL server</span>
+              </button>
             </div>
           </div>
 
@@ -122,34 +185,52 @@ export function ZonosTTSPage() {
               value={text}
               onChange={(e) => setText(e.target.value)}
               className="w-full min-h-[120px] rounded-xl fedda-input p-4 text-sm"
-              placeholder="Enter the text you want Zonos 2 to speak..."
+              placeholder="Enter the text you want spoken..."
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {engine === 'edge' ? (
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Voice / Speaker</div>
-              <input
-                type="text"
-                value={voiceName}
-                onChange={(e) => setVoiceName(e.target.value)}
-                placeholder="Voice name or leave for default/clone"
+              <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">
+                Voice {edgeVoices.length > 0 && <span className="opacity-50">({edgeVoices.length} available)</span>}
+              </div>
+              <select
+                value={edgeVoice}
+                onChange={(e) => setEdgeVoice(e.target.value)}
                 className="w-full rounded-xl fedda-input p-3 text-sm"
-              />
+              >
+                {edgeVoices.length === 0 && <option value="en-US-AvaNeural">en-US-Ava (default)</option>}
+                {edgeVoices.map((v) => (
+                  <option key={v.id} value={v.id}>{v.name}</option>
+                ))}
+              </select>
             </div>
-            <div className="flex items-end gap-2">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Voice / Speaker</div>
                 <input
-                  type="checkbox"
-                  checked={useClone}
-                  onChange={(e) => setUseClone(e.target.checked)}
+                  type="text"
+                  value={voiceName}
+                  onChange={(e) => setVoiceName(e.target.value)}
+                  placeholder="Voice name or leave for default/clone"
+                  className="w-full rounded-xl fedda-input p-3 text-sm"
                 />
-                Use voice cloning
-              </label>
+              </div>
+              <div className="flex items-end gap-2">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={useClone}
+                    onChange={(e) => setUseClone(e.target.checked)}
+                  />
+                  Use voice cloning
+                </label>
+              </div>
             </div>
-          </div>
+          )}
 
-          {useClone && (
+          {engine === 'zonos' && useClone && (
             <div className="space-y-3 border border-white/10 rounded-xl p-4 bg-black/20">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Reference Audio (for cloning)</div>
@@ -208,59 +289,63 @@ export function ZonosTTSPage() {
               />
               <div className="text-xs text-white/50 text-center">{pitch.toFixed(2)}</div>
             </div>
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Emotion / Style</div>
-              <input
-                type="text"
-                value={emotion}
-                onChange={(e) => setEmotion(e.target.value)}
-                placeholder="happy, sad, excited, calm..."
-                className="w-full rounded-xl fedda-input p-3 text-sm"
-              />
-            </div>
+            {engine === 'zonos' && (
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Emotion / Style</div>
+                <input
+                  type="text"
+                  value={emotion}
+                  onChange={(e) => setEmotion(e.target.value)}
+                  placeholder="happy, sad, excited, calm..."
+                  className="w-full rounded-xl fedda-input p-3 text-sm"
+                />
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Temperature</div>
-              <input
-                type="range"
-                min="0.1"
-                max="1.5"
-                step="0.1"
-                value={temperature || 0.7}
-                onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                className="w-full"
-              />
-              <div className="text-xs text-white/50 text-center">{(temperature || 0.7).toFixed(1)}</div>
+          {engine === 'zonos' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Temperature</div>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1.5"
+                  step="0.1"
+                  value={temperature || 0.7}
+                  onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                  className="w-full"
+                />
+                <div className="text-xs text-white/50 text-center">{(temperature || 0.7).toFixed(1)}</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Top P</div>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1.0"
+                  step="0.05"
+                  value={topP || 0.9}
+                  onChange={(e) => setTopP(parseFloat(e.target.value))}
+                  className="w-full"
+                />
+                <div className="text-xs text-white/50 text-center">{(topP || 0.9).toFixed(2)}</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">CFG Scale</div>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2.0"
+                  step="0.1"
+                  value={cfgScale || 1.0}
+                  onChange={(e) => setCfgScale(parseFloat(e.target.value))}
+                  className="w-full"
+                />
+                <div className="text-xs text-white/50 text-center">{(cfgScale || 1.0).toFixed(1)}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Top P</div>
-              <input
-                type="range"
-                min="0.1"
-                max="1.0"
-                step="0.05"
-                value={topP || 0.9}
-                onChange={(e) => setTopP(parseFloat(e.target.value))}
-                className="w-full"
-              />
-              <div className="text-xs text-white/50 text-center">{(topP || 0.9).toFixed(2)}</div>
-            </div>
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">CFG Scale</div>
-              <input
-                type="range"
-                min="0.5"
-                max="2.0"
-                step="0.1"
-                value={cfgScale || 1.0}
-                onChange={(e) => setCfgScale(parseFloat(e.target.value))}
-                className="w-full"
-              />
-              <div className="text-xs text-white/50 text-center">{(cfgScale || 1.0).toFixed(1)}</div>
-            </div>
-          </div>
+          )}
 
           <FeddaButton
             onClick={generate}
@@ -270,7 +355,7 @@ export function ZonosTTSPage() {
           >
             {isGenerating ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Generating with Zonos 2...
+                <Loader2 className="h-4 w-4 animate-spin" /> Generating speech...
               </>
             ) : (
               <>
@@ -289,16 +374,26 @@ export function ZonosTTSPage() {
                 <FeddaButton onClick={downloadAudio} variant="ghost" className="flex-1">
                   <Download className="h-4 w-4 mr-2" /> Download
                 </FeddaButton>
+                <FeddaButton onClick={sendToAudio2Video} variant="violet" className="flex-1">
+                  <Clapperboard className="h-4 w-4 mr-2" /> Send to Audio2Video
+                </FeddaButton>
               </div>
               <audio controls src={audioUrl || audioBase64} className="w-full" />
             </div>
           )}
 
-          <div className="text-[10px] text-white/40">
-            Requires Zonos 2 installed via the WSL tool at <a href="https://getgoingfast.pro/tools/zonos2/" target="_blank" className="underline">getgoingfast.pro/tools/zonos2/</a>. 
-            Set ZONOS_URL env var (default http://localhost:7860) if the server runs on a different port. 
-            For voice cloning, upload a short clear reference audio clip.
-          </div>
+          {engine === 'zonos' ? (
+            <div className="text-[10px] text-white/40">
+              Requires Zonos 2 installed via the WSL tool at <a href="https://getgoingfast.pro/tools/zonos2/" target="_blank" className="underline">getgoingfast.pro/tools/zonos2/</a>.
+              Set ZONOS_URL env var (default http://localhost:7860) if the server runs on a different port.
+              For voice cloning, upload a short clear reference audio clip.
+            </div>
+          ) : (
+            <div className="text-[10px] text-white/40">
+              Edge TTS runs locally via Microsoft's neural voices — no server, no GPU, hundreds of voices in most languages
+              (including Norwegian). No voice cloning; switch to Zonos 2 for that.
+            </div>
+          )}
         </div>
       </FeddaPanel>
     </div>

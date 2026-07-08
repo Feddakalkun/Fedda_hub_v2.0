@@ -138,8 +138,8 @@ export const FEDDA_MODULES: FeddaModule[] = [
   {
     id: 'zonos-tts',
     sourceModuleId: 'core-shell',
-    label: 'Zonos TTS',
-    description: 'High-quality text-to-speech with voice cloning using Zonos 2 (WSL installer recommended for Windows).',
+    label: 'Text to Speech',
+    description: 'Text-to-speech with local Edge neural voices (no setup) or Zonos 2 voice cloning (WSL server). Send clips straight to Audio to Video.',
     area: 'system',
     pack: 'core',
 

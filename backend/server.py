@@ -981,6 +981,68 @@ def _zonos_tts(text: str, voice_name: str = "", reference_audio: str = "", use_v
         }
 
 
+_EDGE_VOICES_CACHE: List[Dict[str, str]] = []
+
+
+async def _edge_tts(text: str, voice_name: str = "", speaking_rate: float = 1.0, pitch: float = 0.0) -> Dict[str, Any]:
+    """Local TTS via Microsoft Edge neural voices (edge-tts). No extra server or GPU needed."""
+    try:
+        import edge_tts
+    except ImportError:
+        return {"success": False, "error": "edge-tts is not installed in this environment.", "provider": "edge"}
+
+    voice = (voice_name or "").strip() or "en-US-AvaNeural"
+    # edge-tts wants rate as a signed percent and pitch as signed Hz
+    rate_pct = int(round((max(0.5, min(2.0, speaking_rate)) - 1.0) * 100))
+    pitch_hz = int(round(max(-0.5, min(0.5, pitch)) * 100))
+    rate_str = f"{rate_pct:+d}%"
+    pitch_str = f"{pitch_hz:+d}Hz"
+
+    try:
+        communicate = edge_tts.Communicate(text, voice, rate=rate_str, pitch=pitch_str)
+        chunks: List[bytes] = []
+        async for chunk in communicate.stream():
+            if chunk.get("type") == "audio" and chunk.get("data"):
+                chunks.append(chunk["data"])
+        audio = b"".join(chunks)
+        if not audio:
+            return {"success": False, "error": "edge-tts returned no audio.", "provider": "edge"}
+        return {
+            "success": True,
+            "provider": "edge",
+            "voice_name": voice,
+            "audio_base64": base64.b64encode(audio).decode("ascii"),
+            "mime_type": "audio/mpeg",
+        }
+    except Exception as e:
+        return {"success": False, "error": f"edge-tts failed: {e}", "provider": "edge"}
+
+
+@app.get("/api/tts/edge-voices")
+async def edge_tts_voices():
+    """List Edge neural voices (cached after first fetch)."""
+    global _EDGE_VOICES_CACHE
+    if _EDGE_VOICES_CACHE:
+        return {"success": True, "voices": _EDGE_VOICES_CACHE}
+    try:
+        import edge_tts
+        raw = await edge_tts.list_voices()
+        voices = [
+            {
+                "id": v.get("ShortName", ""),
+                "name": f"{v.get('ShortName', '').replace('Neural', '')} ({v.get('Gender', '?')})",
+                "locale": v.get("Locale", ""),
+            }
+            for v in raw
+            if v.get("ShortName")
+        ]
+        voices.sort(key=lambda item: (item["locale"], item["id"]))
+        _EDGE_VOICES_CACHE = voices
+        return {"success": True, "voices": voices}
+    except Exception as e:
+        return {"success": False, "error": str(e), "voices": []}
+
+
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
     """
@@ -1323,6 +1385,9 @@ async def chat_tts(req: TtsRequest):
                     "error": f"Mockingbird unavailable: {mockingbird_error}",
                     "provider": "mockingbird",
                 }
+
+        if engine == "edge":
+            return await _edge_tts(text, req.voice_name, req.speaking_rate, req.pitch)
 
         if engine == "zonos":
             return _zonos_tts(

@@ -81,10 +81,12 @@ export const LtxAi2vPage = () => {
     }
   };
 
-  // Consume a "Send to Workflow" handoff image on first mount
+  // Consume a "Send to Workflow" handoff (image or TTS audio) on first mount
   useEffect(() => {
     const url = consumeHandoff('image');
     if (url) uploadFromUrl(url, setImageFilename, setImageUploading, 'handoff-image.png');
+    const audioUrl = consumeHandoff('audio');
+    if (audioUrl) uploadFromUrl(audioUrl, setAudioFilename, setAudioUploading, 'tts-voice.mp3');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
