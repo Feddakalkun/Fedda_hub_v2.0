@@ -326,3 +326,20 @@ thumbnails; simplify SDXL inpaint/outpaint; Chroma higher-res presets (optional)
 - Also: LoRA dropdowns now match family token anywhere in the path (subfolder
   LoRAs like loras/app/Aurora/aurora-zimage.safetensors show up) - Txt2ImgPage
   filter + ZImageDualLoraPage copy.
+
+## 2026-07-08 - Chatterbox TTS engine (natural voice + cloning)
+
+- Third TTS engine "chatterbox" (Resemble AI chatterbox-tts 0.1.7): the natural
+  casual voice the Edge ones lack. Lazy-loads (~2 GB HF download, ~3 GB VRAM,
+  8 s load) in the backend process, thread-locked, ~5x realtime on the 3090.
+  Optional voice clone: reference_audio resolves against absolute path /
+  ComfyUI input / AGENT_CHAT. exaggeration + cfg_weight(pace) params exposed.
+- INSTALL GOTCHAS (documented in install.ps1/update_logic.ps1 which now install
+  it for everyone): must use pip --no-deps (its pins would downgrade
+  transformers 5.12->5.2, numpy 2.4->1.26, diffusers, starlette and break
+  ComfyUI/backend); needs conformer s3tokenizer resemble-perth pydub; and
+  setuptools MUST be <81 (pin 80.9.0) or perth dies on missing pkg_resources.
+- UI: TTS page has three engine buttons (Edge/Chatterbox/Zonos) with
+  exaggeration+pace sliders and a real reference-clip upload; AI2V in-page
+  voice box got an engine dropdown (Edge fast / Chatterbox natural) and a
+  "young/casual" suggested group at the top of the Edge voice list.

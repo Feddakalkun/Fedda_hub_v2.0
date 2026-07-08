@@ -5,7 +5,7 @@ import { Volume2, Upload, Play, Download, Loader2, Clapperboard } from 'lucide-r
 import { saveAudioToGallery } from '../utils/mediaStore';
 import { setHandoff, navigateToTab } from '../utils/workflowHandoff';
 
-type TtsEngine = 'edge' | 'zonos';
+type TtsEngine = 'edge' | 'chatterbox' | 'zonos';
 
 interface EdgeVoice {
   id: string;
@@ -32,6 +32,10 @@ export function ZonosTTSPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [audioUrl, setAudioUrl] = useState('');
   const [audioBase64, setAudioBase64] = useState('');
+  const [exaggeration, setExaggeration] = useState(0.5);
+  const [cbPace, setCbPace] = useState(0.5);
+  const [cbRefName, setCbRefName] = useState('');
+  const [cbRefUploading, setCbRefUploading] = useState(false);
 
   useEffect(() => {
     fetch('/api/tts/edge-voices')
@@ -54,6 +58,25 @@ export function ZonosTTSPage() {
     toast('Reference audio selected. Make sure it is in ComfyUI input or Zonos accessible.', 'info');
   };
 
+  const handleCbRefUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCbRefUploading(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.detail || 'Upload failed');
+      setCbRefName(data.filename);
+      toast('Reference voice uploaded', 'success');
+    } catch (err: any) {
+      toast(err.message || 'Upload failed', 'error');
+    } finally {
+      setCbRefUploading(false);
+    }
+  };
+
   const generate = async () => {
     if (!text.trim()) {
       toast('Text is required', 'error');
@@ -72,14 +95,15 @@ export function ZonosTTSPage() {
           voice_name: engine === 'edge' ? edgeVoice : voiceName,
           tts_engine: engine,
           use_voice_clone: engine === 'zonos' && useClone,
-          reference_audio: referenceAudio,
+          reference_audio: engine === 'chatterbox' ? cbRefName : referenceAudio,
           reference_text: referenceText,
           speaking_rate: speakingRate,
           pitch: pitch,
           emotion: emotion,
-          temperature: temperature,
+          temperature: engine === 'chatterbox' ? 0.8 : temperature,
           top_p: topP,
-          cfg_scale: cfgScale,
+          cfg_scale: engine === 'chatterbox' ? cbPace : cfgScale,
+          exaggeration: exaggeration,
         }),
       });
       const data = await res.json();
@@ -162,7 +186,19 @@ export function ZonosTTSPage() {
                 }`}
               >
                 Edge TTS
-                <span className="block text-[9px] uppercase tracking-wider opacity-60">local · free · no setup</span>
+                <span className="block text-[9px] uppercase tracking-wider opacity-60">fast · many languages</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEngine('chatterbox')}
+                className={`flex-1 rounded-xl border px-3 py-2.5 text-sm transition-all ${
+                  engine === 'chatterbox'
+                    ? 'border-violet-500/40 bg-violet-500/15 text-violet-200'
+                    : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'
+                }`}
+              >
+                Chatterbox
+                <span className="block text-[9px] uppercase tracking-wider opacity-60">natural · voice clone · GPU</span>
               </button>
               <button
                 type="button"
@@ -189,7 +225,64 @@ export function ZonosTTSPage() {
             />
           </div>
 
-          {engine === 'edge' ? (
+          {engine === 'chatterbox' && (
+            <div className="space-y-3">
+              <div className="rounded-xl border border-white/10 bg-black/20 p-4 space-y-3">
+                <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60">
+                  Voice Reference <span className="opacity-50">(optional — clone a voice from a 5–15s clip)</span>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <div className="flex-1 rounded-xl fedda-input p-3 text-sm text-white/60 truncate">
+                    {cbRefName || 'No reference — built-in natural female voice'}
+                  </div>
+                  <label className="cursor-pointer flex items-center gap-2 px-3 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-sm">
+                    {cbRefUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    Upload
+                    <input type="file" accept="audio/*" className="hidden" onChange={handleCbRefUpload} />
+                  </label>
+                  {cbRefName && (
+                    <button
+                      type="button"
+                      onClick={() => setCbRefName('')}
+                      className="px-3 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-sm text-white/50"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Exaggeration</div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={exaggeration}
+                    onChange={(e) => setExaggeration(parseFloat(e.target.value))}
+                    className="w-full"
+                  />
+                  <div className="text-xs text-white/50 text-center">{exaggeration.toFixed(2)} — flat ↔ dramatic</div>
+                </div>
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Pace / Adherence</div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={cbPace}
+                    onChange={(e) => setCbPace(parseFloat(e.target.value))}
+                    className="w-full"
+                  />
+                  <div className="text-xs text-white/50 text-center">{cbPace.toFixed(2)} — fast/loose ↔ slow/precise</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {engine === 'edge' && (
             <div>
               <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">
                 Voice {edgeVoices.length > 0 && <span className="opacity-50">({edgeVoices.length} available)</span>}
@@ -205,7 +298,9 @@ export function ZonosTTSPage() {
                 ))}
               </select>
             </div>
-          ) : (
+          )}
+
+          {engine === 'zonos' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Voice / Speaker</div>
@@ -262,6 +357,7 @@ export function ZonosTTSPage() {
             </div>
           )}
 
+          {engine !== 'chatterbox' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60 mb-1">Speaking Rate</div>
@@ -302,6 +398,7 @@ export function ZonosTTSPage() {
               </div>
             )}
           </div>
+          )}
 
           {engine === 'zonos' && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -382,16 +479,24 @@ export function ZonosTTSPage() {
             </div>
           )}
 
-          {engine === 'zonos' ? (
+          {engine === 'zonos' && (
             <div className="text-[10px] text-white/40">
               Requires Zonos 2 installed via the WSL tool at <a href="https://getgoingfast.pro/tools/zonos2/" target="_blank" className="underline">getgoingfast.pro/tools/zonos2/</a>.
               Set ZONOS_URL env var (default http://localhost:7860) if the server runs on a different port.
               For voice cloning, upload a short clear reference audio clip.
             </div>
-          ) : (
+          )}
+          {engine === 'edge' && (
             <div className="text-[10px] text-white/40">
-              Edge TTS runs locally via Microsoft's neural voices — no server, no GPU, hundreds of voices in most languages
-              (including Norwegian). No voice cloning; switch to Zonos 2 for that.
+              Edge TTS uses Microsoft's neural voices — fast, hundreds of voices in most languages
+              (including Norwegian). No voice cloning; use Chatterbox for that.
+            </div>
+          )}
+          {engine === 'chatterbox' && (
+            <div className="text-[10px] text-white/40">
+              Chatterbox runs fully on your GPU (~3 GB VRAM, first use loads the model). The most natural casual speech —
+              upload a 5–15 s reference clip to lock a consistent voice for your character. English only. Expect ~5× realtime
+              (a 6 s line takes ~30 s).
             </div>
           )}
         </div>

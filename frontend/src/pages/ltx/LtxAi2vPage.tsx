@@ -13,6 +13,19 @@ import { BatchQueuePanel, ChipGroup, GenerateButton, SeedField, SliderField, Upl
 import { cn, inputBase } from '../../lib/styles';
 
 const WIDTH_PRESETS = ['512', '640', '768', '1024', '1280'] as const;
+
+// Younger / casual-sounding Edge voices surfaced at the top of the picker
+export const SUGGESTED_EDGE_VOICES = [
+  'en-US-AnaNeural',
+  'en-GB-MaisieNeural',
+  'en-US-JennyNeural',
+  'en-US-AriaNeural',
+  'en-US-AvaNeural',
+  'en-US-EmmaNeural',
+  'en-AU-NatashaNeural',
+  'nb-NO-PernilleNeural',
+  'nb-NO-IselinNeural',
+];
 const DEFAULT_NEGATIVE = 'blurry, low quality, still frame, frames, watermark, overlay, titles, has blurbox, has subtitles';
 
 export const LtxAi2vPage = () => {
@@ -31,9 +44,10 @@ export const LtxAi2vPage = () => {
   const [audioUploading, setAudioUploading] = useState(false);
   const [referenceCaptioning, setReferenceCaptioning] = useState(false);
 
-  // In-page text-to-speech for the audio slot (Edge TTS, local)
+  // In-page text-to-speech for the audio slot (Edge = fast, Chatterbox = natural GPU voice)
   const [ttsText, setTtsText] = usePersistentState('ltx_ai2v_tts_text', '');
   const [ttsVoice, setTtsVoice] = usePersistentState('ltx_ai2v_tts_voice', 'en-US-AvaNeural');
+  const [ttsEngine, setTtsEngine] = usePersistentState<'edge' | 'chatterbox'>('ltx_ai2v_tts_engine', 'edge');
   const [ttsGenerating, setTtsGenerating] = useState(false);
   const [edgeVoices, setEdgeVoices] = useState<Array<{ id: string; name: string }>>([]);
 
@@ -103,7 +117,7 @@ export const LtxAi2vPage = () => {
       const res = await fetch(`${BACKEND_API.BASE_URL}/api/chat/tts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: ttsText.trim(), tts_engine: 'edge', voice_name: ttsVoice }),
+        body: JSON.stringify({ text: ttsText.trim(), tts_engine: ttsEngine, voice_name: ttsVoice, cfg_scale: 0.5 }),
       });
       const data = await res.json();
       if (!data.success || !data.audio_base64) throw new Error(data.error || 'Voice generation failed');
@@ -237,14 +251,34 @@ export const LtxAi2vPage = () => {
               />
               <div className="flex gap-2">
                 <select
+                  value={ttsEngine}
+                  onChange={(e) => setTtsEngine(e.target.value as 'edge' | 'chatterbox')}
+                  className={cn(inputBase, 'w-[130px] text-[11px]')}
+                >
+                  <option value="edge">Edge (fast)</option>
+                  <option value="chatterbox">Chatterbox (natural)</option>
+                </select>
+                <select
                   value={ttsVoice}
                   onChange={(e) => setTtsVoice(e.target.value)}
-                  className={cn(inputBase, 'flex-1 text-[11px]')}
+                  disabled={ttsEngine === 'chatterbox'}
+                  className={cn(inputBase, 'flex-1 text-[11px] disabled:opacity-40')}
                 >
                   {edgeVoices.length === 0 && <option value="en-US-AvaNeural">en-US-Ava (default)</option>}
-                  {edgeVoices.map((v) => (
-                    <option key={v.id} value={v.id}>{v.name}</option>
-                  ))}
+                  {edgeVoices.length > 0 && (
+                    <optgroup label="★ Suggested — young / casual">
+                      {edgeVoices.filter((v) => SUGGESTED_EDGE_VOICES.includes(v.id)).map((v) => (
+                        <option key={`s-${v.id}`} value={v.id}>{v.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {edgeVoices.length > 0 && (
+                    <optgroup label="All voices">
+                      {edgeVoices.map((v) => (
+                        <option key={v.id} value={v.id}>{v.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
                 <button
                   type="button"

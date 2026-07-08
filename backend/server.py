@@ -769,6 +769,8 @@ class TtsRequest(BaseModel):
     temperature: float = 0.7
     top_p: float = 0.9
     cfg_scale: float = 1.0
+    # Chatterbox expressiveness (0 = flat, 1 = dramatic)
+    exaggeration: float = 0.5
 
 
 class FishModelDownloadRequest(BaseModel):
@@ -979,6 +981,72 @@ def _zonos_tts(text: str, voice_name: str = "", reference_audio: str = "", use_v
             "error": f"Zonos TTS unavailable. Install using https://getgoingfast.pro/tools/zonos2/ and ensure the server is running on {zonos_url}. Error: {str(e)}",
             "provider": "zonos",
         }
+
+
+_CHATTERBOX_MODEL = None
+_CHATTERBOX_LOCK = None
+
+
+def _resolve_reference_audio(name: str) -> Optional[str]:
+    """Resolve a reference-audio name to an existing file (absolute path, ComfyUI input, or AGENT_CHAT)."""
+    candidate = (name or "").strip()
+    if not candidate:
+        return None
+    for path in (Path(candidate), COMFY_DIR / "input" / candidate, VOICE_CLONE_REF_DIR / candidate):
+        try:
+            if path.is_file():
+                return str(path)
+        except OSError:
+            continue
+    return None
+
+
+def _chatterbox_tts_sync(text: str, reference_audio: str = "", exaggeration: float = 0.5,
+                         cfg_weight: float = 0.5, temperature: float = 0.8) -> Dict[str, Any]:
+    """Chatterbox TTS (Resemble AI) — natural expressive speech, optional voice clone from a reference clip.
+
+    Model (~2 GB) lazy-loads on first use and stays resident (~3 GB VRAM).
+    """
+    global _CHATTERBOX_MODEL, _CHATTERBOX_LOCK
+    import io
+    import threading
+    try:
+        import torch
+        import torchaudio
+        from chatterbox.tts import ChatterboxTTS
+    except ImportError as e:
+        return {"success": False, "error": f"chatterbox-tts is not installed: {e}", "provider": "chatterbox"}
+
+    if _CHATTERBOX_LOCK is None:
+        _CHATTERBOX_LOCK = threading.Lock()
+
+    try:
+        with _CHATTERBOX_LOCK:
+            if _CHATTERBOX_MODEL is None:
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                logger.info("Loading Chatterbox TTS model on %s ...", device)
+                _CHATTERBOX_MODEL = ChatterboxTTS.from_pretrained(device=device)
+
+            kwargs: Dict[str, Any] = {
+                "exaggeration": max(0.0, min(1.0, exaggeration)),
+                "cfg_weight": max(0.0, min(1.0, cfg_weight)),
+                "temperature": max(0.05, min(2.0, temperature)),
+            }
+            ref_path = _resolve_reference_audio(reference_audio)
+            if ref_path:
+                kwargs["audio_prompt_path"] = ref_path
+            wav = _CHATTERBOX_MODEL.generate(text, **kwargs)
+            buf = io.BytesIO()
+            torchaudio.save(buf, wav, _CHATTERBOX_MODEL.sr, format="wav")
+        return {
+            "success": True,
+            "provider": "chatterbox",
+            "voice_name": Path(ref_path).name if ref_path else "Chatterbox default",
+            "audio_base64": base64.b64encode(buf.getvalue()).decode("ascii"),
+            "mime_type": "audio/wav",
+        }
+    except Exception as e:
+        return {"success": False, "error": f"Chatterbox TTS failed: {e}", "provider": "chatterbox"}
 
 
 _EDGE_VOICES_CACHE: List[Dict[str, str]] = []
@@ -1388,6 +1456,16 @@ async def chat_tts(req: TtsRequest):
 
         if engine == "edge":
             return await _edge_tts(text, req.voice_name, req.speaking_rate, req.pitch)
+
+        if engine == "chatterbox":
+            return await asyncio.to_thread(
+                _chatterbox_tts_sync,
+                text,
+                req.reference_audio or "",
+                req.exaggeration,
+                max(0.0, min(1.0, req.cfg_scale)),
+                req.temperature,
+            )
 
         if engine == "zonos":
             return _zonos_tts(

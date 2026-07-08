@@ -363,6 +363,19 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "  llama-cpp-python OK" -ForegroundColor Green
 }
 
+# Chatterbox TTS (natural voice engine). --no-deps on purpose: its pins would
+# downgrade transformers/numpy/diffusers/starlette. setuptools<81 for pkg_resources.
+& $PyExe -c "import chatterbox" 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  Installing Chatterbox TTS (natural voice engine)..." -ForegroundColor White
+    & $PyExe -m pip install --no-deps chatterbox-tts --no-warn-script-location 2>&1
+    & $PyExe -m pip install conformer s3tokenizer resemble-perth pydub --no-warn-script-location 2>&1
+    & $PyExe -m pip install "setuptools==80.9.0" --no-warn-script-location 2>&1
+    Write-Host "  Chatterbox TTS installed OK" -ForegroundColor Green
+} else {
+    Write-Host "  Chatterbox TTS OK" -ForegroundColor Green
+}
+
 # ============================================================================
 # 2. FRONTEND - npm install
 # ============================================================================
