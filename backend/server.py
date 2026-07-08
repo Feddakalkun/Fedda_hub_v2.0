@@ -2789,6 +2789,42 @@ async def download_video(req: DownloadVideoRequest):
     }
 
 
+class MuxAudioRequest(BaseModel):
+    video_filename: str
+    video_subfolder: str = ""
+    audio_filename: str
+    # Where in the audio to start (lets a beat drop land on the video's morph point)
+    audio_offset_sec: float = 0.0
+
+
+@app.post("/api/media/mux-audio")
+async def mux_audio(req: MuxAudioRequest):
+    """Mux an audio track onto a generated video (beat-drop reels).
+    Video comes from ComfyUI output, audio from ComfyUI input; result lands in output."""
+    vf = (req.video_filename or "").strip()
+    sub = (req.video_subfolder or "").strip().strip("/\\")
+    if not vf or ".." in vf or ".." in sub:
+        raise HTTPException(status_code=400, detail="Invalid video path")
+    video_path = (OUTPUT_DIR / sub / vf) if sub else (OUTPUT_DIR / vf)
+    if not video_path.is_file():
+        raise HTTPException(status_code=404, detail="Video not found in ComfyUI output")
+    audio_path = _resolve_input_file(req.audio_filename)
+    offset = max(0.0, float(req.audio_offset_sec or 0.0))
+
+    target_name = _safe_unique_name("reel", "mp4")
+    target = OUTPUT_DIR / target_name
+    _run_ffmpeg([
+        "-y",
+        "-i", str(video_path),
+        "-ss", f"{offset:.3f}", "-i", str(audio_path),
+        "-map", "0:v:0", "-map", "1:a:0",
+        "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
+        "-shortest",
+        str(target),
+    ])
+    return {"success": True, "filename": target_name, "subfolder": "", "type": "output"}
+
+
 @app.post("/api/media/trim-video")
 async def trim_video(req: TrimVideoRequest):
     """Trim a ComfyUI input video into a new H.264 mp4 without audio."""

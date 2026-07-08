@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Loader2, Sparkles, Wand2 } from 'lucide-react';
+import { ArrowRight, Loader2, Music, Sparkles, Wand2 } from 'lucide-react';
 import { BACKEND_API } from '../../config/api';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useWorkflowRun } from '../../hooks/useWorkflowRun';
@@ -19,12 +19,16 @@ import { cn, inputBase } from '../../lib/styles';
 import { LTX_RATIOS, LTX_RESOLUTIONS, getLtxDimensions, getSafeLtxAspect, type LtxRatio, type LtxResolution } from '../../config/ltx';
 
 const CHARACTER_PRESETS: Array<{ label: string; prompt: string }> = [
-  { label: 'Superhero', prompt: 'a superhero in a sleek armored suit with glowing energy accents and a flowing cape' },
-  { label: 'Anime', prompt: 'an anime warrior heroine with an elaborate detailed costume, cel-shaded anime art style' },
-  { label: 'Cyberpunk', prompt: 'a cyberpunk mercenary with a neon-lit jacket, cybernetic arm details and holographic visor' },
-  { label: 'Elf Queen', prompt: 'a fantasy elf queen in an ornate silver gown with a jeweled crown and pointed ears' },
-  { label: 'Comic', prompt: 'a bold comic-book heroine with a dramatic costume, inked comic art style with halftone shading' },
-  { label: 'Vampire', prompt: 'a gothic vampire countess in an elegant black lace dress with dramatic dark makeup' },
+  { label: 'Bikini Armor', prompt: 'a fantasy warrior queen in gleaming golden bikini armor with ornate engraved plates, arm guards and a jeweled circlet, toned body, confident stance' },
+  { label: 'Superheroine', prompt: 'a superheroine in a form-fitting glossy bodysuit with glowing energy accents, dramatic cape, bold makeup and windswept hair' },
+  { label: 'Anime', prompt: 'a seductive anime battle heroine in a revealing detailed combat outfit with thigh-high stockings, elaborate hair ornaments, vibrant anime styling' },
+  { label: 'Latex', prompt: 'a femme fatale in a skin-tight glossy black latex catsuit with a high collar, stiletto heels and smoky dramatic eye makeup' },
+  { label: 'Cosplay', prompt: 'a glamorous convention cosplayer in an elaborate revealing fantasy costume with a styled wig, body jewelry, airbrushed makeup and prop details' },
+  { label: 'Cyberpunk', prompt: 'a cyberpunk mercenary in a cropped neon-lit jacket over a tight bodysuit, cybernetic arm details, holographic visor and glowing tattoos' },
+  { label: 'Devil', prompt: 'a sultry devil in a tight red corset outfit with small horns, long gloves, dramatic dark makeup and a slender tail' },
+  { label: 'Angel', prompt: 'an ethereal angel in a flowing white silk mini dress with large feathered wings, golden body glow and delicate jewelry' },
+  { label: 'Elf Queen', prompt: 'a fantasy elf queen in an ornate low-cut silver gown with a jeweled crown, pointed ears and glowing runes on her skin' },
+  { label: 'Gothic', prompt: 'a gothic vampire queen in a black lace corset dress with a choker, dramatic pale makeup, dark lipstick and silver jewelry' },
 ];
 
 const DEFAULT_MORPH_PROMPT =
@@ -43,6 +47,10 @@ export const TransformReelPage = () => {
   const [aspectRatio, setAspectRatio] = usePersistentState('treel_ar', '9:16');
   const [resolution, setResolution] = usePersistentState<LtxResolution>('treel_res', 'M');
   const [lengthSec, setLengthSec] = usePersistentState('treel_len', 3);
+  const [beatFilename, setBeatFilename] = usePersistentState<string | null>('treel_beat_file', null);
+  const [beatUploading, setBeatUploading] = useState(false);
+  const [beatDropSec, setBeatDropSec] = usePersistentState('treel_beat_drop', 0);
+  const [muxing, setMuxing] = useState(false);
   const pollRef = useRef<number | null>(null);
 
   const { toast } = useToast();
@@ -113,8 +121,10 @@ export const TransformReelPage = () => {
             image: sourceFilename,
             prompt:
               `Transform her into ${characterPrompt.trim()}. `
+              + 'Completely replace her clothing with the new costume - highly detailed, form-fitting and flattering, '
+              + 'with rich materials and accessories. '
               + 'Keep the exact same pose, same face, same body position, same camera framing and same background.',
-            negative: 'blurry, low quality, deformed, different pose, different person',
+            negative: 'blurry, low quality, deformed, different pose, different person, same clothes, unchanged outfit, plain, modest, boring costume',
             seed: Math.floor(Math.random() * 10_000_000_000),
           },
         }),
@@ -192,6 +202,55 @@ export const TransformReelPage = () => {
   const autoGenerate = async () => {
     const staged = await createCharacterFrame();
     if (staged) generateMorph(staged);
+  };
+
+  const uploadBeat = async (file: File) => {
+    setBeatUploading(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch(`${BACKEND_API.BASE_URL}/api/upload`, { method: 'POST', body: form });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.detail || 'Upload failed');
+      setBeatFilename(data.filename);
+    } catch (err: any) {
+      toast(err.message || 'Upload failed', 'error');
+    } finally {
+      setBeatUploading(false);
+    }
+  };
+
+  /** Mux the beat track onto the current reel — the drop lands on the morph midpoint. */
+  const addBeatToReel = async () => {
+    if (!run.currentMedia || !beatFilename || muxing) return;
+    setMuxing(true);
+    try {
+      const params = new URLSearchParams(run.currentMedia.split('?')[1] ?? '');
+      const videoFilename = params.get('filename') ?? '';
+      if (!videoFilename) throw new Error('No reel selected');
+      // Morph peaks around the middle of the clip; start the audio so the drop lands there
+      const offset = Math.max(0, beatDropSec - lengthSec / 2);
+      const res = await fetch(`${BACKEND_API.BASE_URL}/api/media/mux-audio`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          video_filename: videoFilename,
+          video_subfolder: params.get('subfolder') ?? '',
+          audio_filename: beatFilename,
+          audio_offset_sec: offset,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.detail || data.error || 'Mux failed');
+      const url = `/comfy/view?filename=${encodeURIComponent(data.filename)}&subfolder=&type=output`;
+      run.setCurrentMedia(url);
+      run.setHistory((prev) => [url, ...prev.filter((u) => u !== url)]);
+      toast('Beat added — reel has audio now', 'success');
+    } catch (err: any) {
+      toast(err.message || 'Adding audio failed', 'error');
+    } finally {
+      setMuxing(false);
+    }
   };
 
   const dims = getLtxDimensions(aspectRatio, resolution);
@@ -342,6 +401,46 @@ export const TransformReelPage = () => {
               label="Generate Transformation Reel"
               requirementHint="Upload a photo and create the character frame first"
             />
+          </div>
+        </WorkflowSection>
+
+        {/* Step 4 — beat audio */}
+        <WorkflowSection title="4 · Beat Audio (optional)">
+          <div className="grid gap-4 lg:grid-cols-[minmax(220px,300px)_minmax(0,1fr)]">
+            <UploadSlot
+              preview={beatFilename ? `/comfy/view?filename=${encodeURIComponent(beatFilename)}&type=input` : null}
+              uploading={beatUploading}
+              onFile={uploadBeat}
+              accept="audio/*,video/*"
+              label="Beat Track"
+              hint="mp3/wav — the song with the drop"
+              previewKind="audio"
+              filename={beatFilename ?? undefined}
+            />
+            <div className="space-y-3">
+              <SliderField
+                label="Drop is at (second in the song)"
+                value={beatDropSec}
+                onChange={setBeatDropSec}
+                min={0}
+                max={120}
+                step={1}
+                format={(v) => `${v}s → morph lands on the drop`}
+              />
+              <button
+                type="button"
+                onClick={addBeatToReel}
+                disabled={!run.currentMedia || !beatFilename || muxing || run.isGenerating}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-violet-500/30 bg-violet-500/10 py-2.5 text-[11px] font-black uppercase tracking-widest text-violet-300 transition-all hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {muxing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Music className="h-3.5 w-3.5" />}
+                {muxing ? 'Adding beat…' : 'Add Beat to Current Reel'}
+              </button>
+              <p className="text-[10px] text-white/25">
+                The song starts so its drop hits the middle of the clip — where the transformation peaks.
+                The result appears as a new reel in the output strip, audio included.
+              </p>
+            </div>
           </div>
         </WorkflowSection>
       </div>

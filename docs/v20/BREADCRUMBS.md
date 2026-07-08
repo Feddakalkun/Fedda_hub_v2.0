@@ -428,3 +428,15 @@ thumbnails; simplify SDXL inpaint/outpaint; Chroma higher-res presets (optional)
   appearance + Describe-from-image + Save), auto-apply checkbox (default on).
   Prompt order: trigger, appearance, user prompt - matches the user's own
   documented prompt pattern. Applies to batch queue lines too.
+
+## 2026-07-08 - Transform Reel v2: better costumes + beat audio
+
+- Costume quality: 10 richer presets (bikini armor, superheroine, anime,
+  latex, cosplay, cyberpunk, devil, angel, elf queen, gothic) and a stronger
+  Qwen edit prompt (explicitly replace clothing, detailed/form-fitting, richer
+  negative incl. same clothes/unchanged outfit/modest).
+- Beat audio: step 4 on the page - upload the song, set which second the drop
+  is at, "Add Beat to Current Reel" muxes it so the drop lands on the clip
+  midpoint (where the morph peaks). Backend POST /api/media/mux-audio (ffmpeg
+  -ss offset on the audio, video stream copied, aac, -shortest; output lands in
+  ComfyUI output as reel_*.mp4 and shows in the strip with sound).
