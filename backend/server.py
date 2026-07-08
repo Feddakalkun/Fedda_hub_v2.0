@@ -744,7 +744,9 @@ class ChatRequest(BaseModel):
     message: Optional[str] = None
     voice_name: str = "Kore"
     speak: bool = False
-    tts_engine: str = "zonos"
+    # Default engine is edge: local, always available. Zonos only runs if the user
+    # explicitly selects it (needs a separate Zonos 2 server they may not have).
+    tts_engine: str = "edge"
     # Zonos conditioning
     speaking_rate: float = 1.0
     pitch: float = 0.0
@@ -757,7 +759,7 @@ class ChatRequest(BaseModel):
 class TtsRequest(BaseModel):
     text: str
     voice_name: str = "Kore"
-    tts_engine: str = "zonos"
+    tts_engine: str = "edge"
     model_path: Optional[str] = None
     use_voice_clone: bool = False
     reference_audio: Optional[str] = None
@@ -975,10 +977,10 @@ def _zonos_tts(text: str, voice_name: str = "", reference_audio: str = "", use_v
                 "audio_base64": base64.b64encode(resp.content).decode("ascii") if isinstance(resp.content, bytes) else str(audio_data),
                 "mime_type": "audio/wav",
             }
-    except Exception as e:
+    except Exception:
         return {
             "success": False,
-            "error": f"Zonos TTS unavailable. Install using https://getgoingfast.pro/tools/zonos2/ and ensure the server is running on {zonos_url}. Error: {str(e)}",
+            "error": f"Zonos server not reachable on {zonos_url}. Zonos 2 is an optional separate install - switch to the Edge or Chatterbox engine instead.",
             "provider": "zonos",
         }
 
