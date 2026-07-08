@@ -11,7 +11,7 @@ import { consumeHandoff } from '../../utils/workflowHandoff';
 import { Field } from '../../components/ui/FeddaPrimitives';
 import { WorkflowShell, WorkflowSection } from '../../components/layout/WorkflowShell';
 import { WorkflowVideoPreviewStrip } from '../../components/layout/WorkflowVideoPreviewStrip';
-import { ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
+import { BatchQueuePanel, ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
 import { cn, inputBase } from '../../lib/styles';
 
 type WanRatio = '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
@@ -40,6 +40,7 @@ const DEFAULT_NEGATIVE = '色调艳丽，过曝，静态，细节模糊不清，
 
 export const Wan22XxxImg2VidPage = () => {
   const [prompt, setPrompt]       = usePersistentState('wan22xxx_prompt', '');
+  const [batchRaw, setBatchRaw]   = usePersistentState('wan22xxx_batch_raw', '');
   const [negative, setNegative]   = usePersistentState('wan22xxx_negative', DEFAULT_NEGATIVE);
   const [seed, setSeed]           = usePersistentState('wan22xxx_seed', -1);
   const [loraHigh, setLoraHigh]   = usePersistentState('wan22xxx_lora_high', '');
@@ -112,21 +113,31 @@ export const Wan22XxxImg2VidPage = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const buildParams = (promptText: string) => ({
+    image: imageFilename,
+    prompt: promptText.trim(),
+    negative: negative.trim(),
+    seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
+    aspect_ratio: RATIO_ASPECT[aspectRatio],
+    direction: RATIO_DIRECTION[aspectRatio],
+    width: RATIO_WIDTH[aspectRatio],
+    length,
+    ...(loraHigh ? { lora_high: { on: true, lora: loraHigh, strength: loraHighStr } } : {}),
+    ...(loraLow  ? { lora_low:  { on: true, lora: loraLow,  strength: loraLowStr  } } : {}),
+  });
+
   const handleGenerate = () => {
     if (!imageFilename || !prompt.trim() || run.isGenerating) return;
-    const resolvedSeed = seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed;
-    run.start({
-      image: imageFilename,
-      prompt: prompt.trim(),
-      negative: negative.trim(),
-      seed: resolvedSeed,
-      aspect_ratio: RATIO_ASPECT[aspectRatio],
-      direction: RATIO_DIRECTION[aspectRatio],
-      width: RATIO_WIDTH[aspectRatio],
-      length,
-      ...(loraHigh ? { lora_high: { on: true, lora: loraHigh, strength: loraHighStr } } : {}),
-      ...(loraLow  ? { lora_low:  { on: true, lora: loraLow,  strength: loraLowStr  } } : {}),
-    });
+    run.start(buildParams(prompt));
+  };
+
+  const handleBatchRun = (prompts: string[]) => {
+    if (run.isGenerating) return;
+    if (!imageFilename) {
+      toast('Upload a reference image first', 'error');
+      return;
+    }
+    void run.startBatch(prompts.map(buildParams));
   };
 
   const canGenerate = !!imageFilename && !!prompt.trim() && !run.isGenerating;
@@ -178,6 +189,15 @@ export const Wan22XxxImg2VidPage = () => {
               label="Prompt"
               enableCaption
             />
+            <div className="mt-3">
+              <BatchQueuePanel
+                value={batchRaw}
+                onChange={setBatchRaw}
+                onRun={handleBatchRun}
+                isGenerating={run.isGenerating}
+                progress={run.batchProgress}
+              />
+            </div>
           </WorkflowSection>
         </div>
 

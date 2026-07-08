@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Loader2, Music, Play, Upload } from 'lucide-react';
+import { ListOrdered, Loader2, Music, Play, Upload } from 'lucide-react';
 import { cn, inputBase } from '../../lib/styles';
 import { FeddaButton } from './FeddaPrimitives';
 
@@ -225,3 +225,77 @@ export const GenerateButton = ({
     )}
   </div>
 );
+
+interface BatchQueuePanelProps {
+  value: string;
+  onChange: (value: string) => void;
+  onRun: (prompts: string[]) => void;
+  isGenerating?: boolean;
+  progress?: { current: number; total: number } | null;
+  disabledHint?: string;
+}
+
+/** Collapsible "one prompt per line" batch queue — same treatment as the image pages' Batch Queue. */
+export const BatchQueuePanel = ({
+  value,
+  onChange,
+  onRun,
+  isGenerating = false,
+  progress = null,
+  disabledHint,
+}: BatchQueuePanelProps) => {
+  const [expanded, setExpanded] = useState(false);
+  const prompts = value.split('\n').map((line) => line.trim()).filter(Boolean);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-white/25 transition-colors hover:text-white/50"
+        >
+          <ListOrdered className="h-3 w-3" />
+          Batch Queue
+          {prompts.length > 0 && (
+            <span className="ml-1 rounded bg-violet-500/20 px-1.5 py-0.5 font-mono text-[8px] text-violet-400">
+              {prompts.length}
+            </span>
+          )}
+        </button>
+        {progress && (
+          <span className="animate-pulse font-mono text-[9px] text-violet-400">
+            {progress.current} / {progress.total}
+          </span>
+        )}
+      </div>
+      {expanded && (
+        <div className="mt-2 space-y-2">
+          <textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={"Paste prompts — one per line:\n\nslow camera push-in, she smiles...\nwind moves her hair, golden light...\nshe turns toward the camera..."}
+            disabled={!!progress}
+            rows={6}
+            className="w-full resize-y rounded-lg border border-white/10 bg-black/30 p-2.5 font-mono text-[11px] text-white/70 placeholder:text-white/15 focus:border-violet-500/30 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+          />
+          {prompts.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onRun(prompts)}
+              disabled={isGenerating}
+              className="w-full rounded-lg border border-violet-500/30 bg-violet-500/10 py-2 text-[10px] font-black uppercase tracking-widest text-violet-300 transition-all hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {isGenerating && progress
+                ? `Generating ${progress.current} / ${progress.total}…`
+                : `Run Batch — ${prompts.length} prompt${prompts.length === 1 ? '' : 's'}`}
+            </button>
+          )}
+          {disabledHint && !isGenerating && (
+            <p className="text-center text-[10px] text-white/25">{disabledHint}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};

@@ -38,8 +38,16 @@ export const useWorkflowRun = ({
   const [currentMedia, setCurrentMedia] = usePersistentState<string | null>(currentKey, null);
   const [history, setHistory] = usePersistentState<string[]>(historyKey, []);
 
+  // Batch queue: param-sets waiting to run one after another
+  const queueRef = useRef<Record<string, unknown>[]>([]);
+  const batchTotalRef = useRef(0);
+  const advanceQueueRef = useRef<() => boolean>(() => false);
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
+
   const prevOutputCountRef = useRef(0);
   const sessionUrlsRef = useRef<string[]>([]);
+  // Guards against the WebSocket and HTTP-polling completion paths both firing for one job
+  const completionHandledRef = useRef(false);
   const {
     state: execState,
     lastOutputVideos,
@@ -70,9 +78,14 @@ export const useWorkflowRun = ({
     if (execState === 'error') {
       setIsGenerating(false);
       setPendingPromptId(null);
+      queueRef.current = [];
+      batchTotalRef.current = 0;
+      setBatchProgress(null);
       return;
     }
     if (execState !== 'done') return;
+    if (completionHandledRef.current) return;
+    completionHandledRef.current = true;
 
     const promptId = pendingPromptId;
     setIsGenerating(false);
@@ -86,7 +99,8 @@ export const useWorkflowRun = ({
         }
         toast(readyMessage, 'success');
       })
-      .catch(() => toast(readyMessage, 'success'));
+      .catch(() => toast(readyMessage, 'success'))
+      .finally(() => { advanceQueueRef.current(); });
   }, [collectUrls, execState, outputKind, pendingPromptId, readyMessage, toast]);
 
   // HTTP fallback polling — handles completion when WebSocket is unavailable (e.g. ComfyUI 403 on origin mismatch)
@@ -94,12 +108,15 @@ export const useWorkflowRun = ({
     if (!pendingPromptId) return;
     const capturedId = pendingPromptId;
     const id = setInterval(async () => {
+      if (completionHandledRef.current) { clearInterval(id); return; }
       try {
         const resp = await fetch(
           `${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.GENERATE_STATUS}/${capturedId}`
         );
         const data = await resp.json() as GenerateStatusResponse;
         if (data.status !== 'completed') return;
+        if (completionHandledRef.current) { clearInterval(id); return; }
+        completionHandledRef.current = true;
         clearInterval(id);
         setIsGenerating(false);
         setPendingPromptId(null);
@@ -107,14 +124,15 @@ export const useWorkflowRun = ({
           collectUrls(data.videos.map(outputUrl));
         }
         toast(readyMessage, 'success');
+        advanceQueueRef.current();
       } catch {}
     }, 5000);
     return () => clearInterval(id);
   }, [pendingPromptId, collectUrls, outputKind, readyMessage, toast]);
 
-  const start = useCallback(async (params: Record<string, unknown>, options: StartWorkflowOptions = {}) => {
-    if (isGenerating) return null;
-
+  // Internal submit — no isGenerating guard so the batch chain can call it
+  const submit = useCallback(async (params: Record<string, unknown>, options: StartWorkflowOptions = {}) => {
+    completionHandledRef.current = false;
     sessionUrlsRef.current = [];
     prevOutputCountRef.current = outputKind === 'video' ? (lastOutputVideos?.length ?? 0) : 0;
     if (options.clearCurrent !== false) {
@@ -148,9 +166,51 @@ export const useWorkflowRun = ({
       toast(err.message || 'Failed to generate', 'error');
       setIsGenerating(false);
       setPendingPromptId(null);
+      queueRef.current = [];
+      setBatchProgress(null);
       return null;
     }
-  }, [isGenerating, lastOutputVideos, outputKind, registerNodeMap, setCurrentMedia, toast, workflowId]);
+  }, [lastOutputVideos, outputKind, registerNodeMap, setCurrentMedia, toast, workflowId]);
+
+  const submitRef = useRef(submit);
+  useEffect(() => { submitRef.current = submit; });
+
+  /** After a job completes, start the next queued one (returns true if it did). */
+  const advanceQueue = useCallback(() => {
+    const next = queueRef.current.shift();
+    if (!next) {
+      if (batchTotalRef.current > 0) {
+        batchTotalRef.current = 0;
+        setBatchProgress(null);
+        toast('Batch complete', 'success');
+      }
+      return false;
+    }
+    setBatchProgress({
+      current: batchTotalRef.current - queueRef.current.length,
+      total: batchTotalRef.current,
+    });
+    setTimeout(() => { void submitRef.current(next, { clearCurrent: false }); }, 400);
+    return true;
+  }, [toast]);
+  advanceQueueRef.current = advanceQueue;
+
+  const start = useCallback(async (params: Record<string, unknown>, options: StartWorkflowOptions = {}) => {
+    if (isGenerating) return null;
+    queueRef.current = [];
+    batchTotalRef.current = 0;
+    setBatchProgress(null);
+    return submit(params, options);
+  }, [isGenerating, submit]);
+
+  /** Queue several param-sets; they run one after another. */
+  const startBatch = useCallback(async (paramsList: Record<string, unknown>[]) => {
+    if (isGenerating || !paramsList.length) return;
+    queueRef.current = paramsList.slice(1);
+    batchTotalRef.current = paramsList.length;
+    setBatchProgress({ current: 1, total: paramsList.length });
+    await submit(paramsList[0]);
+  }, [isGenerating, submit]);
 
   return {
     isGenerating,
@@ -160,5 +220,7 @@ export const useWorkflowRun = ({
     history,
     setHistory,
     start,
+    startBatch,
+    batchProgress,
   };
 };

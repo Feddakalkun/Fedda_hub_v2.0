@@ -10,13 +10,14 @@ import { comfyService } from '../../services/comfyService';
 import { Field } from '../../components/ui/FeddaPrimitives';
 import { WorkflowShell, WorkflowSection } from '../../components/layout/WorkflowShell';
 import { WorkflowVideoPreviewStrip } from '../../components/layout/WorkflowVideoPreviewStrip';
-import { ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
+import { BatchQueuePanel, ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
 import { LTX_RATIOS, LTX_RESOLUTIONS, getLtxDimensions, getSafeLtxAspect, type LtxRatio, type LtxResolution } from '../../config/ltx';
 
 const DIRECTIONS = ['Horizontal', 'Vertical'] as const;
 
 export const LtxFlfPage = () => {
   const [prompt, setPrompt] = usePersistentState('ltx_flf_prompt', '');
+  const [batchRaw, setBatchRaw] = usePersistentState('ltx_flf_batch_raw', '');
   const [aspectRatio, setAspectRatio] = usePersistentState('ltx_flf_ar', '16:9');
   const [resolution, setResolution] = usePersistentState<LtxResolution>('ltx_flf_res', 'M');
   const [direction, setDirection] = usePersistentState('ltx_flf_dir', 'Horizontal');
@@ -92,24 +93,37 @@ export const LtxFlfPage = () => {
     }
   };
 
-  const handleGenerate = () => {
-    if (!firstFilename || !lastFilename || !prompt.trim() || run.isGenerating) return;
-    const dims = getLtxDimensions(aspectRatio, resolution);
+  const buildParams = (promptText: string) => {
+    const dimsNow = getLtxDimensions(aspectRatio, resolution);
     const safeAspect = getSafeLtxAspect(aspectRatio);
-    run.start({
+    return {
       image_first: firstFilename,
       image_last: lastFilename,
-      prompt: prompt.trim(),
+      prompt: promptText.trim(),
       aspect_ratio: safeAspect,
       direction,
-      width: dims.width,
-      height: dims.height,
+      width: dimsNow.width,
+      height: dimsNow.height,
       length_seconds: lengthSec,
       seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
       guide_strength_first: guideFirst,
       guide_strength_last: guideLast,
       ...(loraName ? { lora_slot2: { on: true, lora: loraName, strength: loraStrength } } : {}),
-    });
+    };
+  };
+
+  const handleGenerate = () => {
+    if (!firstFilename || !lastFilename || !prompt.trim() || run.isGenerating) return;
+    run.start(buildParams(prompt));
+  };
+
+  const handleBatchRun = (prompts: string[]) => {
+    if (run.isGenerating) return;
+    if (!firstFilename || !lastFilename) {
+      toast('Upload both keyframes first', 'error');
+      return;
+    }
+    void run.startBatch(prompts.map(buildParams));
   };
 
   const canGenerate = !!firstFilename && !!lastFilename && !!prompt.trim() && !run.isGenerating;
@@ -176,6 +190,15 @@ export const LtxFlfPage = () => {
               label="Motion Prompt"
               enableCaption={false}
             />
+            <div className="mt-3">
+              <BatchQueuePanel
+                value={batchRaw}
+                onChange={setBatchRaw}
+                onRun={handleBatchRun}
+                isGenerating={run.isGenerating}
+                progress={run.batchProgress}
+              />
+            </div>
           </WorkflowSection>
         </div>
 

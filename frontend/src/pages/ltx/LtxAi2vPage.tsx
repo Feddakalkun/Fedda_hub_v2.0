@@ -9,7 +9,7 @@ import { consumeHandoff } from '../../utils/workflowHandoff';
 import { Field, NeutralButton } from '../../components/ui/FeddaPrimitives';
 import { WorkflowShell, WorkflowSection } from '../../components/layout/WorkflowShell';
 import { WorkflowVideoPreviewStrip } from '../../components/layout/WorkflowVideoPreviewStrip';
-import { ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
+import { BatchQueuePanel, ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
 import { cn, inputBase } from '../../lib/styles';
 
 const WIDTH_PRESETS = ['512', '640', '768', '1024', '1280'] as const;
@@ -17,6 +17,7 @@ const DEFAULT_NEGATIVE = 'blurry, low quality, still frame, frames, watermark, o
 
 export const LtxAi2vPage = () => {
   const [prompt, setPrompt] = usePersistentState('ltx_ai2v_prompt', '');
+  const [batchRaw, setBatchRaw] = usePersistentState('ltx_ai2v_batch_raw', '');
   const [negative, setNegative] = usePersistentState('ltx_ai2v_negative', DEFAULT_NEGATIVE);
   const [seed, setSeed] = usePersistentState('ltx_ai2v_seed', -1);
   const [steps, setSteps] = usePersistentState('ltx_ai2v_steps', 4);
@@ -113,18 +114,29 @@ export const LtxAi2vPage = () => {
     }
   };
 
+  const buildParams = (promptText: string) => ({
+    image: imageFilename,
+    audio: audioFilename,
+    prompt: promptText.trim(),
+    negative: negative.trim(),
+    seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
+    steps,
+    width: parseInt(width, 10),
+    duration,
+  });
+
   const handleGenerate = () => {
     if (!imageFilename || !audioFilename || !prompt.trim() || run.isGenerating) return;
-    run.start({
-      image: imageFilename,
-      audio: audioFilename,
-      prompt: prompt.trim(),
-      negative: negative.trim(),
-      seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
-      steps,
-      width: parseInt(width, 10),
-      duration,
-    });
+    run.start(buildParams(prompt));
+  };
+
+  const handleBatchRun = (prompts: string[]) => {
+    if (run.isGenerating) return;
+    if (!imageFilename || !audioFilename) {
+      toast('Upload a reference image and an audio clip first', 'error');
+      return;
+    }
+    void run.startBatch(prompts.map(buildParams));
   };
 
   const canGenerate = !!imageFilename && !!audioFilename && !!prompt.trim() && !run.isGenerating;
@@ -200,6 +212,15 @@ export const LtxAi2vPage = () => {
             label="Prompt"
             enableCaption
           />
+          <div className="mt-3">
+            <BatchQueuePanel
+              value={batchRaw}
+              onChange={setBatchRaw}
+              onRun={handleBatchRun}
+              isGenerating={run.isGenerating}
+              progress={run.batchProgress}
+            />
+          </div>
         </WorkflowSection>
 
         <WorkflowSection

@@ -11,7 +11,7 @@ import { comfyService } from '../../services/comfyService';
 import { Field, NeutralButton } from '../../components/ui/FeddaPrimitives';
 import { WorkflowShell, WorkflowSection } from '../../components/layout/WorkflowShell';
 import { WorkflowVideoPreviewStrip } from '../../components/layout/WorkflowVideoPreviewStrip';
-import { ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
+import { BatchQueuePanel, ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
 import { cn, inputBase } from '../../lib/styles';
 import { LTX_RATIOS, LTX_RESOLUTIONS, getLtxDimensions, type LtxRatio, type LtxResolution } from '../../config/ltx';
 
@@ -23,6 +23,7 @@ export const LtxImg2VidPage = () => {
   const [seed, setSeed] = usePersistentState('ltx_img2vid_seed', -1);
   const [loraName, setLoraName] = usePersistentState('ltx_img2vid_lora_name', '');
   const [loraStrength, setLoraStrength] = usePersistentState('ltx_img2vid_lora_strength', 0.65);
+  const [batchRaw, setBatchRaw] = usePersistentState('ltx_img2vid_batch_raw', '');
   const [aspectRatio, setAspectRatio] = usePersistentState('ltx_img2vid_ar', '16:9');
   const [resolution, setResolution] = usePersistentState<LtxResolution>('ltx_img2vid_res', 'M');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -123,18 +124,31 @@ export const LtxImg2VidPage = () => {
     }
   };
 
-  const handleGenerate = () => {
-    if (!imageFilename || !prompt.trim() || run.isGenerating) return;
+  const buildParams = (promptText: string) => {
     const dims = getLtxDimensions(aspectRatio, resolution);
-    run.start({
+    return {
       image: imageFilename,
-      prompt: prompt.trim(),
+      prompt: promptText.trim(),
       negative: negative.trim(),
       width: dims.width,
       height: dims.height,
       seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
       ...(loraName ? { lora_name: loraName, lora_strength: loraStrength } : {}),
-    });
+    };
+  };
+
+  const handleGenerate = () => {
+    if (!imageFilename || !prompt.trim() || run.isGenerating) return;
+    run.start(buildParams(prompt));
+  };
+
+  const handleBatchRun = (prompts: string[]) => {
+    if (run.isGenerating) return;
+    if (!imageFilename) {
+      toast('Upload a reference image first', 'error');
+      return;
+    }
+    void run.startBatch(prompts.map(buildParams));
   };
 
   const canGenerate = !!imageFilename && !!prompt.trim() && !run.isGenerating;
@@ -196,6 +210,15 @@ export const LtxImg2VidPage = () => {
               label="Prompt"
               enableCaption
             />
+            <div className="mt-3">
+              <BatchQueuePanel
+                value={batchRaw}
+                onChange={setBatchRaw}
+                onRun={handleBatchRun}
+                isGenerating={run.isGenerating}
+                progress={run.batchProgress}
+              />
+            </div>
           </WorkflowSection>
         </div>
 

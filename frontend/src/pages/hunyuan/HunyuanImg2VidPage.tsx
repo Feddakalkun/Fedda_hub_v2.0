@@ -11,7 +11,7 @@ import { comfyService } from '../../services/comfyService';
 import { Field, NeutralButton } from '../../components/ui/FeddaPrimitives';
 import { WorkflowShell, WorkflowSection } from '../../components/layout/WorkflowShell';
 import { WorkflowVideoPreviewStrip } from '../../components/layout/WorkflowVideoPreviewStrip';
-import { ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
+import { BatchQueuePanel, ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
 import { cn, inputBase } from '../../lib/styles';
 
 type HyRatio = '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
@@ -41,6 +41,7 @@ function hyAspect(ratio: HyRatio): string {
 
 export const HunyuanImg2VidPage = () => {
   const [prompt, setPrompt] = usePersistentState('hy_i2v_prompt', '');
+  const [batchRaw, setBatchRaw] = usePersistentState('hy_i2v_batch_raw', '');
   const [negative, setNegative] = usePersistentState('hy_i2v_negative', DEFAULT_NEGATIVE);
   const [seed, setSeed] = usePersistentState('hy_i2v_seed', -1);
   const [loraName, setLoraName] = usePersistentState('hy_i2v_lora_name', '');
@@ -133,22 +134,34 @@ export const HunyuanImg2VidPage = () => {
     }
   };
 
-  const handleGenerate = () => {
-    if (!imageFilename || !prompt.trim() || run.isGenerating) return;
+  const buildParams = (promptText: string) => {
     const [width, height] = HY_DIMS[aspectRatio];
-    const resolvedSeed = seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed;
-    run.start({
+    return {
       image: imageFilename,
-      prompt: prompt.trim(),
+      prompt: promptText.trim(),
       negative: negative.trim(),
-      seed: resolvedSeed,
+      seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
       width,
       height,
       aspect_ratio: hyAspect(aspectRatio),
       direction: hyDirection(aspectRatio),
       length,
       ...(loraName ? { lora_slot1: { on: true, lora: loraName, strength: loraStrength } } : {}),
-    });
+    };
+  };
+
+  const handleGenerate = () => {
+    if (!imageFilename || !prompt.trim() || run.isGenerating) return;
+    run.start(buildParams(prompt));
+  };
+
+  const handleBatchRun = (prompts: string[]) => {
+    if (run.isGenerating) return;
+    if (!imageFilename) {
+      toast('Upload a reference image first', 'error');
+      return;
+    }
+    void run.startBatch(prompts.map(buildParams));
   };
 
   const canGenerate = !!imageFilename && !!prompt.trim() && !run.isGenerating;
@@ -212,6 +225,15 @@ export const HunyuanImg2VidPage = () => {
               label="Prompt"
               enableCaption
             />
+            <div className="mt-3">
+              <BatchQueuePanel
+                value={batchRaw}
+                onChange={setBatchRaw}
+                onRun={handleBatchRun}
+                isGenerating={run.isGenerating}
+                progress={run.batchProgress}
+              />
+            </div>
           </WorkflowSection>
         </div>
 
