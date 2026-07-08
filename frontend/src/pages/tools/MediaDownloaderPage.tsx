@@ -4,10 +4,19 @@
  */
 
 import { useState } from 'react';
-import { Download, Link2, Loader2, Video, X } from 'lucide-react';
+import { Cookie, Download, Link2, Loader2, Video, X } from 'lucide-react';
 import { BACKEND_API } from '../../config/api';
 import { SendToWorkflowMenu } from '../../components/ui/SendToWorkflowMenu';
 import { useToast } from '../../components/ui/Toast';
+import { usePersistentState } from '../../hooks/usePersistentState';
+
+const COOKIE_BROWSERS = [
+  { value: '', label: 'No cookies (public posts only)' },
+  { value: 'firefox', label: 'Firefox (most reliable)' },
+  { value: 'chrome', label: 'Chrome' },
+  { value: 'edge', label: 'Edge' },
+  { value: 'brave', label: 'Brave' },
+];
 
 interface DownloadResult {
   filename: string;
@@ -22,6 +31,7 @@ const PLATFORM_HINTS = [
 
 export const MediaDownloaderPage = () => {
   const [url, setUrl] = useState('');
+  const [cookiesBrowser, setCookiesBrowser] = usePersistentState('media_dl_cookies_browser', '');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DownloadResult | null>(null);
   const [history, setHistory] = useState<DownloadResult[]>([]);
@@ -39,7 +49,7 @@ export const MediaDownloaderPage = () => {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: trimmed }),
+          body: JSON.stringify({ url: trimmed, cookies_browser: cookiesBrowser || null }),
         },
       );
       const data = await res.json();
@@ -114,11 +124,26 @@ export const MediaDownloaderPage = () => {
               {loading ? 'Downloading…' : 'Download'}
             </button>
           </div>
-          <p className="text-[9px] text-white/20 flex flex-wrap gap-x-2">
-            {PLATFORM_HINTS.map((p) => (
-              <span key={p} className="before:content-['·'] before:mr-1">{p}</span>
-            ))}
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[9px] text-white/20 flex flex-wrap gap-x-2">
+              {PLATFORM_HINTS.map((p) => (
+                <span key={p} className="before:content-['·'] before:mr-1">{p}</span>
+              ))}
+            </p>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Cookie className="h-3 w-3 text-white/20" />
+              <select
+                value={cookiesBrowser}
+                onChange={(e) => setCookiesBrowser(e.target.value)}
+                title="Instagram and other login-walled posts need cookies from a browser where you're logged in"
+                className="bg-white/[0.03] border border-white/8 rounded-lg px-2 py-1 text-[10px] text-white/50 outline-none focus:border-white/20 transition-colors"
+              >
+                {COOKIE_BROWSERS.map((b) => (
+                  <option key={b.value} value={b.value}>{b.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Current result */}

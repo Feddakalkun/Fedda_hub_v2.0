@@ -365,3 +365,16 @@ thumbnails; simplify SDXL inpaint/outpaint; Chroma higher-res presets (optional)
   trigger), Companion/registry descriptions cleaned. Default engine is edge
   everywhere. Tab id stays "zonos-tts" and the page file stays
   ZonosTTSPage.tsx (routing/storage churn not worth it).
+
+## 2026-07-08 - Media Downloader: browser cookies for Instagram
+
+- Instagram reels (and other login-walled posts) failed with "empty media
+  response" - yt-dlp needs a logged-in session. Added a Cookies dropdown on
+  the Media Downloader page (None/Firefox/Chrome/Edge/Brave, persisted) ->
+  cookies_browser on /api/media/download-video -> yt-dlp cookiesfrombrowser.
+  Fallback: config/cookies.txt (Netscape format) is used automatically when
+  present and no browser is picked. Error message now explains the fix.
+- Note: recent Chrome versions app-bound-encrypt cookies; extraction may fail
+  unless Chrome is closed - Firefox is the reliable choice.
+- yt-dlp upgraded 2026.6.9 -> 2026.7.4 in the install (extractors go stale
+  fast; update.bat does not currently pin/refresh yt-dlp - consider adding).

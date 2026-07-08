@@ -2362,6 +2362,9 @@ class UIAgentRunRequest(BaseModel):
 
 class DownloadVideoRequest(BaseModel):
     url: str
+    # Browser to borrow logged-in cookies from (yt-dlp cookiesfrombrowser) —
+    # needed for Instagram and other login-walled posts.
+    cookies_browser: Optional[str] = None
 
 
 class TrimVideoRequest(BaseModel):
@@ -2594,11 +2597,29 @@ async def download_video(req: DownloadVideoRequest):
         "no_warnings": True,
         "overwrites": True,
     }
+
+    browser = (req.cookies_browser or "").strip().lower()
+    if browser in {"chrome", "edge", "firefox", "brave", "opera", "vivaldi"}:
+        opts["cookiesfrombrowser"] = (browser,)
+    else:
+        # Manual fallback: an exported Netscape-format cookies.txt in config/
+        cookie_file = CONFIG_DIR / "cookies.txt"
+        if cookie_file.is_file():
+            opts["cookiefile"] = str(cookie_file)
+
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(req.url.strip(), download=True)
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Video download failed: {exc}")
+        msg = str(exc)
+        lowered = msg.lower()
+        if any(token in lowered for token in ("empty media response", "login", "cookies", "not available", "rate-limit")):
+            msg += (
+                " | Tip: this post likely needs a logged-in session. Pick your browser under Cookies "
+                "(Firefox works most reliably; recent Chrome versions may block cookie export - "
+                "close Chrome first or use Firefox), or export a cookies.txt into config/cookies.txt."
+            )
+        raise HTTPException(status_code=400, detail=f"Video download failed: {msg}")
 
     candidates = sorted(input_dir.glob(f"{stem}.*"), key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
     source = target if target.exists() else (candidates[0] if candidates else None)
