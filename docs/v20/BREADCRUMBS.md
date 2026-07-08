@@ -411,3 +411,20 @@ thumbnails; simplify SDXL inpaint/outpaint; Chroma higher-res presets (optional)
 - GOTCHA relearned: never patch source files with PowerShell -replace on PS5.1;
   it corrupts non-ASCII (Chinese negative prompt in Wan22Xxx, em-dashes). Use
   the Edit tool; corruption was caught and reverted before commit.
+
+## 2026-07-08 - Character Sheets (per-LoRA appearance descriptions)
+
+- The walkthrough-requested tool: drag an image -> Ollama vision writes an
+  appearance-ONLY description (no clothes/background/pose - stays valid in
+  every scene) -> saved per LoRA -> auto-prepended to prompts when that LoRA
+  is active. Makes Fill-10 batches stay on-character.
+- Storage = .md sidecar next to the LoRA file, SAME format the user already
+  hand-writes (loras/app/Aurora/Aurora.md: **Trigger:** line + ## Appearance
+  section). Resolution: <stem>.md, else the single .md in the folder. Saving
+  only rewrites the Trigger line + Appearance section, other sections kept.
+- Backend: GET/POST /api/lora/sheet, POST /api/lora/sheet/describe (vision).
+- Frontend: Character Sheets panel in Txt2ImgPage (all image pages) under the
+  Batch Queue - per selected LoRA: sheet status, Create/Edit (trigger +
+  appearance + Describe-from-image + Save), auto-apply checkbox (default on).
+  Prompt order: trigger, appearance, user prompt - matches the user's own
+  documented prompt pattern. Applies to batch queue lines too.

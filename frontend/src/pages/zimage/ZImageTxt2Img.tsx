@@ -10,6 +10,7 @@ import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { comfyService } from '../../services/comfyService';
 import { consumeHandoff } from '../../utils/workflowHandoff';
+import { cn } from '../../lib/styles';
 
 const PRESETS = [
   { label: '1:1', w: 1024, h: 1024 },
@@ -212,6 +213,14 @@ export const Txt2ImgPage = ({
   const [batchRaw, setBatchRaw] = usePersistentState(key('batch_raw'), '');
   const [batchExpanded, setBatchExpanded] = useState(false);
   const [batchFilling, setBatchFilling] = useState(false);
+
+  // Character sheets — per-LoRA appearance descriptions stored as .md sidecars
+  const [loraSheets, setLoraSheets] = useState<Record<string, { exists: boolean; trigger: string; appearance: string }>>({});
+  const [sheetsAutoApply, setSheetsAutoApply] = usePersistentState(key('sheets_auto'), true);
+  const [sheetEditing, setSheetEditing] = useState<string | null>(null);
+  const [sheetTrigger, setSheetTrigger] = useState('');
+  const [sheetAppearance, setSheetAppearance] = useState('');
+  const [sheetBusy, setSheetBusy] = useState(false);
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
   const batchQueueRef = useRef<string[]>([]);
   const completionHandledRef = useRef(false);
@@ -271,6 +280,24 @@ export const Txt2ImgPage = ({
       setAvailableLoras(loras.filter((lora) => matchesLoraFilter(lora, loraPrefixes)));
     }).catch(() => {});
   }, [loraPrefixes]);
+
+  // Load character sheets for the selected LoRAs
+  useEffect(() => {
+    loraEntries.forEach((entry) => {
+      const name = entry.name?.trim();
+      if (!name || loraSheets[name] !== undefined) return;
+      fetch(`${BACKEND_API.BASE_URL}/api/lora/sheet?file=${encodeURIComponent(name)}`)
+        .then((r) => r.json())
+        .then((d) => {
+          setLoraSheets((prev) => ({
+            ...prev,
+            [name]: { exists: !!d?.exists, trigger: d?.trigger || '', appearance: d?.appearance || '' },
+          }));
+        })
+        .catch(() => {});
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loraEntries]);
 
   useEffect(() => {
     let cancelled = false;
@@ -483,7 +510,16 @@ export const Txt2ImgPage = ({
         // Execution can continue; the top strip falls back to raw node IDs.
       }
 
-      const effectivePrompt = [promptText.trim(), characterPrompt.trim()].filter(Boolean).join(', ');
+      // Auto-prepend character sheets (trigger + appearance) of the active LoRAs
+      const sheetPrefix = sheetsAutoApply
+        ? loraEntries
+            .map((entry) => loraSheets[entry.name?.trim() ?? ''])
+            .filter((sheet) => sheet && (sheet.trigger || sheet.appearance))
+            .map((sheet) => [sheet.trigger, sheet.appearance].filter(Boolean).join(', '))
+            .join(' ')
+        : '';
+
+      const effectivePrompt = [sheetPrefix, promptText.trim(), characterPrompt.trim()].filter(Boolean).join(', ');
 
       const params: Record<string, unknown> = {
         prompt: effectivePrompt,
@@ -762,6 +798,131 @@ export const Txt2ImgPage = ({
           </div>
         )}
       </div>
+
+      {/* Character Sheets — appearance descriptions per selected LoRA */}
+      {enableLoras && loraEntries.some((e) => e.name?.trim()) && (
+        <div className="mb-2 rounded-lg border border-white/10 bg-black/20 p-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] font-black uppercase tracking-widest text-white/25">Character Sheets</span>
+            <label className="flex cursor-pointer items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-white/40">
+              <input
+                type="checkbox"
+                checked={sheetsAutoApply}
+                onChange={(e) => setSheetsAutoApply(e.target.checked)}
+              />
+              Auto-apply to prompts
+            </label>
+          </div>
+          <div className="mt-2 space-y-1.5">
+            {loraEntries.filter((e) => e.name?.trim()).map((entry) => {
+              const name = entry.name.trim();
+              const sheet = loraSheets[name];
+              const shortName = name.replace(/\\/g, '/').split('/').pop()?.replace(/\.safetensors$/i, '') ?? name;
+              const isEditing = sheetEditing === name;
+              return (
+                <div key={name} className="rounded-lg border border-white/5 bg-white/[0.02] p-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-mono text-[10px] text-white/60">{shortName}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={cn('text-[8px] font-black uppercase tracking-widest', sheet?.exists ? 'text-emerald-400/70' : 'text-white/20')}>
+                        {sheet === undefined ? '…' : sheet.exists ? '✓ sheet' : 'no sheet'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isEditing) { setSheetEditing(null); return; }
+                          setSheetEditing(name);
+                          setSheetTrigger(sheet?.trigger ?? '');
+                          setSheetAppearance(sheet?.appearance ?? '');
+                        }}
+                        className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-white/40 transition-all hover:bg-white/10"
+                      >
+                        {isEditing ? 'Close' : sheet?.exists ? 'Edit' : 'Create'}
+                      </button>
+                    </div>
+                  </div>
+                  {isEditing && (
+                    <div className="mt-2 space-y-2">
+                      <input
+                        type="text"
+                        value={sheetTrigger}
+                        onChange={(e) => setSheetTrigger(e.target.value)}
+                        placeholder="Trigger word (e.g. auroraskonberg)"
+                        className="w-full rounded-lg border border-white/10 bg-black/30 p-2 font-mono text-[11px] text-white/70 placeholder:text-white/15 focus:border-violet-500/30 focus:outline-none"
+                      />
+                      <textarea
+                        value={sheetAppearance}
+                        onChange={(e) => setSheetAppearance(e.target.value)}
+                        placeholder="Appearance only — hair, eyes, face, build. No clothes, no background."
+                        rows={5}
+                        className="w-full resize-y rounded-lg border border-white/10 bg-black/30 p-2 text-[11px] text-white/70 placeholder:text-white/15 focus:border-violet-500/30 focus:outline-none"
+                      />
+                      <div className="flex gap-2">
+                        <label className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 py-1.5 text-[9px] font-black uppercase tracking-widest text-white/50 transition-all hover:bg-white/10">
+                          {sheetBusy ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+                          Describe from image
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file || sheetBusy) return;
+                              setSheetBusy(true);
+                              try {
+                                const form = new FormData();
+                                form.append('file', file);
+                                const res = await fetch(`${BACKEND_API.BASE_URL}/api/lora/sheet/describe`, { method: 'POST', body: form });
+                                const data = await res.json();
+                                if (!res.ok || !data.success) throw new Error(data.detail || data.error || 'Describe failed');
+                                setSheetAppearance(data.description || '');
+                                toast(data.model ? `Described with ${data.model}` : 'Description ready', 'success');
+                              } catch (err: any) {
+                                toast(err.message || 'Describe failed', 'error');
+                              } finally {
+                                setSheetBusy(false);
+                              }
+                            }}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          disabled={sheetBusy || !sheetAppearance.trim()}
+                          onClick={async () => {
+                            setSheetBusy(true);
+                            try {
+                              const res = await fetch(`${BACKEND_API.BASE_URL}/api/lora/sheet`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ file: name, trigger: sheetTrigger, appearance: sheetAppearance }),
+                              });
+                              const data = await res.json();
+                              if (!data.success) throw new Error(data.error || 'Save failed');
+                              setLoraSheets((prev) => ({
+                                ...prev,
+                                [name]: { exists: true, trigger: sheetTrigger.trim(), appearance: sheetAppearance.trim() },
+                              }));
+                              setSheetEditing(null);
+                              toast('Character sheet saved', 'success');
+                            } catch (err: any) {
+                              toast(err.message || 'Save failed', 'error');
+                            } finally {
+                              setSheetBusy(false);
+                            }
+                          }}
+                          className="flex-1 rounded-lg border border-violet-500/30 bg-violet-500/10 py-1.5 text-[9px] font-black uppercase tracking-widest text-violet-300 transition-all hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Save Sheet
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <SimpleImageCockpit
         promptLabel={promptLabel}

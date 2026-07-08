@@ -2238,6 +2238,141 @@ async def ollama_caption_image(file: UploadFile = File(...), context: str = Form
         raise HTTPException(status_code=500, detail=f"Caption failed: {exc}")
 
 
+LORA_ROOT = COMFY_DIR / "models" / "loras"
+
+
+class LoraSheetSaveRequest(BaseModel):
+    file: str
+    trigger: str = ""
+    appearance: str = ""
+
+
+def _resolve_lora_file(rel: str) -> Optional[Path]:
+    rel = (rel or "").strip().replace("/", os.sep)
+    if not rel or ".." in rel:
+        return None
+    p = LORA_ROOT / rel
+    try:
+        return p if p.is_file() else None
+    except OSError:
+        return None
+
+
+def _sheet_path_for_lora(lora_path: Path) -> Path:
+    """Sheet = <stem>.md next to the LoRA; falls back to a single .md in the folder (user convention)."""
+    exact = lora_path.with_suffix(".md")
+    if exact.is_file():
+        return exact
+    try:
+        mds = [p for p in lora_path.parent.glob("*.md") if p.is_file()]
+        if len(mds) == 1:
+            return mds[0]
+    except OSError:
+        pass
+    return exact
+
+
+def _parse_sheet(text: str) -> Dict[str, str]:
+    trigger = ""
+    m = re.search(r"\*\*Trigger:\*\*\s*(.+)", text)
+    if m:
+        trigger = m.group(1).strip()
+    appearance = ""
+    m = re.search(r"^##\s*Appearance\s*$(.*?)(?=^##\s|\Z)", text, re.MULTILINE | re.DOTALL)
+    if m:
+        appearance = m.group(1).strip()
+    return {"trigger": trigger, "appearance": appearance}
+
+
+@app.get("/api/lora/sheet")
+async def get_lora_sheet(file: str):
+    """Character sheet (trigger + appearance) stored as a .md sidecar next to the LoRA."""
+    lora = _resolve_lora_file(file)
+    if not lora:
+        return {"success": False, "error": "LoRA file not found", "exists": False}
+    sheet = _sheet_path_for_lora(lora)
+    if not sheet.is_file():
+        return {"success": True, "exists": False, "trigger": "", "appearance": ""}
+    try:
+        parsed = _parse_sheet(sheet.read_text(encoding="utf-8", errors="replace"))
+        return {"success": True, "exists": True, "sheet_file": sheet.name, **parsed}
+    except Exception as e:
+        return {"success": False, "error": str(e), "exists": False}
+
+
+@app.post("/api/lora/sheet")
+async def save_lora_sheet(req: LoraSheetSaveRequest):
+    """Create or update the sidecar sheet. Existing files keep their extra sections;
+    only the Trigger line and the ## Appearance section are replaced."""
+    lora = _resolve_lora_file(req.file)
+    if not lora:
+        return {"success": False, "error": "LoRA file not found"}
+    sheet = _sheet_path_for_lora(lora)
+    trigger = (req.trigger or "").strip()
+    appearance = (req.appearance or "").strip()
+    try:
+        if sheet.is_file():
+            text = sheet.read_text(encoding="utf-8", errors="replace")
+            if re.search(r"\*\*Trigger:\*\*", text):
+                text = re.sub(r"(\*\*Trigger:\*\*\s*).*", lambda m: m.group(1) + trigger, text, count=1)
+            else:
+                text = f"**Trigger:** {trigger}\n\n" + text
+            if re.search(r"^##\s*Appearance\s*$", text, re.MULTILINE):
+                text = re.sub(
+                    r"(^##\s*Appearance\s*$)(.*?)(?=^##\s|\Z)",
+                    lambda m: m.group(1) + "\n" + appearance + "\n\n",
+                    text,
+                    count=1,
+                    flags=re.MULTILINE | re.DOTALL,
+                )
+            else:
+                text = text.rstrip() + f"\n\n## Appearance\n{appearance}\n"
+        else:
+            text = (
+                f"# {lora.stem} - character sheet\n\n"
+                f"**Trigger:** {trigger}\n"
+                f"**LoRA:** {lora.name}\n\n"
+                f"## Appearance\n{appearance}\n"
+            )
+        sheet.write_text(text, encoding="utf-8")
+        return {"success": True, "sheet_file": sheet.name}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/lora/sheet/describe")
+async def describe_for_sheet(file: UploadFile = File(...)):
+    """Appearance-only description of the person in an image — for character sheets.
+    Deliberately excludes clothing, background, pose and lighting so the sheet
+    stays valid across every scene."""
+    import base64 as _b64
+    model = _get_ollama_vision_model()
+    if not model:
+        raise HTTPException(status_code=503, detail="No vision model available. Install one with: ollama pull llava")
+    img_b64 = _b64.b64encode(await file.read()).decode()
+    prompt = (
+        "Describe ONLY this person's permanent physical appearance, for reuse in AI image prompts: "
+        "hair color, length and texture; skin tone and any freckles or marks; eye color and shape; "
+        "eyebrows; nose; lips; face shape and jawline; build; apparent age; jewelry only if clearly "
+        "always worn. Do NOT mention clothing, outfit, background, setting, lighting, pose, camera, "
+        "expression or image quality. Write flowing sentences starting with 'She has'. 80-140 words."
+    )
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "images": [img_b64],
+        "stream": False,
+        "options": {"temperature": 0.2, "num_predict": 350},
+    }
+    try:
+        r = requests.post(f"{OLLAMA_URL}/api/generate", json=payload, timeout=120)
+        r.raise_for_status()
+        description = _clean_caption_text(r.json().get("response", ""))
+        return {"success": True, "description": description, "model": model}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Describe failed: {exc}")
+
+
 @app.get("/api/ollama/vision-models")
 async def get_ollama_vision_models():
     """List available Ollama vision models."""
