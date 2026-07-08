@@ -355,3 +355,13 @@ thumbnails; simplify SDXL inpaint/outpaint; Chroma higher-res presets (optional)
   teal-elf mascot + glowing mic + waveforms + VOICE STUDIO title), saved as
   cards/new/venice/35.jpeg, module renamed zonos-tts -> label "Voice Studio",
   card: veniceCard(35). 35.mp4 hover video still missing (optional, WAN I2V).
+
+## 2026-07-08 - Zonos removed
+
+- Zonos 2 engine ripped out (never installed by anyone; its dead-server error
+  confused the user and advertised a third-party installer URL). _zonos_tts
+  deleted from server.py, engine buttons now Edge + Chatterbox only, GrokPage
+  speak-tool was hardcoded to zonos -> now edge (that was the accidental
+  trigger), Companion/registry descriptions cleaned. Default engine is edge
+  everywhere. Tab id stays "zonos-tts" and the page file stays
+  ZonosTTSPage.tsx (routing/storage churn not worth it).

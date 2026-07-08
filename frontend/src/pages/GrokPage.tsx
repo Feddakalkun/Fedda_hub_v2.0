@@ -164,7 +164,7 @@ export function GrokPage() {
       type: "function",
       function: {
         name: "generate_tts",
-        description: "Generate speech audio from text using Zonos TTS. Use this when the user asks to speak, say, voice, read, or convert text to audio/voice/speech. Supports voice cloning with reference audio if provided.",
+        description: "Generate speech audio from text. Use this when the user asks to speak, say, voice, read, or convert text to audio/voice/speech. Supports voice cloning with reference audio if provided.",
         parameters: {
           type: "object",
           properties: {
@@ -286,7 +286,7 @@ export function GrokPage() {
             body: JSON.stringify({
               text: ttsText,
               voice_name: ttsVoice,
-              tts_engine: 'zonos',
+              tts_engine: 'edge',
               use_voice_clone: useClone,
               reference_audio: refAudio,
               speaking_rate: rate
@@ -310,7 +310,7 @@ export function GrokPage() {
               // Auto save
               if (typeof window !== 'undefined') {
                 const { saveAudioToGallery } = await import('../utils/mediaStore');
-                saveAudioToGallery(audio, 'zonos');
+                saveAudioToGallery(audio, 'tts');
               }
             }
           }

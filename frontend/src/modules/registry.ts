@@ -139,7 +139,7 @@ export const FEDDA_MODULES: FeddaModule[] = [
     id: 'zonos-tts',
     sourceModuleId: 'core-shell',
     label: 'Voice Studio',
-    description: 'Generate speech from text — Edge neural voices, Chatterbox natural voice with cloning, or Zonos 2. Send clips straight to Audio to Video.',
+    description: 'Generate speech from text — fast Edge neural voices or natural Chatterbox with voice cloning. Send clips straight to Audio to Video.',
     area: 'system',
     pack: 'core',
 
@@ -164,7 +164,7 @@ export const FEDDA_MODULES: FeddaModule[] = [
     id: 'companion',
     sourceModuleId: 'core-shell',
     label: 'Companion',
-    description: 'Your persistent AI friend and partner. Remembers everything with MemPalace, speaks with Zonos voice, full intrigue and long-term memory.',
+    description: 'Your persistent AI friend and partner. Remembers everything with MemPalace, speaks with a natural voice, full intrigue and long-term memory.',
     area: 'system',
     pack: 'core',
 

@@ -744,10 +744,8 @@ class ChatRequest(BaseModel):
     message: Optional[str] = None
     voice_name: str = "Kore"
     speak: bool = False
-    # Default engine is edge: local, always available. Zonos only runs if the user
-    # explicitly selects it (needs a separate Zonos 2 server they may not have).
     tts_engine: str = "edge"
-    # Zonos conditioning
+    # Prosody conditioning (edge)
     speaking_rate: float = 1.0
     pitch: float = 0.0
     emotion: str = ""
@@ -764,7 +762,7 @@ class TtsRequest(BaseModel):
     use_voice_clone: bool = False
     reference_audio: Optional[str] = None
     reference_text: Optional[str] = None
-    # Zonos advanced conditioning
+    # Prosody / sampling conditioning
     speaking_rate: float = 1.0
     pitch: float = 0.0
     emotion: str = ""
@@ -921,68 +919,6 @@ def _mockingbird_tts(text: str, voice_name: str) -> Dict[str, Any]:
         "audio_base64": base64.b64encode(response.content).decode("ascii"),
         "mime_type": response.headers.get("content-type", "audio/wav"),
     }
-
-
-def _zonos_tts(text: str, voice_name: str = "", reference_audio: str = "", use_voice_clone: bool = False, reference_text: str = "", speaking_rate: float = 1.0, pitch: float = 0.0, emotion: str = "", temperature: float = 0.7, top_p: float = 0.9, cfg_scale: float = 1.0) -> Dict[str, Any]:
-    """
-    Zonos 2 TTS integration.
-    Requires Zonos 2 running (use the WSL installer from https://getgoingfast.pro/tools/zonos2/ ).
-    Assumes a local Zonos server is available at ZONOS_URL (default http://localhost:7860).
-    """
-    zonos_url = os.environ.get("ZONOS_URL", "http://localhost:7860").rstrip("/")
-    try:
-        payload = {
-            "text": text,
-            "speaker": voice_name or "default",
-            "language": "en",
-            "speaking_rate": speaking_rate,
-            "pitch": pitch,
-            "emotion": emotion,
-            "temperature": temperature,
-            "top_p": top_p,
-            "cfg_scale": cfg_scale,
-        }
-        if use_voice_clone and reference_audio:
-            payload["reference_audio"] = reference_audio
-            payload["reference_text"] = reference_text
-
-        resp = requests.post(f"{zonos_url}/tts", json=payload, timeout=180)
-        if not resp.ok:
-            resp = requests.post(f"{zonos_url}/run/predict", json={"data": [text, voice_name or "", reference_audio or ""]}, timeout=180)
-            if not resp.ok:
-                return {"success": False, "error": f"Zonos server error: {resp.text}", "provider": "zonos"}
-
-        data = resp.json()
-        audio_data = data.get("audio") or data.get("data", [None])[0] or data
-        if isinstance(audio_data, str) and audio_data.startswith("data:"):
-            return {
-                "success": True,
-                "provider": "zonos",
-                "voice_name": voice_name or "Zonos",
-                "audio_base64": audio_data.split(",", 1)[1] if "," in audio_data else audio_data,
-                "mime_type": "audio/wav",
-            }
-        elif isinstance(audio_data, dict) and audio_data.get("url"):
-            return {
-                "success": True,
-                "provider": "zonos",
-                "voice_name": voice_name or "Zonos",
-                "audio_url": audio_data["url"],
-            }
-        else:
-            return {
-                "success": True,
-                "provider": "zonos",
-                "voice_name": voice_name or "Zonos",
-                "audio_base64": base64.b64encode(resp.content).decode("ascii") if isinstance(resp.content, bytes) else str(audio_data),
-                "mime_type": "audio/wav",
-            }
-    except Exception:
-        return {
-            "success": False,
-            "error": f"Zonos server not reachable on {zonos_url}. Zonos 2 is an optional separate install - switch to the Edge or Chatterbox engine instead.",
-            "provider": "zonos",
-        }
 
 
 _CHATTERBOX_MODEL = None
@@ -1484,7 +1420,7 @@ async def chat_tts(req: TtsRequest):
 
     try:
         fallback_notice = ""
-        engine = (req.tts_engine or "zonos").strip().lower()
+        engine = (req.tts_engine or "edge").strip().lower()
         if engine == "mockingbird":
             try:
                 return _mockingbird_tts(text, req.voice_name)
@@ -1506,21 +1442,6 @@ async def chat_tts(req: TtsRequest):
                 req.exaggeration,
                 max(0.0, min(1.0, req.cfg_scale)),
                 req.temperature,
-            )
-
-        if engine == "zonos":
-            return _zonos_tts(
-                text,
-                req.voice_name,
-                req.reference_audio or "",
-                req.use_voice_clone,
-                req.reference_text or "",
-                getattr(req, 'speaking_rate', 1.0),
-                getattr(req, 'pitch', 0.0),
-                getattr(req, 'emotion', ""),
-                getattr(req, 'temperature', 0.7),
-                getattr(req, 'top_p', 0.9),
-                getattr(req, 'cfg_scale', 1.0),
             )
 
         voice_params = _tts_params_for_voice(req.voice_name)
