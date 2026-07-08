@@ -18,7 +18,7 @@ const PRESETS = [
   { label: '9:16', w: 896, h: 1152 },
 ];
 
-const DEFAULT_LORA_PREFIXES = ['zimage_turbo/', 'zimage-turbo/'];
+const DEFAULT_LORA_PREFIXES = ['zimage', 'z-image'];
 const DEFAULT_LORA_PACKS = ['zimage_turbo', 'zimage_nsfw'];
 
 type WorkflowModelStatus = {
@@ -95,6 +95,13 @@ interface Txt2ImgPageConfig {
 
 const normLora = (value: string) => value.replace(/\\/g, '/').toLowerCase().trim();
 const loraFileName = (path: string) => path.replace(/\\/g, '/').split('/').pop()?.toLowerCase() ?? '';
+
+// Token can appear anywhere in the path (folder or filename), so LoRAs organized
+// in subfolders like app/Aurora/aurora-zimage.safetensors are picked up too.
+const matchesLoraFilter = (path: string, prefixes: string[]) => {
+  const normalized = normLora(path);
+  return prefixes.some((prefix) => normalized.includes(normLora(prefix).replace(/\/+$/, '')));
+};
 
 const resolveInstalledLoraName = (name: string, available: string[]) => {
   if (!name) return '';
@@ -260,11 +267,7 @@ export const Txt2ImgPage = ({
 
   useEffect(() => {
     comfyService.getLoras().then((loras) => {
-      const filtered = loras.filter((lora) => {
-        const normalized = normLora(lora);
-        return loraPrefixes.some((prefix) => normalized.startsWith(normLora(prefix)));
-      });
-      setAvailableLoras(filtered);
+      setAvailableLoras(loras.filter((lora) => matchesLoraFilter(lora, loraPrefixes)));
     }).catch(() => {});
   }, [loraPrefixes]);
 
@@ -507,7 +510,7 @@ export const Txt2ImgPage = ({
             }))
             .filter((lora) => {
               const normalized = normLora(lora.name);
-              const hasValidPrefix = loraPrefixes.some((prefix) => normalized.startsWith(normLora(prefix)));
+              const hasValidPrefix = matchesLoraFilter(lora.name, loraPrefixes);
               const isInAvailable = availableLoras.some((entry) => normLora(entry) === normalized);
               return hasValidPrefix || isInAvailable;
             })

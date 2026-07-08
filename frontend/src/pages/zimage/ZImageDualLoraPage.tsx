@@ -217,7 +217,8 @@ export const ZImageDualLoraPage = () => {
     comfyService.getLoras().then((all) => {
       const filtered = all.filter((name) => {
         const normalized = name.replace(/\\/g, '/').toLowerCase();
-        return normalized.startsWith('zimage_turbo/') || normalized.startsWith('zimage-turbo/');
+        // Match anywhere in the path so subfolder-organized LoRAs (app/Aurora/...-zimage) show up
+        return normalized.includes('zimage') || normalized.includes('z-image');
       });
       setAvailableLoras(filtered);
     }).catch(() => setAvailableLoras([]));
