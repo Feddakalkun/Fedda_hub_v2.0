@@ -440,3 +440,17 @@ thumbnails; simplify SDXL inpaint/outpaint; Chroma higher-res presets (optional)
   midpoint (where the morph peaks). Backend POST /api/media/mux-audio (ffmpeg
   -ss offset on the audio, video stream copied, aac, -shortest; output lands in
   ComfyUI output as reel_*.mp4 and shows in the strip with sound).
+
+## 2026-07-08 - Transform Reel v3: photoreal outfits + transition styles
+
+- User verdict on v2: "amateur 8s clip with a flash and some noise", outfits
+  "not sexy and real at all". Root causes: costume-shop preset language reads
+  as cosplay-render, and one soft "energy sweep" morph prompt.
+- Outfits rewritten photographically (real fabric behavior, fit, same lighting
+  /grain as source photo): Red Latex, Lingerie, Club Dress, Bikini, Biker,
+  Bunny, Devil, Angel, Fishnet Goth, Cosplay Armor. Edit prompt demands "REAL
+  PHOTOGRAPH" result; negative bans cosplay-prop/plastic/CGI/3d-render/doll.
+- Transition style chips for the morph: Whip Spin (new default), Hard Flash,
+  Hair Flip, Shockwave, Energy Sweep (the old one, kept last). Music-video
+  action language instead of glow-morph. One-time localStorage migration swaps
+  the old stored default to Whip Spin.
