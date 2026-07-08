@@ -285,3 +285,27 @@ Large batch of work since the 07-03 bootstrap; catch-up entry.
 **Open / queued**: real Qwen txt2img workflow + de-dupe Qwen cards; character
 description tool (image -> appearance-only sheet saved per LoRA); preview strips
 on all image pages with removable-but-kept thumbnails; simplify SDXL inpaint.
+
+## 2026-07-08 - Qwen Txt2Img shipped + Batch Prompt Queue everywhere
+
+- Real Qwen text-to-image landed (cceb381): new workflow qwen/qwen-txt2img
+  using qwen_image_2512 fp8 (19 GB, copied from E:\v337) + Lightning 4-step
+  LoRA as a FIXED node (user loras chain after it - mapping user loras onto
+  the Lightning node was stripping it and causing grainy output). Qwen Image
+  card now opens real txt2img; Qwen Reference card opens the reference-edit
+  page. QwenTxt2Img.tsx wired, manifests regenerated.
+- Batch Prompt Queue (25ecdd0): "one prompt per line -> jobs run one by one".
+  Image pages (Txt2ImgPage base) already had it from v22; this adds the video
+  side. useWorkflowRun got startBatch/advanceQueue finished (completion now
+  advances the queue on both the WebSocket and HTTP-polling paths, guarded
+  against double-fire) and a shared BatchQueuePanel in ui/WorkflowControls.tsx
+  is wired into LtxImg2Vid, LtxFlf, LtxAi2v, HunyuanImg2Vid, Wan22XxxImg2Vid.
+  Each line gets its own random seed when seed=-1. Type-check stays at the
+  45-error pre-existing baseline.
+- Note: repo/frontend has no node_modules; type-check by copying changed files
+  into install/app/frontend and running its tsc with -p tsconfig.app.json
+  (plain -p tsconfig.json is the solution file and checks nothing).
+
+**Open / queued**: character description tool (image -> appearance-only sheet
+saved per LoRA); preview strips on all image pages with removable-but-kept
+thumbnails; simplify SDXL inpaint/outpaint; Chroma higher-res presets (optional).
