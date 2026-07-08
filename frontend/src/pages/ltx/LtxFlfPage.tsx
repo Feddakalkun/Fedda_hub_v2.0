@@ -197,6 +197,7 @@ export const LtxFlfPage = () => {
                 onRun={handleBatchRun}
                 isGenerating={run.isGenerating}
                 progress={run.batchProgress}
+                autoFillContext="ltx-flf"
               />
             </div>
           </WorkflowSection>

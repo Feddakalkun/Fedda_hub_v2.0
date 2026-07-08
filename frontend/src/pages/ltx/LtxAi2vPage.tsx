@@ -118,8 +118,10 @@ export const LtxAi2vPage = () => {
       .catch(() => {});
   }, []);
 
-  const generateVoiceClip = async () => {
-    if (!ttsText.trim() || ttsGenerating) return;
+  /** Generates the TTS clip and loads it into the audio slot; returns the uploaded filename. */
+  const generateVoiceClip = async (): Promise<string | null> => {
+    if (!ttsText.trim() || ttsGenerating) return null;
+    let uploadedName: string | null = null;
     setTtsGenerating(true);
     try {
       const res = await fetch(`${BACKEND_API.BASE_URL}/api/chat/tts`, {
@@ -137,13 +139,22 @@ export const LtxAi2vPage = () => {
       if (!data.success || !data.audio_base64) throw new Error(data.error || 'Voice generation failed');
       const bytes = Uint8Array.from(atob(data.audio_base64), (c) => c.charCodeAt(0));
       const file = new File([bytes], 'tts-voice.mp3', { type: data.mime_type || 'audio/mpeg' });
-      await uploadTo(file, setAudioFilename, setAudioUploading);
+      await uploadTo(file, (name) => { uploadedName = name; setAudioFilename(name); }, setAudioUploading);
       toast('Voice clip generated and loaded', 'success');
     } catch (err: any) {
       toast(err.message || 'Voice generation failed', 'error');
     } finally {
       setTtsGenerating(false);
     }
+    return uploadedName;
+  };
+
+  /** One click: generate the voice clip, then immediately start the video with it. */
+  const voiceAndGenerate = async () => {
+    if (!imageFilename || !prompt.trim() || run.isGenerating) return;
+    const audioName = await generateVoiceClip();
+    if (!audioName) return;
+    run.start({ ...buildParams(prompt), audio: audioName });
   };
 
   // Consume a "Send to Workflow" handoff (image or TTS audio) on first mount
@@ -308,12 +319,22 @@ export const LtxAi2vPage = () => {
                 )}
                 <button
                   type="button"
-                  onClick={generateVoiceClip}
+                  onClick={() => { void generateVoiceClip(); }}
                   disabled={!ttsText.trim() || ttsGenerating}
                   className="flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-violet-300 transition-all hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {ttsGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Volume2 className="h-3 w-3" />}
                   Voice
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { void voiceAndGenerate(); }}
+                  disabled={!ttsText.trim() || !imageFilename || !prompt.trim() || ttsGenerating || run.isGenerating}
+                  title="Generate the voice clip and immediately start the video with it"
+                  className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {(ttsGenerating || run.isGenerating) ? <Loader2 className="h-3 w-3 animate-spin" /> : <Music className="h-3 w-3" />}
+                  Voice + Video
                 </button>
               </div>
             </div>
@@ -349,6 +370,7 @@ export const LtxAi2vPage = () => {
               onRun={handleBatchRun}
               isGenerating={run.isGenerating}
               progress={run.batchProgress}
+              autoFillContext="ltx-lipsync"
             />
           </div>
         </WorkflowSection>

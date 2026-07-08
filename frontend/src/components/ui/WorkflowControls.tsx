@@ -233,6 +233,8 @@ interface BatchQueuePanelProps {
   isGenerating?: boolean;
   progress?: { current: number; total: number } | null;
   disabledHint?: string;
+  /** When set, shows a dice button that fills the queue with N random influencer prompts for this context. */
+  autoFillContext?: string;
 }
 
 /** Collapsible "one prompt per line" batch queue — same treatment as the image pages' Batch Queue. */
@@ -243,9 +245,25 @@ export const BatchQueuePanel = ({
   isGenerating = false,
   progress = null,
   disabledHint,
+  autoFillContext,
 }: BatchQueuePanelProps) => {
   const [expanded, setExpanded] = useState(false);
+  const [filling, setFilling] = useState(false);
   const prompts = value.split('\n').map((line) => line.trim()).filter(Boolean);
+
+  const autoFill = async () => {
+    if (!autoFillContext || filling) return;
+    setFilling(true);
+    try {
+      const res = await fetch(`/api/prompts/influencer-batch?count=10&context=${encodeURIComponent(autoFillContext)}`);
+      const data = await res.json();
+      if (data?.success && Array.isArray(data.prompts) && data.prompts.length) {
+        onChange(data.prompts.join('\n'));
+        setExpanded(true);
+      }
+    } catch { /* backend not restarted yet or offline — ignore */ }
+    setFilling(false);
+  };
 
   return (
     <div>
@@ -263,11 +281,24 @@ export const BatchQueuePanel = ({
             </span>
           )}
         </button>
-        {progress && (
-          <span className="animate-pulse font-mono text-[9px] text-violet-400">
-            {progress.current} / {progress.total}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {autoFillContext && !progress && (
+            <button
+              type="button"
+              onClick={autoFill}
+              disabled={filling}
+              title="Fill with 10 random influencer prompts"
+              className="rounded border border-violet-500/25 bg-violet-500/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-violet-300/80 transition-all hover:bg-violet-500/20 disabled:opacity-40"
+            >
+              {filling ? '…' : '🎲 Fill 10'}
+            </button>
+          )}
+          {progress && (
+            <span className="animate-pulse font-mono text-[9px] text-violet-400">
+              {progress.current} / {progress.total}
+            </span>
+          )}
+        </div>
       </div>
       {expanded && (
         <div className="mt-2 space-y-2">

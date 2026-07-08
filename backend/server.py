@@ -2139,6 +2139,18 @@ async def ollama_pull_model(req: OllamaPullRequest):
     )
 
 
+@app.get("/api/prompts/influencer-batch")
+async def influencer_prompt_batch(count: int = 10, context: str = "zimage"):
+    """Roll N random influencer briefs and template-compose them instantly (no Ollama)."""
+    import influencer_prompts
+    n = max(1, min(50, count))
+    prompts = [
+        influencer_prompts.compose_prompt(influencer_prompts.roll_brief(), context)
+        for _ in range(n)
+    ]
+    return {"success": True, "prompts": prompts}
+
+
 @app.post("/api/ollama/prompt")
 async def ollama_generate_prompt(req: OllamaPromptRequest):
     """Generate or enhance a prompt using Ollama. Returns SSE stream of tokens."""

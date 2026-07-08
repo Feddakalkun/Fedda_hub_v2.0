@@ -178,6 +178,24 @@ def roll_brief(rng: random.Random | None = None) -> Dict[str, str]:
         "negative": r.choice(NEGATIVES),
     }
 
+def compose_prompt(brief: Dict[str, str], context: str = "zimage") -> str:
+    """Template-compose a full prompt straight from a brief — no LLM round-trip.
+
+    Slightly less fluent than the Ollama-woven version, but instant, which makes
+    batch generation (N prompts at once) possible.
+    """
+    is_video = any(k in (context or "").lower() for k in ("wan", "ltx", "vid", "hunyuan"))
+    text = (
+        f"photorealistic candid photo of {brief['subject']}, {brief['action']} "
+        f"in {brief['scene']}, wearing {brief['outfit']}, {brief['lighting']}, "
+        f"{brief['camera']}, {brief['lens']}, {brief['composition']}, "
+        f"{brief['mood']} mood, {brief['palette']}, {brief['realism']}, {brief['negative']}"
+    )
+    if is_video:
+        text += ", subtle natural motion, hair shifting gently, a small breath, gentle camera drift"
+    return text
+
+
 def build_messages(brief: Dict[str, str], context: str = "zimage") -> Tuple[str, str]:
     is_video = any(k in (context or "").lower() for k in ("wan", "ltx", "vid", "hunyuan"))
 

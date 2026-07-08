@@ -217,6 +217,7 @@ export const LtxImg2VidPage = () => {
                 onRun={handleBatchRun}
                 isGenerating={run.isGenerating}
                 progress={run.batchProgress}
+                autoFillContext="ltx-img2vid"
               />
             </div>
           </WorkflowSection>

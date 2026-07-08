@@ -196,6 +196,7 @@ export const Wan22XxxImg2VidPage = () => {
                 onRun={handleBatchRun}
                 isGenerating={run.isGenerating}
                 progress={run.batchProgress}
+                autoFillContext="wan-i2v"
               />
             </div>
           </WorkflowSection>

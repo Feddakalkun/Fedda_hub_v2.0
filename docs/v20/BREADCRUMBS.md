@@ -395,3 +395,19 @@ thumbnails; simplify SDXL inpaint/outpaint; Chroma higher-res presets (optional)
 - Beat-sync note: clip is generated without audio; user drops it on the beat in
   their editor. Possible v2: mux a chosen audio track + place the morph at a
   timestamp.
+
+## 2026-07-08 - Automation pass: one-click pipelines
+
+- Transform Reel is now one-click: "Auto - Photo to Reel" runs character frame
+  -> stage -> morph video unattended (button shows step 1/2, 2/2). "Frame Only"
+  stays for re-rolling the character look before morphing.
+- AI2V "Voice + Video": generates the TTS clip and immediately starts the
+  lipsync video with it - text to talking video in one press.
+- Instant influencer prompt batches: GET /api/prompts/influencer-batch
+  (compose_prompt in influencer_prompts.py template-composes briefs, no Ollama
+  round-trip). "Fill 10" dice button in every Batch Queue: image pages
+  (Txt2ImgPage inline UI) + all 5 video pages (BatchQueuePanel autoFillContext).
+  Fill 10 -> Run Batch = ten different scenes of a character LoRA unattended.
+- GOTCHA relearned: never patch source files with PowerShell -replace on PS5.1;
+  it corrupts non-ASCII (Chinese negative prompt in Wan22Xxx, em-dashes). Use
+  the Edit tool; corruption was caught and reverted before commit.

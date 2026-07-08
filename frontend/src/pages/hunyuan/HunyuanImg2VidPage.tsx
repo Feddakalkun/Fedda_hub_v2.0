@@ -232,6 +232,7 @@ export const HunyuanImg2VidPage = () => {
                 onRun={handleBatchRun}
                 isGenerating={run.isGenerating}
                 progress={run.batchProgress}
+                autoFillContext="hunyuan-i2v"
               />
             </div>
           </WorkflowSection>

@@ -96,8 +96,10 @@ export const TransformReelPage = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const createCharacterFrame = async () => {
-    if (!sourceFilename || !characterPrompt.trim() || transforming) return;
+  /** Runs the Qwen edit and stages the result as a ComfyUI input; returns the staged filename. */
+  const createCharacterFrame = async (): Promise<string | null> => {
+    if (!sourceFilename || !characterPrompt.trim() || transforming) return null;
+    let stagedName: string | null = null;
     setTransforming(true);
     setTransformedUrl(null);
     setTransformedInput(null);
@@ -151,6 +153,7 @@ export const TransformReelPage = () => {
             const upData = await upRes.json();
             if (!upData.success) { reject(new Error(upData.detail || 'Could not stage character frame')); return; }
             setTransformedInput(upData.filename);
+            stagedName = upData.filename;
             resolve();
           } catch {
             /* transient poll errors are fine */
@@ -163,14 +166,16 @@ export const TransformReelPage = () => {
     } finally {
       setTransforming(false);
     }
+    return stagedName;
   };
 
-  const generateMorph = () => {
-    if (!sourceFilename || !transformedInput || run.isGenerating) return;
+  const generateMorph = (lastFrameOverride?: string) => {
+    const lastFrame = lastFrameOverride ?? transformedInput;
+    if (!sourceFilename || !lastFrame || run.isGenerating) return;
     const dims = getLtxDimensions(aspectRatio, resolution);
     run.start({
       image_first: sourceFilename,
-      image_last: transformedInput,
+      image_last: lastFrame,
       prompt: morphPrompt.trim() || DEFAULT_MORPH_PROMPT,
       aspect_ratio: getSafeLtxAspect(aspectRatio),
       direction: aspectRatio === '9:16' || aspectRatio === '3:4' ? 'Vertical' : 'Horizontal',
@@ -183,9 +188,16 @@ export const TransformReelPage = () => {
     });
   };
 
+  /** Full pipeline in one click: character frame → auto-start the morph video. */
+  const autoGenerate = async () => {
+    const staged = await createCharacterFrame();
+    if (staged) generateMorph(staged);
+  };
+
   const dims = getLtxDimensions(aspectRatio, resolution);
   const canTransform = !!sourceFilename && !!characterPrompt.trim() && !transforming;
   const canMorph = !!sourceFilename && !!transformedInput && !run.isGenerating && !transforming;
+  const canAuto = !!sourceFilename && !!characterPrompt.trim() && !transforming && !run.isGenerating;
 
   return (
     <WorkflowShell
@@ -246,15 +258,27 @@ export const TransformReelPage = () => {
                 placeholder="Describe who she becomes..."
                 className={cn(inputBase, 'min-h-[72px] resize-y')}
               />
-              <button
-                type="button"
-                onClick={createCharacterFrame}
-                disabled={!canTransform}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-violet-500/30 bg-violet-500/10 py-2.5 text-[11px] font-black uppercase tracking-widest text-violet-300 transition-all hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {transforming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                {transforming ? 'Creating character frame…' : 'Create Character Frame'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={autoGenerate}
+                  disabled={!canAuto}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-violet-600 py-2.5 text-[11px] font-black uppercase tracking-widest text-white transition-all hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {(transforming || run.isGenerating) ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+                  {transforming ? 'Step 1/2 — character frame…' : run.isGenerating ? 'Step 2/2 — morph video…' : 'Auto — Photo to Reel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { void createCharacterFrame(); }}
+                  disabled={!canTransform}
+                  title="Only create the character frame (re-roll until you like it, then morph manually below)"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-2.5 text-[11px] font-black uppercase tracking-widest text-violet-300 transition-all hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Frame Only
+                </button>
+              </div>
             </div>
           </WorkflowSection>
         </div>
@@ -312,7 +336,7 @@ export const TransformReelPage = () => {
           </div>
           <div className="mt-4">
             <GenerateButton
-              onClick={generateMorph}
+              onClick={() => generateMorph()}
               disabled={!canMorph}
               isGenerating={run.isGenerating}
               label="Generate Transformation Reel"

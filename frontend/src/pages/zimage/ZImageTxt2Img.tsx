@@ -211,6 +211,7 @@ export const Txt2ImgPage = ({
   // Batch queue state
   const [batchRaw, setBatchRaw] = usePersistentState(key('batch_raw'), '');
   const [batchExpanded, setBatchExpanded] = useState(false);
+  const [batchFilling, setBatchFilling] = useState(false);
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
   const batchQueueRef = useRef<string[]>([]);
   const completionHandledRef = useRef(false);
@@ -705,11 +706,36 @@ export const Txt2ImgPage = ({
               </span>
             )}
           </button>
-          {batchProgress && (
-            <span className="animate-pulse font-mono text-[9px] text-violet-400">
-              {batchProgress.current} / {batchProgress.total}
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {!batchProgress && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (batchFilling) return;
+                  setBatchFilling(true);
+                  try {
+                    const res = await fetch(`${BACKEND_API.BASE_URL}/api/prompts/influencer-batch?count=10&context=${encodeURIComponent(promptContext)}`);
+                    const data = await res.json();
+                    if (data?.success && Array.isArray(data.prompts) && data.prompts.length) {
+                      setBatchRaw(data.prompts.join('\n'));
+                      setBatchExpanded(true);
+                    }
+                  } catch { /* backend offline or not restarted — ignore */ }
+                  setBatchFilling(false);
+                }}
+                disabled={batchFilling}
+                title="Fill with 10 random influencer prompts"
+                className="rounded border border-violet-500/25 bg-violet-500/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-violet-300/80 transition-all hover:bg-violet-500/20 disabled:opacity-40"
+              >
+                {batchFilling ? '…' : '🎲 Fill 10'}
+              </button>
+            )}
+            {batchProgress && (
+              <span className="animate-pulse font-mono text-[9px] text-violet-400">
+                {batchProgress.current} / {batchProgress.total}
+              </span>
+            )}
+          </div>
         </div>
         {batchExpanded && (
           <div className="mt-2 space-y-2">
