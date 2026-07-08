@@ -152,7 +152,8 @@
         "qwen-edit-2509-image-reference",
         "qwen-edit-2512",
         "qwen-multi-angles",
-        "qwen-multi-angles-fast"
+        "qwen-multi-angles-fast",
+        "qwen-txt2img"
       ],
       "custom_nodes": [
         "ComfyUI-qwenmultiangle",

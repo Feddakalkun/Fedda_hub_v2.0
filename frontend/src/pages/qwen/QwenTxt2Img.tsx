@@ -1,7 +1,5 @@
 import { Txt2ImgPage } from '../zimage/ZImageTxt2Img';
 
-// Temporary workflow bridge:
-// Until a dedicated Qwen backend workflow is added, we reuse the same txt2img payload surface.
 export const QwenTxt2Img = () => {
   const QWEN_ASPECT_PRESETS = [
     { label: '1:1', w: 1328, h: 1328 },
@@ -16,7 +14,7 @@ export const QwenTxt2Img = () => {
   return (
     <Txt2ImgPage
       storageKey="qwen_txt2img"
-      workflowId="qwen-edit-2512"
+      workflowId="qwen-txt2img"
       familyLabel="Qwen"
       capabilityLabel="Text to Image"
       promptContext="qwen"

@@ -4,6 +4,7 @@ import { FluxTxt2Img } from './flux/FluxTxt2Img';
 import { ChromaSimpleTxt2Img, ChromaTxt2Img } from './chroma/ChromaTxt2Img';
 import { FireRedImageEditPage } from './firered/FireRedImageEditPage';
 import { QwenImageReferencePage } from './qwen/QwenImageReferencePage';
+import { QwenTxt2Img } from './qwen/QwenTxt2Img';
 import { QwenMultiAnglesPage } from './qwen/QwenMultiAnglesPage';
 import { QwenRapidEditPage } from './qwen/QwenRapidEditPage';
 import { ZImageDualLoraPage } from './zimage/ZImageDualLoraPage';
@@ -33,8 +34,8 @@ export const IMAGE_WORKFLOW_PAGES: Record<string, ComponentType> = {
   'flux': FluxTxt2Img,
   'flux-txt2img': FluxTxt2Img,
   'firered-image-edit': FireRedImageEditPage,
-  'qwen': QwenImageReferencePage,
-  'qwen-txt2img': QwenImageReferencePage,
+  'qwen': QwenTxt2Img,
+  'qwen-txt2img': QwenTxt2Img,
   'qwen-image-ref': QwenImageReferencePage,
   'qwen-rapid-edit-v23': QwenRapidEditPage,
   'qwen-multi-angle': QwenMultiAnglesPage,

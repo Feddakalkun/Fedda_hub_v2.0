@@ -2279,5 +2279,59 @@
         "label": "Use First N Seconds (0 = full clip)"
       }
     }
+  },
+  "qwen-txt2img": {
+    "name": "Qwen - Text to Image",
+    "filename": "qwen/qwen-txt2img.json",
+    "description": "Pure text-to-image with Qwen Image 2512 (4-step Lightning).",
+    "inputs": {
+      "prompt": {
+        "node_id": "10",
+        "input_key": "text",
+        "type": "string",
+        "label": "Prompt"
+      },
+      "negative": {
+        "node_id": "6",
+        "input_key": "text",
+        "type": "string",
+        "label": "Negative Prompt"
+      },
+      "width": {
+        "node_id": "5",
+        "input_key": "width",
+        "type": "number",
+        "label": "Width"
+      },
+      "height": {
+        "node_id": "5",
+        "input_key": "height",
+        "type": "number",
+        "label": "Height"
+      },
+      "seed": {
+        "node_id": "4",
+        "input_key": "seed",
+        "type": "number",
+        "label": "Seed"
+      },
+      "steps": {
+        "node_id": "4",
+        "input_key": "steps",
+        "type": "number",
+        "label": "Steps"
+      },
+      "cfg": {
+        "node_id": "4",
+        "input_key": "cfg",
+        "type": "number",
+        "label": "CFG"
+      },
+      "loras": {
+        "node_id": "30",
+        "type": "loras",
+        "label": "LoRAs"
+      }
+    }
   }
 }
