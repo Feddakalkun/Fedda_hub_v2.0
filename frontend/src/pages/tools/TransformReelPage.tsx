@@ -104,6 +104,22 @@ export const TransformReelPage = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /** Source photo's dimensions scaled to ~1024 on the long side, snapped to /8 — keeps the edit in the same aspect ratio. */
+  const getSourceDims = (): Promise<{ w: number; h: number }> =>
+    new Promise((resolve) => {
+      if (!sourcePreview) { resolve({ w: 768, h: 768 }); return; }
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, 1024 / Math.max(img.naturalWidth, img.naturalHeight));
+        resolve({
+          w: Math.max(64, Math.round((img.naturalWidth * scale) / 8) * 8),
+          h: Math.max(64, Math.round((img.naturalHeight * scale) / 8) * 8),
+        });
+      };
+      img.onerror = () => resolve({ w: 768, h: 768 });
+      img.src = sourcePreview;
+    });
+
   /** Runs the Qwen edit and stages the result as a ComfyUI input; returns the staged filename. */
   const createCharacterFrame = async (): Promise<string | null> => {
     if (!sourceFilename || !characterPrompt.trim() || transforming) return null;
@@ -112,6 +128,7 @@ export const TransformReelPage = () => {
     setTransformedUrl(null);
     setTransformedInput(null);
     try {
+      const dims = await getSourceDims();
       const res = await fetch(`${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.GENERATE}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -119,6 +136,8 @@ export const TransformReelPage = () => {
           workflow_id: 'qwen-rapid-edit-v23',
           params: {
             image: sourceFilename,
+            width: dims.w,
+            height: dims.h,
             prompt:
               `Transform her into ${characterPrompt.trim()}. `
               + 'Completely replace her clothing with the new costume - highly detailed, form-fitting and flattering, '
