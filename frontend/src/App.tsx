@@ -17,6 +17,7 @@ import { GrokPage } from './pages/GrokPage';
 import { ZonosTTSPage } from './pages/ZonosTTSPage';
 import { UIAgentPage } from './pages/UIAgentPage';
 import { MediaDownloaderPage } from './pages/tools/MediaDownloaderPage';
+import { TransformReelPage } from './pages/tools/TransformReelPage';
 import { ModuleUnavailablePage } from './pages/ModuleUnavailablePage';
 import { GlobalGalleryPanel } from './components/layout/GlobalGalleryPanel';
 import {
@@ -182,6 +183,7 @@ function FeddaApp() {
     if (activeTab === 'zonos-tts') return <ZonosTTSPage />;
     if (activeTab === 'companion') return <UIAgentPage />;
     if (activeTab === 'media-downloader') return <MediaDownloaderPage />;
+    if (activeTab === 'transform-reel') return <TransformReelPage />;
 
     const currentModule = findModuleForTab(activeTab, availableModules);
     if (currentModule?.area === 'image') {

@@ -1,4 +1,4 @@
-import { Bot, Download, Film, Images, LayoutDashboard, Sparkles, Video, Volume2, Heart, type LucideIcon } from 'lucide-react';
+import { Bot, Download, Film, Images, LayoutDashboard, Sparkles, Video, Volume2, Heart, Wand2, type LucideIcon } from 'lucide-react';
 
 export type ModulePack = 'core' | 'booster';
 export type ModuleArea = 'home' | 'image' | 'video' | 'system';
@@ -159,6 +159,18 @@ export const FEDDA_MODULES: FeddaModule[] = [
     defaultTab: 'media-downloader',
     Icon: Download,
     card: { poster: '/cards/new/venice/33.jpeg' },
+  },
+  {
+    id: 'transform-reel',
+    sourceModuleId: 'core-shell',
+    label: 'Transform Reel',
+    description: 'The viral beat-drop transformation: photo → character version of the same frame → seamless morph video, ready for reels.',
+    area: 'home',
+    pack: 'core',
+    tabs: ['transform-reel'],
+    defaultTab: 'transform-reel',
+    Icon: Wand2,
+    card: veniceCard(36),
   },
   {
     id: 'companion',

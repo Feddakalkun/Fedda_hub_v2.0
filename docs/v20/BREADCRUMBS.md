@@ -378,3 +378,20 @@ thumbnails; simplify SDXL inpaint/outpaint; Chroma higher-res presets (optional)
   unless Chrome is closed - Firefox is the reliable choice.
 - yt-dlp upgraded 2026.6.9 -> 2026.7.4 in the install (extractors go stale
   fast; update.bat does not currently pin/refresh yt-dlp - consider adding).
+
+## 2026-07-08 - Transform Reel (viral beat-drop transformation)
+
+- New page pages/tools/TransformReelPage.tsx (tab transform-reel, card venice
+  36, module in registry.ts area home): the Instagram-style transformation
+  reel. Flow: upload photo -> Qwen Rapid Edit v23 makes the character version
+  of the SAME frame (pose/face/framing kept; preset chips: superhero, anime,
+  cyberpunk, elf queen, comic, vampire) -> the edited output is re-uploaded as
+  ComfyUI input -> LTX First/Last Frame morphs source->character (default
+  9:16, 3s, guide strengths 0.85) with an energy-burst transformation prompt.
+- No new backend: chains existing qwen-rapid-edit-v23 + ltx-flf via
+  /api/generate client-side. Rapid-edit checkpoint verified on disk. WorkflowShell
+  banner points at ltx-flf; if rapid-edit models are missing on a fresh install
+  run download_models.bat qwen-rapid-edit-v23.
+- Beat-sync note: clip is generated without audio; user drops it on the beat in
+  their editor. Possible v2: mux a chosen audio track + place the morph at a
+  timestamp.
