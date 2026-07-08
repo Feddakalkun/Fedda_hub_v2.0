@@ -36,6 +36,17 @@ export function ZonosTTSPage() {
   const [cbPace, setCbPace] = useState(0.5);
   const [cbRefName, setCbRefName] = useState('');
   const [cbRefUploading, setCbRefUploading] = useState(false);
+  const [cbVoices, setCbVoices] = useState<Array<{ id: string; name: string }>>([]);
+
+  const refreshCbVoices = () => {
+    fetch('/api/tts/voices')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.voices)) setCbVoices(data.voices);
+      })
+      .catch(() => {});
+  };
+  useEffect(refreshCbVoices, []);
 
   useEffect(() => {
     fetch('/api/tts/edge-voices')
@@ -63,13 +74,17 @@ export function ZonosTTSPage() {
     if (!file) return;
     setCbRefUploading(true);
     try {
+      const suggested = file.name.replace(/\.[^.]+$/, '');
+      const name = window.prompt('Name this voice:', suggested) ?? suggested;
       const form = new FormData();
       form.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: form });
+      form.append('name', name);
+      const res = await fetch('/api/tts/voices', { method: 'POST', body: form });
       const data = await res.json();
-      if (!data.success) throw new Error(data.detail || 'Upload failed');
-      setCbRefName(data.filename);
-      toast('Reference voice uploaded', 'success');
+      if (!data.success) throw new Error(data.error || 'Upload failed');
+      setCbRefName(data.voice.id);
+      refreshCbVoices();
+      toast(`Voice "${data.voice.name}" saved to library`, 'success');
     } catch (err: any) {
       toast(err.message || 'Upload failed', 'error');
     } finally {
@@ -229,26 +244,24 @@ export function ZonosTTSPage() {
             <div className="space-y-3">
               <div className="rounded-xl border border-white/10 bg-black/20 p-4 space-y-3">
                 <div className="text-xs font-semibold uppercase tracking-[1px] text-white/60">
-                  Voice Reference <span className="opacity-50">(optional — clone a voice from a 5–15s clip)</span>
+                  Voice <span className="opacity-50">(saved reference clips — add a 5–15s clip to create a new voice)</span>
                 </div>
                 <div className="flex gap-2 items-center">
-                  <div className="flex-1 rounded-xl fedda-input p-3 text-sm text-white/60 truncate">
-                    {cbRefName || 'No reference — built-in natural female voice'}
-                  </div>
+                  <select
+                    value={cbRefName}
+                    onChange={(e) => setCbRefName(e.target.value)}
+                    className="flex-1 rounded-xl fedda-input p-3 text-sm"
+                  >
+                    <option value="">Default — built-in natural female voice</option>
+                    {cbVoices.map((v) => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
                   <label className="cursor-pointer flex items-center gap-2 px-3 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-sm">
                     {cbRefUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                    Upload
+                    Add Voice
                     <input type="file" accept="audio/*" className="hidden" onChange={handleCbRefUpload} />
                   </label>
-                  {cbRefName && (
-                    <button
-                      type="button"
-                      onClick={() => setCbRefName('')}
-                      className="px-3 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-sm text-white/50"
-                    >
-                      Clear
-                    </button>
-                  )}
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

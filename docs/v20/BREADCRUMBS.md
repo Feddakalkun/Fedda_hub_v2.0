@@ -343,3 +343,15 @@ thumbnails; simplify SDXL inpaint/outpaint; Chroma higher-res presets (optional)
   exaggeration+pace sliders and a real reference-clip upload; AI2V in-page
   voice box got an engine dropdown (Edge fast / Chatterbox natural) and a
   "young/casual" suggested group at the top of the Edge voice list.
+
+## 2026-07-08 - Chatterbox voice library + Voice Studio card (venice 35)
+
+- Voice library: ComfyUI/input/VOICES holds named reference clips. Backend
+  GET/POST /api/tts/voices (list/save, name sanitized, audio exts only).
+  Voice dropdowns on the Voice Studio page (Add Voice saves to library) and
+  in the AI2V in-page voice box (chatterbox mode) - pick Default or any saved
+  voice; the id (VOICES/name.wav) is passed as reference_audio.
+- Card 35 generated on the user's rig via Z-Image Turbo (1536x896, first roll,
+  teal-elf mascot + glowing mic + waveforms + VOICE STUDIO title), saved as
+  cards/new/venice/35.jpeg, module renamed zonos-tts -> label "Voice Studio",
+  card: veniceCard(35). 35.mp4 hover video still missing (optional, WAN I2V).

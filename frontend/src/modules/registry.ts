@@ -138,14 +138,15 @@ export const FEDDA_MODULES: FeddaModule[] = [
   {
     id: 'zonos-tts',
     sourceModuleId: 'core-shell',
-    label: 'Text to Speech',
-    description: 'Text-to-speech with local Edge neural voices (no setup) or Zonos 2 voice cloning (WSL server). Send clips straight to Audio to Video.',
+    label: 'Voice Studio',
+    description: 'Generate speech from text — Edge neural voices, Chatterbox natural voice with cloning, or Zonos 2. Send clips straight to Audio to Video.',
     area: 'system',
     pack: 'core',
 
     tabs: ['zonos-tts'],
     defaultTab: 'zonos-tts',
     Icon: Volume2,
+    card: veniceCard(35),
   },
   {
     id: 'media-downloader',

@@ -1049,6 +1049,45 @@ def _chatterbox_tts_sync(text: str, reference_audio: str = "", exaggeration: flo
         return {"success": False, "error": f"Chatterbox TTS failed: {e}", "provider": "chatterbox"}
 
 
+CHATTERBOX_VOICES_DIR = COMFY_DIR / "input" / "VOICES"
+_VOICE_FILE_EXTS = {".wav", ".mp3", ".m4a", ".ogg", ".flac"}
+
+
+@app.get("/api/tts/voices")
+async def list_tts_voices():
+    """Saved Chatterbox voice references (one clip = one reusable named voice)."""
+    try:
+        CHATTERBOX_VOICES_DIR.mkdir(parents=True, exist_ok=True)
+        voices = sorted(
+            (
+                {"id": f"VOICES/{p.name}", "name": p.stem}
+                for p in CHATTERBOX_VOICES_DIR.iterdir()
+                if p.suffix.lower() in _VOICE_FILE_EXTS
+            ),
+            key=lambda v: v["name"].lower(),
+        )
+        return {"success": True, "voices": voices}
+    except Exception as e:
+        return {"success": False, "error": str(e), "voices": []}
+
+
+@app.post("/api/tts/voices")
+async def save_tts_voice(file: UploadFile = File(...), name: str = Form("")):
+    """Save a reference clip into the voice library under a friendly name."""
+    try:
+        CHATTERBOX_VOICES_DIR.mkdir(parents=True, exist_ok=True)
+        base = (name or Path(file.filename or "voice").stem).strip()
+        base = re.sub(r"[^\w\- ]+", "", base).strip() or "voice"
+        suffix = Path(file.filename or "").suffix.lower()
+        if suffix not in _VOICE_FILE_EXTS:
+            suffix = ".wav"
+        target = CHATTERBOX_VOICES_DIR / f"{base}{suffix}"
+        target.write_bytes(await file.read())
+        return {"success": True, "voice": {"id": f"VOICES/{target.name}", "name": target.stem}}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 _EDGE_VOICES_CACHE: List[Dict[str, str]] = []
 
 

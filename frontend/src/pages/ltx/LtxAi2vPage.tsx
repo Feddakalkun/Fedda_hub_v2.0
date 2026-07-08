@@ -48,8 +48,10 @@ export const LtxAi2vPage = () => {
   const [ttsText, setTtsText] = usePersistentState('ltx_ai2v_tts_text', '');
   const [ttsVoice, setTtsVoice] = usePersistentState('ltx_ai2v_tts_voice', 'en-US-AvaNeural');
   const [ttsEngine, setTtsEngine] = usePersistentState<'edge' | 'chatterbox'>('ltx_ai2v_tts_engine', 'edge');
+  const [ttsCbVoice, setTtsCbVoice] = usePersistentState('ltx_ai2v_tts_cb_voice', '');
   const [ttsGenerating, setTtsGenerating] = useState(false);
   const [edgeVoices, setEdgeVoices] = useState<Array<{ id: string; name: string }>>([]);
+  const [cbVoices, setCbVoices] = useState<Array<{ id: string; name: string }>>([]);
 
   const { toast } = useToast();
   const run = useWorkflowRun({
@@ -108,6 +110,12 @@ export const LtxAi2vPage = () => {
         if (data?.success && Array.isArray(data.voices)) setEdgeVoices(data.voices);
       })
       .catch(() => {});
+    fetch(`${BACKEND_API.BASE_URL}/api/tts/voices`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.voices)) setCbVoices(data.voices);
+      })
+      .catch(() => {});
   }, []);
 
   const generateVoiceClip = async () => {
@@ -117,7 +125,13 @@ export const LtxAi2vPage = () => {
       const res = await fetch(`${BACKEND_API.BASE_URL}/api/chat/tts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: ttsText.trim(), tts_engine: ttsEngine, voice_name: ttsVoice, cfg_scale: 0.5 }),
+        body: JSON.stringify({
+          text: ttsText.trim(),
+          tts_engine: ttsEngine,
+          voice_name: ttsVoice,
+          reference_audio: ttsEngine === 'chatterbox' ? ttsCbVoice : '',
+          cfg_scale: 0.5,
+        }),
       });
       const data = await res.json();
       if (!data.success || !data.audio_base64) throw new Error(data.error || 'Voice generation failed');
@@ -258,28 +272,40 @@ export const LtxAi2vPage = () => {
                   <option value="edge">Edge (fast)</option>
                   <option value="chatterbox">Chatterbox (natural)</option>
                 </select>
-                <select
-                  value={ttsVoice}
-                  onChange={(e) => setTtsVoice(e.target.value)}
-                  disabled={ttsEngine === 'chatterbox'}
-                  className={cn(inputBase, 'flex-1 text-[11px] disabled:opacity-40')}
-                >
-                  {edgeVoices.length === 0 && <option value="en-US-AvaNeural">en-US-Ava (default)</option>}
-                  {edgeVoices.length > 0 && (
-                    <optgroup label="★ Suggested — young / casual">
-                      {edgeVoices.filter((v) => SUGGESTED_EDGE_VOICES.includes(v.id)).map((v) => (
-                        <option key={`s-${v.id}`} value={v.id}>{v.name}</option>
-                      ))}
-                    </optgroup>
-                  )}
-                  {edgeVoices.length > 0 && (
-                    <optgroup label="All voices">
-                      {edgeVoices.map((v) => (
-                        <option key={v.id} value={v.id}>{v.name}</option>
-                      ))}
-                    </optgroup>
-                  )}
-                </select>
+                {ttsEngine === 'chatterbox' ? (
+                  <select
+                    value={ttsCbVoice}
+                    onChange={(e) => setTtsCbVoice(e.target.value)}
+                    className={cn(inputBase, 'flex-1 text-[11px]')}
+                  >
+                    <option value="">Default — natural female</option>
+                    {cbVoices.map((v) => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <select
+                    value={ttsVoice}
+                    onChange={(e) => setTtsVoice(e.target.value)}
+                    className={cn(inputBase, 'flex-1 text-[11px]')}
+                  >
+                    {edgeVoices.length === 0 && <option value="en-US-AvaNeural">en-US-Ava (default)</option>}
+                    {edgeVoices.length > 0 && (
+                      <optgroup label="★ Suggested — young / casual">
+                        {edgeVoices.filter((v) => SUGGESTED_EDGE_VOICES.includes(v.id)).map((v) => (
+                          <option key={`s-${v.id}`} value={v.id}>{v.name}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {edgeVoices.length > 0 && (
+                      <optgroup label="All voices">
+                        {edgeVoices.map((v) => (
+                          <option key={v.id} value={v.id}>{v.name}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                )}
                 <button
                   type="button"
                   onClick={generateVoiceClip}
