@@ -568,3 +568,19 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   denoise. For MAX identity fidelity (outfit-only, pose/face/background pixel-
   locked) the better tool is automask inpaint (they have SDXL Inpaint Automask
   w/ PersonMaskUltra) - proposed as a future 3rd "Inpaint" edit mode.
+
+## 2026-07-08 - Transform Reel: Inpaint edit mode (locks face/hair/background)
+
+- User feedback on Quality (2509): works now but face/hair drift too much + grainy
+  (2509 regenerates the whole frame; 4-step lightning is soft). Fundamental, not
+  a settings issue - so added the automask inpaint path as a 3rd edit mode.
+- Inpaint mode routes the character frame through sdxl-inpaint-automask:
+  mask_clothes + mask_body = true, mask_face/hair/background = false, so ONLY the
+  outfit region is repainted and her face, hair and background stay pixel-locked.
+  Edit Strength (denoise ~0.85) applies here; steps floored to 20 (SDXL, not
+  lightning); scene change is ignored (background is masked out - noted in UI).
+  Prompt reduced to an outfit-focused fill prompt.
+- createCharacterFrame refactored to build reqBody per mode (fast/quality/inpaint);
+  poll status URL now uses reqBody.workflow_id instead of hardcoded rapid-edit.
+- Three-way toggle: Fast (rapid img2img) / Quality (2509 flexible) / Inpaint
+  (max identity fidelity, outfit-only). SDXL checkpoints confirmed on disk.

@@ -107,8 +107,8 @@ export const TransformReelPage = () => {
   const [beatUploading, setBeatUploading] = useState(false);
   const [beatDropSec, setBeatDropSec] = usePersistentState('treel_beat_drop', 0);
   const [muxing, setMuxing] = useState(false);
-  // Which Qwen edit model makes the character frame
-  const [editModel, setEditModel] = usePersistentState<'fast' | 'quality'>('treel_edit_model', 'fast');
+  // Which model makes the character frame
+  const [editModel, setEditModel] = usePersistentState<'fast' | 'quality' | 'inpaint'>('treel_edit_model', 'fast');
   // Character-frame (Qwen img2img) controls
   const [editStrength, setEditStrength] = usePersistentState('treel_edit_strength', 0.85);
   const [editCfg, setEditCfg] = usePersistentState('treel_edit_cfg', 1.0);
@@ -203,18 +203,44 @@ export const TransformReelPage = () => {
     setTransformedInput(null);
     try {
       const dims = await getSourceDims();
-      const res = await fetch(`${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.GENERATE}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const negative = 'blurry, low quality, deformed, different pose, different person, same clothes, unchanged outfit, '
+        + 'costume party look, cosplay prop, plastic, CGI, 3d render, doll, airbrushed, cartoon, illustration, studio backdrop';
+      const seed = Math.floor(Math.random() * 10_000_000_000);
+
+      let reqBody: { workflow_id: string; params: Record<string, unknown> };
+      if (editModel === 'inpaint') {
+        // Inpaint keeps face + hair + background pixel-locked; only clothing/body is repainted.
+        reqBody = {
+          workflow_id: 'sdxl-inpaint-automask',
+          params: {
+            image: sourceFilename,
+            width: dims.w,
+            height: dims.h,
+            preresize_min_width: dims.w,
+            preresize_min_height: dims.h,
+            denoise: editStrength,
+            cfg: editCfg,
+            steps: Math.max(editSteps, 20),
+            seed,
+            prompt: `a woman wearing ${characterPrompt.trim()}, real fabric with natural folds and sheen, `
+              + 'natural skin texture, photorealistic, sharp focus, same body and pose',
+            negative,
+            mask_clothes: true,
+            mask_body: true,
+            mask_face: false,
+            mask_hair: false,
+            mask_accessories: false,
+            mask_background: false,
+          },
+        };
+      } else {
+        // Fast (rapid, img2img) or Quality (2509, reference-conditioned from empty latent)
+        reqBody = {
           workflow_id: editModel === 'quality' ? 'qwen-edit-2509-image-reference' : 'qwen-rapid-edit-v23',
           params: {
             image: sourceFilename,
             width: dims.w,
             height: dims.h,
-            // Quality (2509) generates from an empty latent using the photo as reference
-            // conditioning, so it needs full denoise; Fast (rapid) is true img2img where
-            // Edit Strength is the denoise. Sending 0.85 to 2509 produces a blank frame.
             denoise: editModel === 'quality' ? 1.0 : editStrength,
             cfg: editCfg,
             steps: editSteps,
@@ -234,11 +260,16 @@ export const TransformReelPage = () => {
                 + 'and the same lighting, color grade and grain as the original photo. '
                 + 'Keep the exact same pose, same face, same body position, same camera framing and same background.'
               ),
-            negative: 'blurry, low quality, deformed, different pose, different person, same clothes, unchanged outfit, '
-              + 'costume party look, cosplay prop, plastic, CGI, 3d render, doll, airbrushed, cartoon, illustration, studio backdrop',
-            seed: Math.floor(Math.random() * 10_000_000_000),
+            negative,
+            seed,
           },
-        }),
+        };
+      }
+
+      const res = await fetch(`${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.GENERATE}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reqBody),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.detail || 'Transform failed to start');
@@ -255,7 +286,7 @@ export const TransformReelPage = () => {
           }
           try {
             const statusRes = await fetch(
-              `${BACKEND_API.BASE_URL}/api/generate/status/${promptId}?workflow_id=qwen-rapid-edit-v23`,
+              `${BACKEND_API.BASE_URL}/api/generate/status/${promptId}?workflow_id=${encodeURIComponent(reqBody.workflow_id)}`,
             );
             const status = await statusRes.json();
             if (status.status !== 'completed') return;
@@ -487,7 +518,7 @@ export const TransformReelPage = () => {
                   <button
                     type="button"
                     onClick={() => setEditModel('quality')}
-                    title="Qwen Image Edit 2509 — slower but preserves identity/pose much better"
+                    title="Qwen Image Edit 2509 — flexible, can change scene, but regenerates the whole frame (face/hair may drift)"
                     className={cn(
                       'rounded-md border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest transition-all',
                       editModel === 'quality' ? 'border-violet-500/40 bg-violet-500/15 text-violet-200' : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10',
@@ -495,8 +526,24 @@ export const TransformReelPage = () => {
                   >
                     Quality
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditModel('inpaint')}
+                    title="SDXL automask inpaint — repaints ONLY the clothing; face, hair and background stay pixel-identical. Best for keeping her exactly."
+                    className={cn(
+                      'rounded-md border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest transition-all',
+                      editModel === 'inpaint' ? 'border-violet-500/40 bg-violet-500/15 text-violet-200' : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10',
+                    )}
+                  >
+                    Inpaint
+                  </button>
                 </div>
               </div>
+              {editModel === 'inpaint' && (
+                <p className="text-[9px] text-white/30">
+                  Inpaint locks her face, hair and background — only the outfit changes. Scene change is ignored in this mode.
+                </p>
+              )}
 
               <div className="flex gap-2">
                 <button
