@@ -619,3 +619,17 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   drop lands on the clip midpoint (where the morph peaks). Tune via the
   "Drop is at" slider. Not per-beat matching - just the drop moment, which is
   the sync that matters for these reels.
+
+## 2026-07-08 - Fix LTX ~1s seam (VAEDecodeTiled temporal tiling)
+
+- User saw a glitch every ~1s in Transform Reel output ("makes 1s at a time,
+  not seamless"). Cause: LTX FLF VAEDecodeTiled decoded only temporal_size=32
+  frames/tile with temporal_overlap=8 -> at 24fps a 3s (72f) clip tiled at
+  0-32/24-56/48-80 -> seams every ~1s.
+- Fix: LTX-23-flf.json node 5622 AND LTX-23-img2vid.json node 4851 bumped to
+  temporal_size 96 (4s @24fps in ONE tile -> seamless typical reels),
+  temporal_overlap 24, tile_size 768, overlap 96. ltx-23-ai2v already had
+  temporal_size 4096 (fine). Helps both Transform Reel + LtxFlf/LtxImg2Vid pages.
+- VRAM: short reels decode all frames in one tile; longer clips get 24-frame
+  overlap (was 8) so seams blend. If a very long/high-res LTX job OOMs on decode,
+  lower temporal_size again.
