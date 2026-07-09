@@ -726,3 +726,13 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   fills the Generate box + switches to Generate mode so you make YOUR character
   with a LoRA in a matching image) and "Use Frame" (old behavior: exact frame as
   starter to edit). Shared grabFrameBlob() helper. Needs an Ollama vision model.
+
+## 2026-07-08 - Scail Studio: two-column app layout (use the width)
+
+- User feedback: narrow centered column wasted the screen, wanted 'iphone easy'.
+  Rebuilt as a 2-col grid: big MEDIA STAGE left (sticky, min-h 64vh, uses width +
+  vertical space - shows the clip video w/ capture buttons, then the generated/
+  dressed character large) + a compact CONTROL RAIL right (Step 1 link+Get, Step
+  2 model/lora/prompt/upload, Step 3 outfit). Stacks to one column under lg.
+- Video + capture buttons moved into the stage; the old inline 'Current image'
+  card removed (image now shows in the stage). Empty stage shows a hint.

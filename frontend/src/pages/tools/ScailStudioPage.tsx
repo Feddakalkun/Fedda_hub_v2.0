@@ -311,12 +311,64 @@ export const ScailStudioPage = () => {
       hideOutputPane
       output={null}
     >
-      <div className="mx-auto max-w-2xl space-y-4">
-        {/* STEP 1 — driving clip */}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)]">
+        {/* ── STAGE (big media, uses the width) ── */}
+        <div className="lg:sticky lg:top-4 lg:self-start">
+          <div className="flex min-h-[64vh] flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/40">
+            {starterPreview ? (
+              <>
+                <div className="flex items-center justify-between px-4 py-2.5">
+                  <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-400/80">
+                    <Check className="h-3.5 w-3.5" /> {applying ? 'Applying outfit…' : generating ? 'Generating…' : 'Your character'}
+                  </span>
+                  <button type="button" onClick={() => { setStarterFile(null); setStarterPreview(null); }}
+                    className="text-[10px] font-bold uppercase tracking-widest text-white/30 transition hover:text-white/60">
+                    Start over
+                  </button>
+                </div>
+                <div className="flex flex-1 items-center justify-center bg-black/30 p-2">
+                  <img src={starterPreview} alt="current" className="max-h-[76vh] w-full object-contain" />
+                </div>
+              </>
+            ) : clipPreview ? (
+              <div className="flex flex-1 flex-col p-3">
+                <div className="flex flex-1 items-center justify-center">
+                  <video ref={videoRef} src={clipPreview} controls playsInline className="max-h-[68vh] w-full rounded-xl bg-black" />
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <button type="button" onClick={captureFrameToPrompt} disabled={busy}
+                    title="Describe this frame with a vision model and build a matching prompt to generate your own character"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-bold text-white transition-all hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40">
+                    {capturing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    Describe → Prompt
+                  </button>
+                  <button type="button" onClick={captureFrame} disabled={busy}
+                    title="Use this exact frame as the starter image to edit directly"
+                    className="flex items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm font-bold text-violet-300 transition-all hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40">
+                    <Camera className="h-4 w-4" /> Use Frame
+                  </button>
+                </div>
+                <p className="mt-2 text-center text-[10px] text-white/25">
+                  Scrub to the pose you want, pause, then <span className="text-white/40">Describe → Prompt</span> recreates it as your character.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+                <Film className="h-8 w-8 text-white/10" />
+                <p className="text-sm text-white/25">Paste a clip link or generate a character to begin</p>
+                <p className="max-w-xs text-[11px] text-white/15">The clip, your generated character, and outfit results all show here.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── CONTROL RAIL ── */}
+        <div className="space-y-4">
+        {/* STEP 1 — driving clip link */}
         <WorkflowSection title="1 · Driving Clip">
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <p className="text-[11px] text-white/35">
-              Paste a TikTok / Reels / YouTube link — the motion clip SCAIL-2 will use. Then capture a frame to build your character on.
+              Paste a TikTok / Reels / YouTube link — the motion clip for SCAIL-2.
             </p>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -337,40 +389,9 @@ export const ScailStudioPage = () => {
                 className="flex items-center gap-1.5 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 text-xs font-bold uppercase tracking-widest text-violet-300 transition-all hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {clipDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Film className="h-4 w-4" />}
-                {clipDownloading ? '' : 'Download'}
+                {clipDownloading ? '' : 'Get'}
               </button>
             </div>
-
-            {clipPreview && (
-              <div className="space-y-2">
-                <video ref={videoRef} src={clipPreview} controls playsInline className="max-h-[50vh] w-full rounded-xl bg-black" />
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={captureFrameToPrompt}
-                    disabled={busy}
-                    title="Describe this frame with a vision model and build a matching prompt to generate your own character"
-                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-violet-600 py-2.5 text-sm font-bold text-white transition-all hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {capturing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                    Describe → Prompt
-                  </button>
-                  <button
-                    type="button"
-                    onClick={captureFrame}
-                    disabled={busy}
-                    title="Use this exact frame as the starter image (to edit directly)"
-                    className="flex items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2.5 text-sm font-bold text-violet-300 transition-all hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <Camera className="h-4 w-4" />
-                    Use Frame
-                  </button>
-                </div>
-                <p className="text-center text-[10px] text-white/25">
-                  Scrub to the pose you want, pause, then: <span className="text-white/40">Describe → Prompt</span> recreates it as your character, or <span className="text-white/40">Use Frame</span> edits it directly.
-                </p>
-              </div>
-            )}
           </div>
         </WorkflowSection>
 
@@ -484,26 +505,7 @@ export const ScailStudioPage = () => {
           </div>
         </WorkflowSection>
 
-        {/* Current image */}
-        {starterPreview && (
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/40">
-            <div className="flex items-center justify-between px-3 py-2">
-              <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-400/80">
-                <Check className="h-3.5 w-3.5" /> Current image
-              </span>
-              <button
-                type="button"
-                onClick={() => { setStarterFile(null); setStarterPreview(null); }}
-                className="text-[10px] font-bold uppercase tracking-widest text-white/30 transition hover:text-white/60"
-              >
-                Start over
-              </button>
-            </div>
-            <img src={starterPreview} alt="current" className="max-h-[60vh] w-full object-contain" />
-          </div>
-        )}
-
-        {/* STEP 2 — outfit */}
+        {/* STEP 3 — outfit */}
         {starterFile && (
           <WorkflowSection title="3 · Change Outfit">
             <div className="space-y-2.5">
@@ -545,6 +547,7 @@ export const ScailStudioPage = () => {
             </div>
           </WorkflowSection>
         )}
+        </div>
       </div>
     </WorkflowShell>
   );
