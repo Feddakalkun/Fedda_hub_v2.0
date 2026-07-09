@@ -607,3 +607,15 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   on top of the v3 photoreal set = 17 total.
 - Morph: +2 transition styles (Walk Toward, Slow Reveal - fashion-film moves)
   = 7 total. All still photographic/music-video worded.
+
+## 2026-07-08 - Transform Reel: beat audio from a link
+
+- Beat Audio step gained a URL input: paste a TikTok/Reels/YouTube (any yt-dlp)
+  link -> loadBeatFromUrl POSTs /api/media/download-video -> the downloaded mp4
+  becomes beatFilename; the existing mux extracts its audio track (-map 1:a).
+  Reuses the media-downloader infra (incl. cookie fallback config/cookies.txt).
+- SYNC clarified (for the user Q): it is drop-to-midpoint TIMING alignment, not
+  audio beat-detection. audio_offset = beatDropSec - lengthSec/2 so the song's
+  drop lands on the clip midpoint (where the morph peaks). Tune via the
+  "Drop is at" slider. Not per-beat matching - just the drop moment, which is
+  the sync that matters for these reels.

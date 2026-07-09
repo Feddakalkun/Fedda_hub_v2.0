@@ -147,6 +147,8 @@ export const TransformReelPage = () => {
   const [beatFilename, setBeatFilename] = usePersistentState<string | null>('treel_beat_file', null);
   const [beatUploading, setBeatUploading] = useState(false);
   const [beatDropSec, setBeatDropSec] = usePersistentState('treel_beat_drop', 0);
+  const [beatUrl, setBeatUrl] = useState('');
+  const [beatUrlLoading, setBeatUrlLoading] = useState(false);
   const [muxing, setMuxing] = useState(false);
   // Which model makes the character frame
   const [editModel, setEditModel] = usePersistentState<'fast' | 'quality' | 'inpaint'>('treel_edit_model', 'fast');
@@ -409,6 +411,28 @@ export const TransformReelPage = () => {
       toast(err.message || 'Upload failed', 'error');
     } finally {
       setBeatUploading(false);
+    }
+  };
+
+  /** Pull audio from a TikTok / Instagram / YouTube (or any yt-dlp) link and use it as the beat. */
+  const loadBeatFromUrl = async () => {
+    const u = beatUrl.trim();
+    if (!u || beatUrlLoading) return;
+    setBeatUrlLoading(true);
+    try {
+      const res = await fetch(`${BACKEND_API.BASE_URL}/api/media/download-video`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: u }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.detail || 'Could not fetch audio from link');
+      setBeatFilename(data.filename); // the mux step extracts the audio track from it
+      toast('Audio loaded from link', 'success');
+    } catch (err: any) {
+      toast(err.message || 'Could not fetch audio from link', 'error');
+    } finally {
+      setBeatUrlLoading(false);
     }
   };
 
@@ -815,6 +839,27 @@ export const TransformReelPage = () => {
               filename={beatFilename ?? undefined}
             />
             <div className="space-y-3">
+              <div>
+                <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-white/25">Or paste a TikTok / Reels / YouTube link</p>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={beatUrl}
+                    onChange={(e) => setBeatUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && !beatUrlLoading && loadBeatFromUrl()}
+                    placeholder="https://www.tiktok.com/..."
+                    className={cn(inputBase, 'flex-1 text-[12px]')}
+                  />
+                  <button
+                    type="button"
+                    onClick={loadBeatFromUrl}
+                    disabled={!beatUrl.trim() || beatUrlLoading}
+                    className="flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 text-[10px] font-black uppercase tracking-widest text-violet-300 transition-all hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {beatUrlLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Load'}
+                  </button>
+                </div>
+              </div>
               <SliderField
                 label="Drop is at (second in the song)"
                 value={beatDropSec}
