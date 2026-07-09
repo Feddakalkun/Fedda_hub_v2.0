@@ -538,3 +538,18 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   from the public lightx2v/Qwen-Image-Lightning HF repo into
   ComfyUI/models/loras/qwen/. This also unblocks the standalone Qwen Image
   Reference page which uses the same workflow.
+
+## 2026-07-08 - Qwen 2509 edit now provisions for all users (manifest gap fix)
+
+- The Fast/Quality toggle's Quality model (qwen-edit-2509-image-reference) had
+  NO manifest - I'd side-loaded its Lightning LoRA with a manual curl, so other
+  users would NOT have gotten it. Root cause: the manifest generator only reads
+  models from embedded "Downloader" nodes, and the 2509 workflow had none.
+- Fix: copied the HuggingFaceDownloader node (node 20, all 4 verified URLs incl.
+  Lightning LoRA -> loras/qwen) from qwen-edit-2512.json into the 2509 workflow,
+  regenerated manifests. Now qwen-edit-2509-image-reference.txt (4 models) +
+  .nodes.txt exist -> download_models.bat and the in-app "Download models"
+  button both cover it for everyone.
+- RULE for future model additions: a workflow's models are only downloadable by
+  users if the workflow contains a HuggingFaceDownloader node listing them (that
+  is what generate_model_manifests.py scans). Never rely on a manual curl.
