@@ -856,9 +856,9 @@ export const TransformReelPage = () => {
                 value={lengthSec}
                 onChange={setLengthSec}
                 min={2}
-                max={8}
+                max={20}
                 step={1}
-                format={(v) => `${v}s`}
+                format={(v) => `${v}s${v > 10 ? ' · heavy on VRAM' : ''}`}
               />
             </div>
           </div>
