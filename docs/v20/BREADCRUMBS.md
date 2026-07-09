@@ -736,3 +736,34 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   2 model/lora/prompt/upload, Step 3 outfit). Stacks to one column under lg.
 - Video + capture buttons moved into the stage; the old inline 'Current image'
   card removed (image now shows in the stage). Empty stage shows a hint.
+
+## 2026-07-08 - HANDOFF to 2nd account: Scail Studio current state + next steps
+
+Scail Studio (tab scail-studio, pages/tools/ScailStudioPage.tsx, Automations row
+next to Transform Reel, icon-only card - venice art NOT generated yet) is the
+active work. Pipeline built so far, all shipped/synced at 8b31861:
+- Layout: 2-col - big sticky media STAGE (left) + control RAIL (right). "iphone
+  easy" is the design goal; user may want more polish / progressive reveal.
+- Step 1 Driving Clip: paste TikTok/Reels/YT link -> /api/media/download-video
+  -> video in stage. Two capture buttons: "Describe -> Prompt" (vision-caption
+  the frame via /api/ollama/caption context=zimage, fills Generate box + switches
+  to generate mode -> recreate as YOUR character) and "Use Frame" (exact frame as
+  starter). clipFile persisted for the future SCAIL-2 step.
+- Step 2 Starter Image: Generate (model picker Z-Image/Flux Klein/Qwen/Chroma/
+  SDXL, each own steps/cfg; multi-LoRA rows filtered per family) OR Upload.
+- Step 3 Change Outfit: sdxl-inpaint-automask (clothing/body masked; face/hair/bg
+  locked).
+
+NOT DONE / next:
+- The SCAIL-2 motion step itself (wan21-scail2: driving clip clipFile + character
+  image -> animated video). This is the payoff step, not built yet.
+- "Make the person we want" refinement: step 3 only swaps outfit; changing
+  identity/face to a chosen character needs Qwen-edit or character-LoRA routing.
+- Generate the venice card art for scail-studio (currently icon-only).
+- SDXL txt2img (sdxl-txt2img.json, realism-sdxl) has NO downloader node -> other
+  users can't provision realism-sdxl (fine on this machine). RunPod follow-up.
+- Backend restart still needed on this machine for SDXL (workflow_api+modules.json
+  cached at startup) + the TTS/media endpoints from earlier today.
+
+Reminders: two-account split (this file is the handoff channel); one feature ->
+commit -> push -> git checkout -- . && pull in install/app; user launches servers.
