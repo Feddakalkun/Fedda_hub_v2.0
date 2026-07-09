@@ -658,3 +658,9 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   starter so you can iterate. denoise 0.85 / cfg 2 / 25 steps.
 - SCAIL-2 (wan21-scail2) motion step intentionally NOT built yet - user wants to
   review/adjust steps 1-2 first. Shared helpers pollImages() + stageAsInput().
+
+## 2026-07-08 - Scail Studio: LLM prompt-assist on character + outfit boxes
+
+- Replaced the plain textareas with PromptAssistant (context "zimage") on both
+  the Starter Image "Describe your character" box and the Change Outfit box -
+  gives Enhance / Generate / dice-Influencer Ollama buttons for building prompts.

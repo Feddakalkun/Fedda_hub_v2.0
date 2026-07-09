@@ -13,6 +13,7 @@ import { comfyService } from '../../services/comfyService';
 import { consumeHandoff } from '../../utils/workflowHandoff';
 import { WorkflowShell, WorkflowSection } from '../../components/layout/WorkflowShell';
 import { UploadSlot } from '../../components/ui/WorkflowControls';
+import { PromptAssistant } from '../../components/ui/PromptAssistant';
 import { cn, inputBase } from '../../lib/styles';
 
 const OUTFIT_PRESETS: Array<{ label: string; prompt: string }> = [
@@ -253,11 +254,14 @@ export const ScailStudioPage = () => {
               />
             ) : (
               <div className="space-y-2.5">
-                <textarea
+                <PromptAssistant
+                  context="zimage"
                   value={genPrompt}
-                  onChange={(e) => setGenPrompt(e.target.value)}
+                  onChange={setGenPrompt}
                   placeholder="Describe her — e.g. a 22 year old blonde woman, full body, standing in a studio..."
-                  className={cn(inputBase, 'min-h-[70px] resize-y')}
+                  minRows={3}
+                  accent="violet"
+                  label="Describe your character"
                 />
                 <select value={loraName} onChange={(e) => setLoraName(e.target.value)} className={cn(inputBase, 'text-sm')}>
                   <option value="">No character LoRA</option>
@@ -315,11 +319,15 @@ export const ScailStudioPage = () => {
                   </button>
                 ))}
               </div>
-              <textarea
+              <PromptAssistant
+                context="zimage"
                 value={outfitPrompt}
-                onChange={(e) => setOutfitPrompt(e.target.value)}
+                onChange={setOutfitPrompt}
                 placeholder="Describe the outfit..."
-                className={cn(inputBase, 'min-h-[60px] resize-y')}
+                minRows={2}
+                accent="violet"
+                label="Outfit"
+                enableCaption={false}
               />
               <button
                 type="button"
