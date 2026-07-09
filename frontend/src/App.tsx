@@ -19,6 +19,7 @@ import { UIAgentPage } from './pages/UIAgentPage';
 import { MediaDownloaderPage } from './pages/tools/MediaDownloaderPage';
 import { TransformReelPage } from './pages/tools/TransformReelPage';
 import { ScailStudioPage } from './pages/tools/ScailStudioPage';
+import { ReelMachinePage } from './pages/tools/ReelMachinePage';
 import { ModuleUnavailablePage } from './pages/ModuleUnavailablePage';
 import { GlobalGalleryPanel } from './components/layout/GlobalGalleryPanel';
 import {
@@ -186,6 +187,7 @@ function FeddaApp() {
     if (activeTab === 'media-downloader') return <MediaDownloaderPage />;
     if (activeTab === 'transform-reel') return <TransformReelPage />;
     if (activeTab === 'scail-studio') return <ScailStudioPage />;
+    if (activeTab === 'reel-machine') return <ReelMachinePage />;
 
     const currentModule = findModuleForTab(activeTab, availableModules);
     if (currentModule?.area === 'image') {

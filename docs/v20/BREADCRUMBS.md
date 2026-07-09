@@ -806,3 +806,32 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
   you skip generation and morph your own before/after. Section always shows now.
 - Note: click-to-zoom lightbox on these two is dormant (UploadSlot replaced the
   zoomable imgs); Lightbox still mounted, just no opener - re-add if zoom wanted.
+
+## 2026-07-09 - REEL MACHINE: new automation card (viral reels, plan-approved)
+
+- New card "Reel Machine" (tab reel-machine, Automations row, Film icon - venice
+  art deferred until user approves the page). Flow: Photo -> Sound -> Make Reel.
+  Phone-frame 9:16 stage left (video + progress overlay + cancel), horizontal
+  feed of finished reels under it (click to play, per-item download + remove),
+  3 fat steps right.
+- Format 1 BEAT SWITCH (the fast workhorse): N Qwen rapid-edit outfit frames of
+  the SAME photo/pose (sequential, skip-on-fail, cancelRef) -> new backend
+  POST /api/media/beat-cut: librosa beat_track on the chosen sound window ->
+  images normalized to 1080x1920 (PIL) -> ffmpeg concat-demuxer hard cuts on
+  each beat + audio muxed -> reel_*.mp4 in ComfyUI output. Empty images = probe
+  mode (page shows "N BPM - M cuts" after loading a sound; re-probes on start-
+  second change, debounced). Core mechanics verified standalone: synthetic
+  120bpm click detected at 117.5, cuts land on clicks, 8s mp4 w/ both streams.
+- Format 2 TRANSFORMATION: photo -> one outfit frame -> LTX FLF morph (9:16 M,
+  random TRANSITION_STYLE, poll budget scales with length) -> /api/media/mux-audio.
+- Shared extraction: pages/tools/reelPresets.ts (CHARACTER_PRESETS 16 +
+  TRANSITION_STYLES 7, now imported by TransformReelPage too) and
+  pages/tools/reelPipeline.ts (submitGenerate/pollGeneration/stageAsInput/viewUrl,
+  PipelineCancelled; direct-poll bypasses useWorkflowRun so no double-collection).
+- Sound source: TikTok/Reels/YT link via /api/media/download-video or audio
+  upload. Style: Surprise-me random N (3-8) or pick outfit chips; reel length
+  4-12s slider. beforeunload guard while making.
+- NEEDS BACKEND RESTART (new /api/media/beat-cut endpoint).
+- TODO next: venice card art after user approves; Send-to-workflow on feed
+  items; possible Reddit research pass on more formats (web search was rate-
+  limited this session).
