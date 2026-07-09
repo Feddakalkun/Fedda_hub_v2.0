@@ -505,3 +505,20 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   validated it (JSON parses, img2img chain coherent), added the UI, committed
   it together. Backend must restart to reload workflow_api.json mapping before
   the denoise/node-11 mapping takes effect.
+
+## 2026-07-08 - Transform Reel: scene/setting change (both outfit + scene)
+
+- Added optional scene change to Transform Reel: "Change scene too" toggle in
+  the Character section reveals 10 photoreal SCENE_PRESETS (nightclub, beach
+  sunset, penthouse, neon street, red carpet, throne room, rooftop pool, snow
+  forest, desert, cathedral) + a free text field.
+- When on, the Qwen edit prompt changes BOTH outfit and background (drops the
+  "keep same background" clause, adds "background is now <scene>", lighting on
+  her matches the new environment); when off, unchanged (outfit only, clean
+  morph). Note in UI: scene change is a bigger edit -> bump Edit Strength 0.9+.
+- Morph (LTX FLF) then interpolates original scene -> new scene along with the
+  outfit, giving a full world-transform reveal instead of just a costume swap.
+- Outfit presets left at their v3 photoreal state (already rewritten earlier).
+- POSSIBLE other interpretation of "scene and outfits": the influencer_prompts.py
+  SCENES/OUTFITS tables used by Fill-10 batches. If the user meant those,
+  improve those curated lists next.

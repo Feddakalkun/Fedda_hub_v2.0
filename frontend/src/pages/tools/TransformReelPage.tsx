@@ -33,6 +33,20 @@ const CHARACTER_PRESETS: Array<{ label: string; prompt: string }> = [
   { label: 'Cosplay Armor', prompt: 'a form-fitting fantasy armor set that looks practically built - a molded chest piece over a black bodysuit, layered thigh plates, worn metal with real scratches and reflections, a long braid, subtle scar makeup' },
 ];
 
+// Scene / setting presets — photographic, so the new background reads as a real place.
+const SCENE_PRESETS: Array<{ label: string; prompt: string }> = [
+  { label: 'Nightclub', prompt: 'a dark nightclub with colored laser lights, haze in the air, a crowd blurred behind her, neon signs glowing, real club atmosphere' },
+  { label: 'Beach Sunset', prompt: 'a tropical beach at golden-hour sunset, wet sand and gentle waves behind her, warm rim light, palm silhouettes, real seaside haze' },
+  { label: 'Penthouse', prompt: 'a luxury penthouse at night with floor-to-ceiling windows overlooking a glittering city skyline, warm interior lamps, marble and glass' },
+  { label: 'Neon Street', prompt: 'a rainy neon city street at night, wet reflective asphalt, glowing shop signs in Japanese and English, bokeh headlights, cinematic cyberpunk mood' },
+  { label: 'Red Carpet', prompt: 'a red carpet event with camera flashes going off, a step-and-repeat backdrop, velvet ropes, glamorous paparazzi lighting' },
+  { label: 'Throne Room', prompt: 'a grand fantasy throne room with towering stone pillars, torch fire, banners and a golden throne, dramatic volumetric light' },
+  { label: 'Rooftop Pool', prompt: 'a luxury rooftop infinity pool at dusk, city skyline behind, string lights, turquoise water reflections, warm summer air' },
+  { label: 'Snow Forest', prompt: 'a quiet snow-covered pine forest at blue hour, soft falling snow, cold blue light with a warm rim, breath visible in the air' },
+  { label: 'Desert Dunes', prompt: 'golden desert sand dunes under a low warm sun, wind lifting fine sand, long shadows, epic cinematic scale' },
+  { label: 'Cathedral', prompt: 'a vast gothic cathedral interior with stained-glass light beams, stone arches, dust in the air, moody dramatic lighting' },
+];
+
 // Transition styles — music-video moves, not a soft glow morph.
 const TRANSITION_STYLES: Array<{ label: string; prompt: string }> = [
   {
@@ -79,6 +93,8 @@ export const TransformReelPage = () => {
   const [sourceFilename, setSourceFilename] = usePersistentState<string | null>('treel_source_file', null);
   const [sourceUploading, setSourceUploading] = useState(false);
   const [characterPrompt, setCharacterPrompt] = usePersistentState('treel_character_prompt', CHARACTER_PRESETS[0].prompt);
+  const [changeScene, setChangeScene] = usePersistentState('treel_change_scene', false);
+  const [scenePrompt, setScenePrompt] = usePersistentState('treel_scene_prompt', SCENE_PRESETS[0].prompt);
   const [morphPrompt, setMorphPrompt] = usePersistentState('treel_morph_prompt', DEFAULT_MORPH_PROMPT);
   const [transformedUrl, setTransformedUrl] = usePersistentState<string | null>('treel_transformed_url', null);
   const [transformedInput, setTransformedInput] = usePersistentState<string | null>('treel_transformed_input', null);
@@ -195,12 +211,22 @@ export const TransformReelPage = () => {
             denoise: editStrength,
             cfg: editCfg,
             steps: editSteps,
-            prompt:
-              `Change her outfit: she is now wearing ${characterPrompt.trim()}. `
-              + 'Completely replace her clothing. The result must look like a REAL PHOTOGRAPH of her - real fabric '
-              + 'with natural folds, weight and sheen, natural skin texture, the outfit fitting her body believably, '
-              + 'and the same lighting, color grade and grain as the original photo. '
-              + 'Keep the exact same pose, same face, same body position, same camera framing and same background.',
+            prompt: (changeScene && scenePrompt.trim())
+              ? (
+                `Change her outfit and her surroundings: she is now wearing ${characterPrompt.trim()}, `
+                + `and the background is now ${scenePrompt.trim()}. `
+                + 'Completely replace both her clothing and the background. The result must look like a REAL PHOTOGRAPH '
+                + 'of her - real fabric with natural folds, weight and sheen, natural skin texture, the outfit fitting '
+                + 'her body believably, and lighting on her that matches the new environment. '
+                + 'Keep the exact same pose, same face, same body position and same camera framing and distance.'
+              )
+              : (
+                `Change her outfit: she is now wearing ${characterPrompt.trim()}. `
+                + 'Completely replace her clothing. The result must look like a REAL PHOTOGRAPH of her - real fabric '
+                + 'with natural folds, weight and sheen, natural skin texture, the outfit fitting her body believably, '
+                + 'and the same lighting, color grade and grain as the original photo. '
+                + 'Keep the exact same pose, same face, same body position, same camera framing and same background.'
+              ),
             negative: 'blurry, low quality, deformed, different pose, different person, same clothes, unchanged outfit, '
               + 'costume party look, cosplay prop, plastic, CGI, 3d render, doll, airbrushed, cartoon, illustration, studio backdrop',
             seed: Math.floor(Math.random() * 10_000_000_000),
@@ -395,6 +421,49 @@ export const TransformReelPage = () => {
                 placeholder="Describe who she becomes..."
                 className={cn(inputBase, 'min-h-[72px] resize-y')}
               />
+
+              {/* Scene / setting — optional background change */}
+              <div className="rounded-lg border border-white/10 bg-black/20 p-2.5">
+                <label className="flex cursor-pointer items-center justify-between">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Change scene too</span>
+                  <input
+                    type="checkbox"
+                    checked={changeScene}
+                    onChange={(e) => setChangeScene(e.target.checked)}
+                  />
+                </label>
+                {changeScene && (
+                  <div className="mt-2 space-y-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      {SCENE_PRESETS.map((s) => (
+                        <button
+                          key={s.label}
+                          type="button"
+                          onClick={() => setScenePrompt(s.prompt)}
+                          className={cn(
+                            'rounded-lg border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider transition-all',
+                            scenePrompt === s.prompt
+                              ? 'border-violet-500/40 bg-violet-500/15 text-violet-200'
+                              : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10',
+                          )}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      value={scenePrompt}
+                      onChange={(e) => setScenePrompt(e.target.value)}
+                      placeholder="Describe the new setting / background..."
+                      className={cn(inputBase, 'min-h-[56px] resize-y text-[12px]')}
+                    />
+                    <p className="text-[9px] text-white/25">
+                      Changing the scene is a bigger edit — bump Edit Strength up (0.9+) if the background doesn't change enough.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-2">
                 <button
                   type="button"
