@@ -151,22 +151,50 @@ export const ScailStudioPage = () => {
     }
   };
 
-  // Grab the currently-shown video frame (client-side canvas) and use it as the starter image.
-  const captureFrame = async () => {
+  const grabFrameBlob = async (): Promise<Blob | null> => {
     const video = videoRef.current;
-    if (!video || !video.videoWidth || capturing) return;
+    if (!video || !video.videoWidth) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d')?.drawImage(video, 0, 0);
+    return new Promise((r) => canvas.toBlob(r, 'image/png'));
+  };
+
+  // Grab the currently-shown video frame and use it directly as the starter image.
+  const captureFrame = async () => {
+    if (capturing || !videoRef.current?.videoWidth) return;
     setCapturing(true);
     try {
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d')?.drawImage(video, 0, 0);
-      const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+      const blob = await grabFrameBlob();
       if (!blob) throw new Error('Could not capture frame');
       await uploadStarter(new File([blob], 'clip-frame.png', { type: 'image/png' }));
       toast('Frame captured as starter', 'success');
     } catch (err: any) {
       toast(err.message || 'Capture failed', 'error');
+    } finally {
+      setCapturing(false);
+    }
+  };
+
+  // Caption the current frame with a vision model and drop a recreation prompt into the Generate box.
+  const captureFrameToPrompt = async () => {
+    if (capturing || !videoRef.current?.videoWidth) return;
+    setCapturing(true);
+    try {
+      const blob = await grabFrameBlob();
+      if (!blob) throw new Error('Could not capture frame');
+      const form = new FormData();
+      form.append('file', new File([blob], 'clip-frame.png', { type: 'image/png' }));
+      form.append('context', 'zimage');
+      const res = await fetch(`${BACKEND_API.BASE_URL}/api/ollama/caption`, { method: 'POST', body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.detail || 'Caption failed');
+      setGenPrompt(data.caption ?? '');
+      setMode('generate');
+      toast(data.model ? `Prompt built with ${data.model}` : 'Prompt built from frame', 'success');
+    } catch (err: any) {
+      toast(err.message || 'Caption failed', 'error');
     } finally {
       setCapturing(false);
     }
@@ -316,17 +344,30 @@ export const ScailStudioPage = () => {
             {clipPreview && (
               <div className="space-y-2">
                 <video ref={videoRef} src={clipPreview} controls playsInline className="max-h-[50vh] w-full rounded-xl bg-black" />
-                <button
-                  type="button"
-                  onClick={captureFrame}
-                  disabled={busy}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-2.5 text-sm font-bold text-white transition-all hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {capturing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                  {capturing ? 'Capturing…' : 'Capture This Frame → Starter'}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={captureFrameToPrompt}
+                    disabled={busy}
+                    title="Describe this frame with a vision model and build a matching prompt to generate your own character"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-violet-600 py-2.5 text-sm font-bold text-white transition-all hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {capturing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    Describe → Prompt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={captureFrame}
+                    disabled={busy}
+                    title="Use this exact frame as the starter image (to edit directly)"
+                    className="flex items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2.5 text-sm font-bold text-violet-300 transition-all hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Camera className="h-4 w-4" />
+                    Use Frame
+                  </button>
+                </div>
                 <p className="text-center text-[10px] text-white/25">
-                  Scrub the video to the pose you want, pause, then capture.
+                  Scrub to the pose you want, pause, then: <span className="text-white/40">Describe → Prompt</span> recreates it as your character, or <span className="text-white/40">Use Frame</span> edits it directly.
                 </p>
               </div>
             )}

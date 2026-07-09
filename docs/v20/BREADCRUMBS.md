@@ -717,3 +717,12 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
 - STILL TODO: the character step currently only inpaints outfit; "make the person
   we want" (identity/face -> chosen character) needs Qwen-edit or character-LoRA
   routing - to refine next. Then wire the SCAIL-2 motion step (clipFile + character).
+
+## 2026-07-08 - Scail Studio: caption captured frame -> recreation prompt
+
+- Driving Clip now offers two capture buttons: "Describe -> Prompt" (captions
+  the current frame via /api/ollama/caption context=zimage - which returns a
+  photoreal recreation prompt of visible subject/pose/wardrobe/lighting - then
+  fills the Generate box + switches to Generate mode so you make YOUR character
+  with a LoRA in a matching image) and "Use Frame" (old behavior: exact frame as
+  starter to edit). Shared grabFrameBlob() helper. Needs an Ollama vision model.
