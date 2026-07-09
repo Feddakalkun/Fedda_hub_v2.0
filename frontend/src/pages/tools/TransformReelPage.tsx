@@ -505,6 +505,7 @@ export const TransformReelPage = () => {
               onUrl={uploadSourceFromUrl}
               label="Source Photo"
               hint="The 'before' — her normal look"
+              onClear={() => { setSourceFilename(null); setTransformedUrl(null); setTransformedInput(null); }}
             />
           </WorkflowSection>
 
@@ -837,6 +838,7 @@ export const TransformReelPage = () => {
               hint="mp3/wav — the song with the drop"
               previewKind="audio"
               filename={beatFilename ?? undefined}
+              onClear={() => setBeatFilename(null)}
             />
             <div className="space-y-3">
               <div>

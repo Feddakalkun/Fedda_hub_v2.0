@@ -633,3 +633,14 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
 - VRAM: short reels decode all frames in one tile; longer clips get 24-frame
   overlap (was 8) so seams blend. If a very long/high-res LTX job OOMs on decode,
   lower temporal_size again.
+
+## 2026-07-08 - UploadSlot clear (✕) button
+
+- User couldn't remove/replace the Transform Reel source photo (the Before/After
+  image only zooms via lightbox now; the small step-1 slot had no clear affordance
+  and they were dropping onto the wrong element). UploadSlot's drag-drop was
+  actually fine.
+- Added optional onClear prop to UploadSlot (ui/WorkflowControls) -> shows a ✕
+  button top-right over any preview. Wired on Transform Reel Source Photo (clears
+  source + derived character-frame state) and Beat Track. Available to all pages
+  that use UploadSlot; only renders when onClear is passed.

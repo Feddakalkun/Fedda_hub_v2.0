@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { ListOrdered, Loader2, Music, Play, Upload } from 'lucide-react';
+import { ListOrdered, Loader2, Music, Play, Upload, X } from 'lucide-react';
 import { cn, inputBase } from '../../lib/styles';
 import { FeddaButton } from './FeddaPrimitives';
 
@@ -105,6 +105,8 @@ interface UploadSlotProps {
   height?: number;
   previewKind?: 'image' | 'video' | 'audio';
   filename?: string;
+  /** When provided, shows a ✕ button on the preview to clear/remove it. */
+  onClear?: () => void;
 }
 
 /** Click/drag-drop upload slot with preview (generalized from the LTX reference slot). */
@@ -119,6 +121,7 @@ export const UploadSlot = ({
   height = 150,
   previewKind = 'image',
   filename,
+  onClear,
 }: UploadSlotProps) => {
   const ref = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -145,6 +148,16 @@ export const UploadSlot = ({
       )}
       style={{ height }}
     >
+      {preview && onClear && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onClear(); }}
+          title="Remove"
+          className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white/80 transition-all hover:bg-red-500/80 hover:text-white"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
       {preview && previewKind === 'audio' ? (
         <div className="flex h-full flex-col items-center justify-center gap-2 p-3">
           <Music className="h-6 w-6 text-emerald-400/70" />
