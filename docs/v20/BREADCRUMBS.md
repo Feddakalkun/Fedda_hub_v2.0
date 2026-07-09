@@ -454,3 +454,37 @@ thumbnails; simplify SDXL inpaint/outpaint; Chroma higher-res presets (optional)
   Hair Flip, Shockwave, Energy Sweep (the old one, kept last). Music-video
   action language instead of glow-morph. One-time localStorage migration swaps
   the old stored default to Whip Spin.
+
+## 2026-07-08 - SESSION CONTEXT: two-account split working (read this first)
+
+This project is being driven across TWO separate Claude accounts/sessions
+working on the SAME repo and install, alternating whenever one hits its usage
+limit. If you are a fresh session, you are almost certainly the OTHER account
+picking up where the last one stopped - assume work is already in flight.
+
+How this session (2026-07-08) was entered:
+- The user pasted a full chat log (080726.txt) from the previous account's
+  session and said "continue where we left off". Re-derive state the same way
+  if handed a log: read the newest BREADCRUMBS entries + HANDOFF.md, check
+  `git log --oneline`, do NOT assume a clean start.
+- Both accounts commit to the same remote (github.com/Feddakalkun/Fedda_hub_v2.0)
+  and pull into the same install/app. So: pull before starting, push after
+  every feature, keep breadcrumbs current - the OTHER account relies on them as
+  the handoff channel since the two sessions never see each other's chat.
+
+Coordination rules that matter with two writers:
+- One feature -> one commit -> push -> `git pull` in install/app, immediately.
+  Never leave the working tree dirty at end of a turn; the other account may
+  start any moment.
+- If install/app has local edits when you pull (e.g. from tsc copy-checks),
+  `git checkout -- .` first (those are throwaway type-check copies, never
+  hand-edits worth keeping).
+- The user launches all servers; neither account starts them (standing rule).
+
+Everything shipped 2026-07-08 (this session, on top of the 07-05/07-08 Qwen +
+batch-queue work from the previous account): Edge + Chatterbox TTS with voice
+library + Voice Studio card, Zonos removed, Media Downloader browser cookies,
+Transform Reel (photo->character frame->morph video, now v3 with photoreal
+outfit presets + transition styles + beat-drop audio mux), one-click automation
+pipelines, instant influencer prompt batches (Fill 10), and per-LoRA Character
+Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
