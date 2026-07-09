@@ -177,7 +177,7 @@ export const FEDDA_MODULES: FeddaModule[] = [
     sourceModuleId: 'core-shell',
     label: 'Scail Studio',
     description: 'Make or upload a character, dress her with inpaint, then bring her to motion with SCAIL-2 (motion step coming next).',
-    area: 'home',
+    area: 'automation',
     pack: 'core',
     tabs: ['scail-studio'],
     defaultTab: 'scail-studio',
