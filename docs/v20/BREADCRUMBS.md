@@ -522,3 +522,19 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
 - POSSIBLE other interpretation of "scene and outfits": the influencer_prompts.py
   SCENES/OUTFITS tables used by Fill-10 batches. If the user meant those,
   improve those curated lists next.
+
+## 2026-07-08 - Transform Reel: Fast/Quality edit-model toggle
+
+- Which model makes the character frame is now switchable in the Character
+  section: Fast = qwen-rapid-edit-v23 (default), Quality =
+  qwen-edit-2509-image-reference (full Qwen Image Edit 2509, far better
+  identity/pose preservation, slower). Toggle only swaps workflow_id on the
+  character-frame /api/generate call; both take the same params (2509 mapping
+  has image/prompt/width/height/seed/steps/cfg/denoise/loras).
+- NOTE: 2512 was NOT usable - its workflow_api mapping has no image input;
+  2509-image-reference is the correct full-quality edit workflow.
+- Quality needed one missing asset: Qwen-Image-Lightning-4steps-V1.0.safetensors
+  (the 2509 workflow references loras/qwen/, was absent). Downloaded ~1.58 GB
+  from the public lightx2v/Qwen-Image-Lightning HF repo into
+  ComfyUI/models/loras/qwen/. This also unblocks the standalone Qwen Image
+  Reference page which uses the same workflow.
