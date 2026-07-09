@@ -212,7 +212,10 @@ export const TransformReelPage = () => {
             image: sourceFilename,
             width: dims.w,
             height: dims.h,
-            denoise: editStrength,
+            // Quality (2509) generates from an empty latent using the photo as reference
+            // conditioning, so it needs full denoise; Fast (rapid) is true img2img where
+            // Edit Strength is the denoise. Sending 0.85 to 2509 produces a blank frame.
+            denoise: editModel === 'quality' ? 1.0 : editStrength,
             cfg: editCfg,
             steps: editSteps,
             prompt: (changeScene && scenePrompt.trim())
@@ -527,13 +530,13 @@ export const TransformReelPage = () => {
               {showAdvanced && (
                 <div className="space-y-3 rounded-lg border border-white/10 bg-black/20 p-2.5">
                   <SliderField
-                    label="Edit Strength"
+                    label="Edit Strength (Fast model only)"
                     value={editStrength}
                     onChange={setEditStrength}
                     min={0.4}
                     max={1}
                     step={0.05}
-                    format={(v) => `${v.toFixed(2)} — low keeps her, high changes more`}
+                    format={(v) => editModel === 'quality' ? 'ignored — Quality uses full denoise' : `${v.toFixed(2)} — low keeps her, high changes more`}
                   />
                   <SliderField
                     label="Edit CFG"

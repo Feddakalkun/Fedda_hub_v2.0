@@ -553,3 +553,18 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
 - RULE for future model additions: a workflow's models are only downloadable by
   users if the workflow contains a HuggingFaceDownloader node listing them (that
   is what generate_model_manifests.py scans). Never rely on a manual curl.
+
+## 2026-07-08 - Transform Reel: fix Quality (2509) blank-frame bug
+
+- Quality mode produced a flat olive/blank frame. Cause: the 2509 workflow's
+  KSampler generates from an EmptyLatentImage (node 13, sized via node 17 from
+  width/height) using the photo as reference conditioning (node 16) - it needs
+  denoise=1.0. Transform Reel's "Edit Strength" slider was sending 0.85 to it,
+  and 0.85 denoise on an empty latent = structureless flat color.
+- Fix: character-frame call now sends denoise = (quality ? 1.0 : editStrength).
+  Edit Strength only means something for Fast (rapid-edit, which IS true img2img);
+  slider relabeled + shows "ignored" in Quality mode.
+- Note: 2509 keeps identity via the edit-reference encoder, NOT via img2img
+  denoise. For MAX identity fidelity (outfit-only, pose/face/background pixel-
+  locked) the better tool is automask inpaint (they have SDXL Inpaint Automask
+  w/ PersonMaskUltra) - proposed as a future 3rd "Inpaint" edit mode.
