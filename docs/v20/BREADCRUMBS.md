@@ -644,3 +644,17 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   button top-right over any preview. Wired on Transform Reel Source Photo (clears
   source + derived character-frame state) and Beat Track. Available to all pages
   that use UploadSlot; only renders when onClear is passed.
+
+## 2026-07-08 - New card: Scail Studio (step 1 - starter image + outfit inpaint)
+
+- New page pages/tools/ScailStudioPage.tsx (tab scail-studio, module in registry,
+  Icon only for now - card art deferred until concept approved). Intentionally
+  simpler/cleaner than Transform Reel.
+- Step 1 Starter Image: toggle Generate-with-Z-Image (prompt + one character LoRA
+  dropdown, 896x1152) OR Upload. Generated output is staged back as a ComfyUI
+  input so step 2 can use it.
+- Step 2 Change Outfit: 6 outfit presets + text -> sdxl-inpaint-automask
+  (mask_clothes+body, face/hair/background locked). Result becomes the new
+  starter so you can iterate. denoise 0.85 / cfg 2 / 25 steps.
+- SCAIL-2 (wan21-scail2) motion step intentionally NOT built yet - user wants to
+  review/adjust steps 1-2 first. Shared helpers pollImages() + stageAsInput().
