@@ -153,6 +153,7 @@ export const TransformReelPage = () => {
   // Which model makes the character frame
   const [editModel, setEditModel] = usePersistentState<'fast' | 'quality' | 'inpaint'>('treel_edit_model', 'fast');
   // Inpaint mode: which regions to also repaint (clothing is always on)
+  const [inpaintBody, setInpaintBody] = usePersistentState('treel_inpaint_body', true);
   const [inpaintHair, setInpaintHair] = usePersistentState('treel_inpaint_hair', false);
   const [inpaintBackground, setInpaintBackground] = usePersistentState('treel_inpaint_bg', false);
   const [inpaintAccessories, setInpaintAccessories] = usePersistentState('treel_inpaint_acc', false);
@@ -278,7 +279,7 @@ export const TransformReelPage = () => {
               + ', real fabric with natural folds and sheen, natural skin texture, photorealistic, sharp focus, same body and pose',
             negative,
             mask_clothes: true,
-            mask_body: true,
+            mask_body: inpaintBody,
             mask_face: false,
             mask_hair: inpaintHair,
             mask_accessories: inpaintAccessories,
@@ -620,6 +621,10 @@ export const TransformReelPage = () => {
                     Locks her face and pose. Outfit always changes — optionally also repaint:
                   </p>
                   <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                    <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-white/50">
+                      <input type="checkbox" checked={inpaintBody} onChange={(e) => setInpaintBody(e.target.checked)} />
+                      Body
+                    </label>
                     <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-white/50">
                       <input type="checkbox" checked={inpaintHair} onChange={(e) => setInpaintHair(e.target.checked)} />
                       Hair

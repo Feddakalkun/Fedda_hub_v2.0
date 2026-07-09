@@ -791,3 +791,9 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
   workflow_api.json and a Length slider (2-12s, default 5) in LtxImg2VidPage Run
   Settings; buildParams now sends length_seconds (applies to batch runs too).
 - REQUIRES backend restart (workflow_api.json cached at startup).
+
+## 2026-07-08 - Transform Reel: Body toggle in inpaint
+
+- Inpaint mask_body was hardcoded true; now an explicit "Body" checkbox
+  (default on) alongside Hair/Accessories/Background. Off = only clothing region
+  repaints (skin/physique kept); on = body skin regenerates too. Face never masked.
