@@ -1,3 +1,4 @@
+import { Sparkles } from 'lucide-react';
 import { useModules } from '../../contexts/ModuleContext';
 import type { FeddaModule } from '../../modules/registry';
 
@@ -57,10 +58,13 @@ function HomeCard({ module, onSelect }: { module: FeddaModule; onSelect: (id: st
 function AutomationCard({ module, onSelect }: { module?: FeddaModule; onSelect: (id: string) => void }) {
   if (!module) {
     return (
-      <div className="relative aspect-[9/16] overflow-hidden rounded-xl border border-dashed border-white/10 bg-white/[0.02]">
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/25">Coming soon</span>
-          <span className="text-[10px] text-white/15 leading-relaxed">More automated pipelines are on the way</span>
+      <div className="relative aspect-[9/16] overflow-hidden rounded-xl border border-dashed border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03]">
+            <Sparkles className="h-5 w-5 text-white/25" />
+          </div>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">Coming soon</span>
+          <span className="text-[10px] text-white/15 leading-relaxed">More automated pipelines on the way</span>
         </div>
       </div>
     );
@@ -100,9 +104,9 @@ export const RichHome = ({ onSelect }: RichHomeProps) => {
     <div className="h-full overflow-y-auto custom-scrollbar bg-[#050506]">
       <div className="flex min-h-full w-full flex-col px-8 py-8 pt-4">
         {automations.length > 0 && (
-          <section className="mb-6 space-y-3">
+          <section className="mb-6 flex flex-col items-center space-y-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">Automations</p>
-            <div className="grid w-full max-w-3xl gap-3 grid-cols-4">
+            <div className="grid w-full max-w-5xl gap-4 grid-cols-4">
               {automationSlots.map((module, i) => (
                 <AutomationCard key={module?.id ?? `soon-${i}`} module={module} onSelect={onSelect} />
               ))}
