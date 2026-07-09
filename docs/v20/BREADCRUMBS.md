@@ -783,3 +783,11 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
   `download_models.bat wan22-img2vid` or use the in-UI Download button first.
 - LTX img2vid already had UploadSlot + Build From Reference - it's the reference
   style; WAN now matches. No LTX change needed.
+
+## 2026-07-08 - LTX Img2Vid: expose Length control
+
+- ltx-img2vid workflow had a "LENGTH IN SECONDS" node (4997, default 8, x24fps ->
+  frames) that was never mapped. Added length_seconds -> node 4997 in
+  workflow_api.json and a Length slider (2-12s, default 5) in LtxImg2VidPage Run
+  Settings; buildParams now sends length_seconds (applies to batch runs too).
+- REQUIRES backend restart (workflow_api.json cached at startup).

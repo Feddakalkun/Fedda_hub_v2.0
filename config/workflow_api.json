@@ -1582,6 +1582,12 @@
         "input_key": "height",
         "type": "number",
         "label": "Height"
+      },
+      "length_seconds": {
+        "node_id": "4997",
+        "input_key": "value",
+        "type": "number",
+        "label": "Length (s)"
       }
     }
   },

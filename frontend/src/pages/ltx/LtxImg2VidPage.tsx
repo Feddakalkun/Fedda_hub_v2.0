@@ -26,6 +26,7 @@ export const LtxImg2VidPage = () => {
   const [batchRaw, setBatchRaw] = usePersistentState('ltx_img2vid_batch_raw', '');
   const [aspectRatio, setAspectRatio] = usePersistentState('ltx_img2vid_ar', '16:9');
   const [resolution, setResolution] = usePersistentState<LtxResolution>('ltx_img2vid_res', 'M');
+  const [lengthSec, setLengthSec] = usePersistentState('ltx_img2vid_len', 5);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [imageFilename, setImageFilename] = usePersistentState<string | null>('ltx_img2vid_image_file', null);
   const [imageUploading, setImageUploading] = useState(false);
@@ -132,6 +133,7 @@ export const LtxImg2VidPage = () => {
       negative: negative.trim(),
       width: dims.width,
       height: dims.height,
+      length_seconds: lengthSec,
       seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
       ...(loraName ? { lora_name: loraName, lora_strength: loraStrength } : {}),
     };
@@ -280,6 +282,15 @@ export const LtxImg2VidPage = () => {
               <Field label={`Resolution — ${dims.width}×${dims.height}`}>
                 <ChipGroup options={LTX_RESOLUTIONS} value={resolution} onChange={setResolution} />
               </Field>
+              <SliderField
+                label="Length"
+                value={lengthSec}
+                onChange={setLengthSec}
+                min={2}
+                max={12}
+                step={1}
+                format={(v) => `${v}s`}
+              />
             </div>
           </div>
 
