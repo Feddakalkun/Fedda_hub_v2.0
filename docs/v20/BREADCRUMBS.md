@@ -702,3 +702,18 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   final text and runStream cleans it (cleanPrompt strips a leading Here/Sure/OK...:
   preamble line + a single pair of wrapping quotes) on completion. Applies to
   enhance/inspire/influencer everywhere PromptAssistant is used.
+
+## 2026-07-08 - Scail Studio: Driving Clip step (link -> download -> capture frame)
+
+- New Step 1 "Driving Clip": paste TikTok/Reels/YT link -> /api/media/download-video
+  -> video player -> "Capture This Frame" grabs the current frame client-side
+  (canvas.toBlob, same-origin /comfy/view so no taint) and uploads it as the
+  starter image (feeds the existing character step). clipFile persisted for the
+  future SCAIL-2 (wan21-scail2) motion step which needs the driving video.
+- Renumbered: 1 Driving Clip, 2 Starter Image, 3 Change Outfit.
+- Rationale: SCAIL-2 is motion transfer (driving video + subject image). Capturing
+  the clip's frame gives the exact starting pose to build the character on, so the
+  animated result starts matched to the clip.
+- STILL TODO: the character step currently only inpaints outfit; "make the person
+  we want" (identity/face -> chosen character) needs Qwen-edit or character-LoRA
+  routing - to refine next. Then wire the SCAIL-2 motion step (clipFile + character).

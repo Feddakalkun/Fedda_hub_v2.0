@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { Check, ImagePlus, Loader2, Shirt, Sparkles, Upload, Wand2 } from 'lucide-react';
+import { Camera, Check, Film, ImagePlus, Link2, Loader2, Shirt, Sparkles, Upload, Wand2 } from 'lucide-react';
 import { BACKEND_API } from '../../config/api';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useToast } from '../../components/ui/Toast';
@@ -90,8 +90,16 @@ export const ScailStudioPage = () => {
   const [outfitPrompt, setOutfitPrompt] = usePersistentState('scail_outfit_prompt', OUTFIT_PRESETS[0].prompt);
   const [applying, setApplying] = useState(false);
 
-  const busy = uploading || generating || applying;
+  // driving clip state (the motion video for SCAIL-2; we also grab a starter frame from it)
+  const [clipUrl, setClipUrl] = useState('');
+  const [clipFile, setClipFile] = usePersistentState<string | null>('scail_clip_file', null);
+  const [clipDownloading, setClipDownloading] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const busy = uploading || generating || applying || clipDownloading || capturing;
   const dimsRef = useRef<{ w: number; h: number }>({ w: 896, h: 1152 });
+  const clipPreview = clipFile ? `/comfy/view?filename=${encodeURIComponent(clipFile)}&type=input` : null;
 
   useEffect(() => {
     comfyService.getLoras().then(setAllLoras).catch(() => {});
@@ -120,6 +128,48 @@ export const ScailStudioPage = () => {
     img.src = preview;
     setStarterFile(file);
     setStarterPreview(preview);
+  };
+
+  const downloadClip = async () => {
+    const u = clipUrl.trim();
+    if (!u || clipDownloading) return;
+    setClipDownloading(true);
+    try {
+      const res = await fetch(`${BACKEND_API.BASE_URL}/api/media/download-video`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: u }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.detail || 'Download failed');
+      setClipFile(data.filename);
+      toast('Clip downloaded', 'success');
+    } catch (err: any) {
+      toast(err.message || 'Download failed', 'error');
+    } finally {
+      setClipDownloading(false);
+    }
+  };
+
+  // Grab the currently-shown video frame (client-side canvas) and use it as the starter image.
+  const captureFrame = async () => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth || capturing) return;
+    setCapturing(true);
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d')?.drawImage(video, 0, 0);
+      const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+      if (!blob) throw new Error('Could not capture frame');
+      await uploadStarter(new File([blob], 'clip-frame.png', { type: 'image/png' }));
+      toast('Frame captured as starter', 'success');
+    } catch (err: any) {
+      toast(err.message || 'Capture failed', 'error');
+    } finally {
+      setCapturing(false);
+    }
   };
 
   const uploadStarter = async (file: File) => {
@@ -234,8 +284,57 @@ export const ScailStudioPage = () => {
       output={null}
     >
       <div className="mx-auto max-w-2xl space-y-4">
-        {/* STEP 1 — starter image */}
-        <WorkflowSection title="1 · Starter Image">
+        {/* STEP 1 — driving clip */}
+        <WorkflowSection title="1 · Driving Clip">
+          <div className="space-y-3">
+            <p className="text-[11px] text-white/35">
+              Paste a TikTok / Reels / YouTube link — the motion clip SCAIL-2 will use. Then capture a frame to build your character on.
+            </p>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20" />
+                <input
+                  type="url"
+                  value={clipUrl}
+                  onChange={(e) => setClipUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && !clipDownloading && downloadClip()}
+                  placeholder="https://www.tiktok.com/..."
+                  className={cn(inputBase, 'w-full pl-9 text-sm')}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={downloadClip}
+                disabled={!clipUrl.trim() || clipDownloading}
+                className="flex items-center gap-1.5 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 text-xs font-bold uppercase tracking-widest text-violet-300 transition-all hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {clipDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Film className="h-4 w-4" />}
+                {clipDownloading ? '' : 'Download'}
+              </button>
+            </div>
+
+            {clipPreview && (
+              <div className="space-y-2">
+                <video ref={videoRef} src={clipPreview} controls playsInline className="max-h-[50vh] w-full rounded-xl bg-black" />
+                <button
+                  type="button"
+                  onClick={captureFrame}
+                  disabled={busy}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-2.5 text-sm font-bold text-white transition-all hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {capturing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                  {capturing ? 'Capturing…' : 'Capture This Frame → Starter'}
+                </button>
+                <p className="text-center text-[10px] text-white/25">
+                  Scrub the video to the pose you want, pause, then capture.
+                </p>
+              </div>
+            )}
+          </div>
+        </WorkflowSection>
+
+        {/* STEP 2 — starter image */}
+        <WorkflowSection title="2 · Starter Image">
           <div className="space-y-3">
             <div className="flex gap-2">
               <button
@@ -365,7 +464,7 @@ export const ScailStudioPage = () => {
 
         {/* STEP 2 — outfit */}
         {starterFile && (
-          <WorkflowSection title="2 · Change Outfit">
+          <WorkflowSection title="3 · Change Outfit">
             <div className="space-y-2.5">
               <div className="flex flex-wrap gap-1.5">
                 {OUTFIT_PRESETS.map((p) => (
