@@ -221,6 +221,35 @@ export const TransformReelPage = () => {
     }
   };
 
+  // Upload your own "after" / last frame directly (skip generation)
+  const uploadAfterFrame = async (file: File) => {
+    setTransforming(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch(`${BACKEND_API.BASE_URL}/api/upload`, { method: 'POST', body: form });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.detail || 'Upload failed');
+      setTransformedInput(data.filename);
+      setTransformedUrl(`/comfy/view?filename=${encodeURIComponent(data.filename)}&type=input`);
+    } catch (err: any) {
+      toast(err.message || 'Upload failed', 'error');
+    } finally {
+      setTransforming(false);
+    }
+  };
+
+  const uploadAfterFromUrl = async (url: string) => {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Failed to fetch image (${res.status})`);
+      const blob = await res.blob();
+      await uploadAfterFrame(new File([blob], 'transform-after.png', { type: blob.type || 'image/png' }));
+    } catch (err: any) {
+      toast(err.message || 'Could not load image from URL', 'error');
+    }
+  };
+
   // Consume a "Send to Workflow" handoff image on first mount
   useEffect(() => {
     const url = consumeHandoff('image');
@@ -752,28 +781,41 @@ export const TransformReelPage = () => {
           </WorkflowSection>
         </div>
 
-        {/* Before / after */}
-        {(sourcePreview || transformedUrl) && (
-          <WorkflowSection title="Before → After">
-            <div className="flex items-center gap-3">
-              <div className="flex-1 overflow-hidden rounded-xl border border-white/10 bg-black/30">
-                {sourcePreview
-                  ? <img src={sourcePreview} alt="before" onClick={() => setLightbox(sourcePreview)} className="max-h-64 w-full cursor-zoom-in object-contain" />
-                  : <div className="flex h-32 items-center justify-center text-[10px] text-white/20">source</div>}
-              </div>
-              <ArrowRight className="h-5 w-5 shrink-0 text-violet-400/60" />
-              <div className="flex-1 overflow-hidden rounded-xl border border-white/10 bg-black/30">
-                {transformedUrl
-                  ? <img src={transformedUrl} alt="after" onClick={() => setLightbox(transformedUrl)} className="max-h-64 w-full cursor-zoom-in object-contain" />
-                  : (
-                    <div className="flex h-32 items-center justify-center text-[10px] text-white/20">
-                      {transforming ? 'generating…' : 'character frame appears here'}
-                    </div>
-                  )}
-              </div>
+        {/* Before → After keyframes (drop your own, or let the character step fill the after) */}
+        <WorkflowSection title="Before → After">
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-white/25">Before · first frame</p>
+              <UploadSlot
+                preview={sourcePreview}
+                uploading={sourceUploading}
+                onFile={uploadSource}
+                onUrl={uploadSourceFromUrl}
+                label="Before"
+                hint="Click or drop"
+                height={200}
+                onClear={() => { setSourceFilename(null); setTransformedUrl(null); setTransformedInput(null); }}
+              />
             </div>
-          </WorkflowSection>
-        )}
+            <ArrowRight className="mt-14 h-5 w-5 shrink-0 text-violet-400/60" />
+            <div className="flex-1">
+              <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-white/25">After · last frame</p>
+              <UploadSlot
+                preview={transformedUrl}
+                uploading={transforming}
+                onFile={uploadAfterFrame}
+                onUrl={uploadAfterFromUrl}
+                label="After"
+                hint="Drop your own, or generate above"
+                height={200}
+                onClear={() => { setTransformedUrl(null); setTransformedInput(null); }}
+              />
+            </div>
+          </div>
+          <p className="mt-2 text-center text-[10px] text-white/25">
+            Drop both frames to morph your own before → after, or upload a Source and generate the character above.
+          </p>
+        </WorkflowSection>
 
         {/* Step 3 — morph */}
         <WorkflowSection title="3 · Morph Video">

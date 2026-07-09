@@ -797,3 +797,12 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
 - Inpaint mask_body was hardcoded true; now an explicit "Body" checkbox
   (default on) alongside Hair/Accessories/Background. Off = only clothing region
   repaints (skin/physique kept); on = body skin regenerates too. Face never masked.
+
+## 2026-07-08 - Transform Reel: drag-drop your own before/after keyframes
+
+- Before -> After row is now two UploadSlots (drag-drop + URL + clear): Before =
+  source (first frame), After = your own last frame via new uploadAfterFrame/
+  uploadAfterFromUrl (uploads to ComfyUI input, sets transformedInput+Url). Lets
+  you skip generation and morph your own before/after. Section always shows now.
+- Note: click-to-zoom lightbox on these two is dormant (UploadSlot replaced the
+  zoomable imgs); Lightbox still mounted, just no opener - re-add if zoom wanted.
