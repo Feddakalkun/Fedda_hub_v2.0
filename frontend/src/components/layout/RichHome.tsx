@@ -52,15 +52,63 @@ function HomeCard({ module, onSelect }: { module: FeddaModule; onSelect: (id: st
   );
 }
 
+// Portrait (9:16) card for the top "Automations" row. Renders an active
+// module or a "coming soon" placeholder.
+function AutomationCard({ module, onSelect }: { module?: FeddaModule; onSelect: (id: string) => void }) {
+  if (!module) {
+    return (
+      <div className="relative aspect-[9/16] overflow-hidden rounded-xl border border-dashed border-white/10 bg-white/[0.02]">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/25">Coming soon</span>
+          <span className="text-[10px] text-white/15 leading-relaxed">More automated pipelines are on the way</span>
+        </div>
+      </div>
+    );
+  }
+  const Icon = module.Icon;
+  return (
+    <button
+      onClick={() => onSelect(module.defaultTab)}
+      aria-label={module.label}
+      className="group relative aspect-[9/16] overflow-hidden rounded-xl border border-violet-500/25 bg-[#08090d] transition-all hover:-translate-y-0.5 hover:border-violet-400/50"
+    >
+      {module.card?.poster ? (
+        <img src={module.card.poster} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Icon className="h-6 w-6 text-white/40" />
+        </div>
+      )}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-3 pt-8">
+        <p className="text-sm font-semibold text-white">{module.label}</p>
+      </div>
+      <span className="absolute left-2 top-2 rounded-md bg-violet-500/80 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">Automation</span>
+    </button>
+  );
+}
+
 export const RichHome = ({ onSelect }: RichHomeProps) => {
   const { availableModules } = useModules();
   const cards = availableModules.filter((module) => module.card && (module.area === 'home' || module.area === 'system'));
   const topCards = cards.slice(0, 2);
   const bottomCards = cards.slice(2);
+  const automations = availableModules.filter((module) => module.area === 'automation');
+  // Pad to 4 slots (undefined = "coming soon" placeholder)
+  const automationSlots: (FeddaModule | undefined)[] = [...automations, undefined, undefined, undefined, undefined].slice(0, 4);
 
   return (
     <div className="h-full overflow-y-auto custom-scrollbar bg-[#050506]">
       <div className="flex min-h-full w-full flex-col px-8 py-8 pt-4">
+        {automations.length > 0 && (
+          <section className="mb-6 space-y-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">Automations</p>
+            <div className="grid w-full gap-3 grid-cols-2 md:grid-cols-4">
+              {automationSlots.map((module, i) => (
+                <AutomationCard key={module?.id ?? `soon-${i}`} module={module} onSelect={onSelect} />
+              ))}
+            </div>
+          </section>
+        )}
         <section className="space-y-4">
           <div className="grid w-full gap-4 md:grid-cols-2">
             {topCards.map((module) => (

@@ -1,7 +1,7 @@
 import { Bot, Download, Film, Images, LayoutDashboard, Sparkles, Video, Volume2, Heart, Wand2, type LucideIcon } from 'lucide-react';
 
 export type ModulePack = 'core' | 'booster';
-export type ModuleArea = 'home' | 'image' | 'video' | 'system';
+export type ModuleArea = 'home' | 'image' | 'video' | 'system' | 'automation';
 
 export type SourceModuleId =
   | 'core-shell'
@@ -165,7 +165,7 @@ export const FEDDA_MODULES: FeddaModule[] = [
     sourceModuleId: 'core-shell',
     label: 'Transform Reel',
     description: 'The viral beat-drop transformation: photo → character version of the same frame → seamless morph video, ready for reels.',
-    area: 'home',
+    area: 'automation',
     pack: 'core',
     tabs: ['transform-reel'],
     defaultTab: 'transform-reel',
