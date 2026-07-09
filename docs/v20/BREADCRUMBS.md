@@ -584,3 +584,15 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   poll status URL now uses reqBody.workflow_id instead of hardcoded rapid-edit.
 - Three-way toggle: Fast (rapid img2img) / Quality (2509 flexible) / Inpaint
   (max identity fidelity, outfit-only). SDXL checkpoints confirmed on disk.
+
+## 2026-07-08 - Transform Reel: optional inpaint regions (hair/bg/accessories)
+
+- Inpaint mode gained optional region toggles: Hair, Accessories, Background
+  (clothing always on). Each flips the matching mask_* flag in
+  sdxl-inpaint-automask; face is never masked so identity holds. Background
+  toggle reuses scenePrompt (enable "Change scene too" to pick the setting).
+- HONEST LIMITS documented in UI: makeup-only keeping-face and pose change are
+  NOT possible with region inpaint (masking face = new face; single-denoise pass
+  can't do light-face + heavy-clothes; pose needs a full regenerate). Those route
+  to Quality mode instead. A dedicated low-denoise face "makeup pass" would be a
+  separate future feature if wanted.

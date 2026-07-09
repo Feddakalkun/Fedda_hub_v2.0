@@ -109,6 +109,10 @@ export const TransformReelPage = () => {
   const [muxing, setMuxing] = useState(false);
   // Which model makes the character frame
   const [editModel, setEditModel] = usePersistentState<'fast' | 'quality' | 'inpaint'>('treel_edit_model', 'fast');
+  // Inpaint mode: which regions to also repaint (clothing is always on)
+  const [inpaintHair, setInpaintHair] = usePersistentState('treel_inpaint_hair', false);
+  const [inpaintBackground, setInpaintBackground] = usePersistentState('treel_inpaint_bg', false);
+  const [inpaintAccessories, setInpaintAccessories] = usePersistentState('treel_inpaint_acc', false);
   // Character-frame (Qwen img2img) controls
   const [editStrength, setEditStrength] = usePersistentState('treel_edit_strength', 0.85);
   const [editCfg, setEditCfg] = usePersistentState('treel_edit_cfg', 1.0);
@@ -222,15 +226,17 @@ export const TransformReelPage = () => {
             cfg: editCfg,
             steps: Math.max(editSteps, 20),
             seed,
-            prompt: `a woman wearing ${characterPrompt.trim()}, real fabric with natural folds and sheen, `
-              + 'natural skin texture, photorealistic, sharp focus, same body and pose',
+            prompt: `a woman wearing ${characterPrompt.trim()}`
+              + (inpaintHair ? ', with a new hairstyle' : '')
+              + (inpaintBackground && scenePrompt.trim() ? `, background is ${scenePrompt.trim()}` : '')
+              + ', real fabric with natural folds and sheen, natural skin texture, photorealistic, sharp focus, same body and pose',
             negative,
             mask_clothes: true,
             mask_body: true,
             mask_face: false,
-            mask_hair: false,
-            mask_accessories: false,
-            mask_background: false,
+            mask_hair: inpaintHair,
+            mask_accessories: inpaintAccessories,
+            mask_background: inpaintBackground,
           },
         };
       } else {
@@ -540,9 +546,33 @@ export const TransformReelPage = () => {
                 </div>
               </div>
               {editModel === 'inpaint' && (
-                <p className="text-[9px] text-white/30">
-                  Inpaint locks her face, hair and background — only the outfit changes. Scene change is ignored in this mode.
-                </p>
+                <div className="rounded-lg border border-white/10 bg-black/20 p-2.5 space-y-2">
+                  <p className="text-[9px] text-white/30">
+                    Locks her face and pose. Outfit always changes — optionally also repaint:
+                  </p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                    <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-white/50">
+                      <input type="checkbox" checked={inpaintHair} onChange={(e) => setInpaintHair(e.target.checked)} />
+                      Hair
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-white/50">
+                      <input type="checkbox" checked={inpaintAccessories} onChange={(e) => setInpaintAccessories(e.target.checked)} />
+                      Accessories
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-white/50">
+                      <input type="checkbox" checked={inpaintBackground} onChange={(e) => setInpaintBackground(e.target.checked)} />
+                      Background
+                    </label>
+                  </div>
+                  {inpaintBackground && (
+                    <p className="text-[9px] text-white/25">
+                      Background uses the Scene picked below — turn on "Change scene too" to choose one.
+                    </p>
+                  )}
+                  <p className="text-[9px] text-white/25">
+                    Makeup-only and pose change aren't possible in inpaint (they'd repaint the face / need a full regenerate) — use Quality for those.
+                  </p>
+                </div>
               )}
 
               <div className="flex gap-2">
