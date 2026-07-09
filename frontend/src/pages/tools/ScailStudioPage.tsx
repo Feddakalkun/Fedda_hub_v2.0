@@ -244,7 +244,7 @@ export const ScailStudioPage = () => {
                 className={cn('flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-bold transition-all',
                   mode === 'generate' ? 'border-violet-500/40 bg-violet-500/15 text-violet-200' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10')}
               >
-                <Sparkles className="h-4 w-4" /> Generate with Z-Image
+                <Sparkles className="h-4 w-4" /> Generate image
               </button>
               <button
                 type="button"
