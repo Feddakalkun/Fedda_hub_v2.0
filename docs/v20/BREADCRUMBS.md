@@ -664,3 +664,14 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
 - Replaced the plain textareas with PromptAssistant (context "zimage") on both
   the Starter Image "Describe your character" box and the Change Outfit box -
   gives Enhance / Generate / dice-Influencer Ollama buttons for building prompts.
+
+## 2026-07-08 - Scail Studio: base model picker + multi-LoRA
+
+- Starter-image generate gained a model picker: Z-Image, FLUX2 Klein
+  (flux2klein-txt2img, no width/height in mapping), Qwen (qwen-txt2img),
+  Chroma HD (chroma1-hd-txt2img, NO lora support - workflow has no lora mapping).
+- Multi-LoRA: loraEntries array with per-row dropdown (filtered to the model's
+  family token: zimage/flux/qwen) + strength slider + remove + Add LoRA.
+  Switching model clears the LoRA list. Loads ALL loras now, filters per family.
+- SDXL was requested but there is NO sdxl txt2img workflow in the project (only
+  inpaint/controlnet/outpaint) - omitted; would need a new workflow to add.

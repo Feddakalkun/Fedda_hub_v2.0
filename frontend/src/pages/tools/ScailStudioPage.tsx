@@ -27,6 +27,15 @@ const OUTFIT_PRESETS: Array<{ label: string; prompt: string }> = [
 
 const IMG_NEGATIVE = 'blurry, low quality, deformed, extra limbs, watermark, text';
 
+// Base models for the starter image. loraToken = substring a LoRA path must contain
+// to belong to this family (null = the workflow has no LoRA support). size = send width/height.
+const MODELS: Array<{ id: string; label: string; loraToken: string | null; size: boolean }> = [
+  { id: 'z-image', label: 'Z-Image', loraToken: 'zimage', size: true },
+  { id: 'flux2klein-txt2img', label: 'FLUX2 Klein', loraToken: 'flux', size: false },
+  { id: 'qwen-txt2img', label: 'Qwen', loraToken: 'qwen', size: true },
+  { id: 'chroma1-hd-txt2img', label: 'Chroma HD', loraToken: null, size: true },
+];
+
 // Poll a prompt to completion and return its output images (backend status endpoint).
 async function pollImages(promptId: string, workflowId: string, maxTicks = 120): Promise<Array<{ filename: string; subfolder: string; type: string }>> {
   for (let i = 0; i < maxTicks; i++) {
@@ -63,11 +72,18 @@ export const ScailStudioPage = () => {
   const [mode, setMode] = usePersistentState<'upload' | 'generate'>('scail_mode', 'generate');
   const [uploading, setUploading] = useState(false);
 
-  // generate (z-image) state
+  // generate state
   const [genPrompt, setGenPrompt] = usePersistentState('scail_gen_prompt', '');
-  const [loraName, setLoraName] = usePersistentState('scail_gen_lora', '');
-  const [availableLoras, setAvailableLoras] = useState<string[]>([]);
+  const [modelId, setModelId] = usePersistentState('scail_gen_model', 'z-image');
+  const [loraEntries, setLoraEntries] = usePersistentState<Array<{ name: string; strength: number }>>('scail_gen_loras', []);
+  const [allLoras, setAllLoras] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
+
+  const model = MODELS.find((m) => m.id === modelId) ?? MODELS[0];
+  const familyLoras = model.loraToken
+    ? allLoras.filter((l) => l.replace(/\\/g, '/').toLowerCase().includes(model.loraToken!))
+    : [];
+  const shortLora = (p: string) => p.replace(/\\/g, '/').split('/').pop()?.replace(/\.safetensors$/i, '') ?? p;
 
   // outfit (inpaint) state
   const [outfitPrompt, setOutfitPrompt] = usePersistentState('scail_outfit_prompt', OUTFIT_PRESETS[0].prompt);
@@ -77,12 +93,7 @@ export const ScailStudioPage = () => {
   const dimsRef = useRef<{ w: number; h: number }>({ w: 896, h: 1152 });
 
   useEffect(() => {
-    comfyService.getLoras()
-      .then((loras) => setAvailableLoras(loras.filter((l) => {
-        const n = l.replace(/\\/g, '/').toLowerCase();
-        return n.includes('zimage') || n.includes('z-image');
-      })))
-      .catch(() => {});
+    comfyService.getLoras().then(setAllLoras).catch(() => {});
   }, []);
 
   // Accept a "Send to Workflow" image handoff
@@ -130,26 +141,28 @@ export const ScailStudioPage = () => {
     if (!genPrompt.trim() || busy) return;
     setGenerating(true);
     try {
+      const activeLoras = model.loraToken
+        ? loraEntries.filter((e) => e.name && e.name.trim()).map((e) => ({ name: e.name, strength: e.strength }))
+        : [];
       const res = await fetch(`${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.GENERATE}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          workflow_id: 'z-image',
+          workflow_id: model.id,
           params: {
             prompt: genPrompt.trim(),
             negative: IMG_NEGATIVE,
-            width: 896,
-            height: 1152,
+            ...(model.size ? { width: 896, height: 1152 } : {}),
             steps: 11,
             cfg: 1.0,
             seed: Math.floor(Math.random() * 10_000_000_000),
-            ...(loraName ? { loras: [{ name: loraName, strength: 1.0 }] } : {}),
+            ...(activeLoras.length ? { loras: activeLoras } : {}),
           },
         }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.detail || 'Generate failed');
-      const images = await pollImages(data.prompt_id, 'z-image');
+      const images = await pollImages(data.prompt_id, model.id);
       if (!images.length) throw new Error('No image produced');
       const url = viewUrl(images[images.length - 1]);
       const staged = await stageAsInput(url, 'scail-starter.png');
@@ -263,12 +276,59 @@ export const ScailStudioPage = () => {
                   accent="violet"
                   label="Describe your character"
                 />
-                <select value={loraName} onChange={(e) => setLoraName(e.target.value)} className={cn(inputBase, 'text-sm')}>
-                  <option value="">No character LoRA</option>
-                  {availableLoras.map((l) => (
-                    <option key={l} value={l}>{l.replace(/\\/g, '/').split('/').pop()?.replace(/\.safetensors$/i, '')}</option>
-                  ))}
-                </select>
+                <div>
+                  <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-white/25">Model</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {MODELS.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => { setModelId(m.id); setLoraEntries([]); }}
+                        className={cn('rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition-all',
+                          modelId === m.id ? 'border-violet-500/40 bg-violet-500/15 text-violet-200' : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10')}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {model.loraToken ? (
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-white/25">
+                      LoRAs {familyLoras.length > 0 && <span className="opacity-50">({familyLoras.length} for {model.label})</span>}
+                    </p>
+                    {loraEntries.map((entry, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <select
+                          value={entry.name}
+                          onChange={(e) => setLoraEntries(loraEntries.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
+                          className={cn(inputBase, 'flex-1 text-[11px]')}
+                        >
+                          <option value="">Select LoRA…</option>
+                          {familyLoras.map((l) => <option key={l} value={l}>{shortLora(l)}</option>)}
+                        </select>
+                        <input
+                          type="range" min={0} max={1.5} step={0.05} value={entry.strength}
+                          onChange={(e) => setLoraEntries(loraEntries.map((x, j) => j === i ? { ...x, strength: parseFloat(e.target.value) } : x))}
+                          className="w-20"
+                        />
+                        <span className="w-8 text-right font-mono text-[10px] text-white/40">{entry.strength.toFixed(2)}</span>
+                        <button type="button" onClick={() => setLoraEntries(loraEntries.filter((_, j) => j !== i))}
+                          className="text-white/30 transition hover:text-red-400">✕</button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setLoraEntries([...loraEntries, { name: '', strength: 1.0 }])}
+                      className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white/40 transition hover:bg-white/10"
+                    >
+                      + Add LoRA
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-white/25">{model.label} has no LoRA support here.</p>
+                )}
                 <button
                   type="button"
                   onClick={generateStarter}
