@@ -2825,6 +2825,139 @@ async def mux_audio(req: MuxAudioRequest):
     return {"success": True, "filename": target_name, "subfolder": "", "type": "output"}
 
 
+class BeatCutRequest(BaseModel):
+    # ComfyUI input image filenames, shown in order, cut on the beats. Empty = probe only.
+    images: List[str] = []
+    audio_filename: str
+    audio_offset_sec: float = 0.0
+    max_seconds: float = 8.0
+    # Beats closer together than this are merged (avoids strobe cuts on fast songs)
+    min_cut_sec: float = 0.4
+
+
+def _detect_beat_cuts(audio_path: Path, offset: float, total: float, min_cut: float) -> Dict[str, Any]:
+    """librosa beat detection on [offset, offset+total] of the audio.
+    Returns cut times relative to the offset (first cut always 0) + bpm."""
+    import tempfile
+    import numpy as np
+    import librosa
+
+    tmp_wav = Path(tempfile.mkdtemp(prefix="fedda_beat_")) / "analysis.wav"
+    try:
+        _run_ffmpeg([
+            "-y", "-ss", f"{offset:.3f}", "-t", f"{total + 1.0:.3f}",
+            "-i", str(audio_path),
+            "-ac", "1", "-ar", "22050", "-vn",
+            str(tmp_wav),
+        ])
+        y, sr = librosa.load(str(tmp_wav), sr=22050, mono=True)
+        tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
+        beat_times = librosa.frames_to_time(beat_frames, sr=sr)
+        bpm = float(np.atleast_1d(tempo)[0]) if np.size(tempo) else 0.0
+    finally:
+        try:
+            tmp_wav.unlink(missing_ok=True)
+            tmp_wav.parent.rmdir()
+        except OSError:
+            pass
+
+    cuts: List[float] = [0.0]
+    for b in beat_times:
+        t = float(b)
+        if t <= 0 or t > total - 0.15:
+            continue
+        if t - cuts[-1] >= min_cut:
+            cuts.append(t)
+
+    if len(cuts) < 3:  # weak/undetectable beat: fall back to an even grid
+        step = max(min_cut, 0.5)
+        cuts = [round(t, 3) for t in np.arange(0.0, total - 0.15, step).tolist()]
+        if not cuts:
+            cuts = [0.0]
+    return {"cuts": cuts, "bpm": round(bpm, 1)}
+
+
+@app.post("/api/media/beat-cut")
+async def beat_cut(req: BeatCutRequest):
+    """Build a beat-switch reel: still images hard-cut on the beats of the audio.
+    With no images this is a probe: returns bpm + how many cuts would be made."""
+    audio_path = _resolve_input_file(req.audio_filename)
+    offset = max(0.0, float(req.audio_offset_sec or 0.0))
+    total = max(3.0, min(15.0, float(req.max_seconds or 8.0)))
+    min_cut = max(0.2, min(2.0, float(req.min_cut_sec or 0.4)))
+
+    try:
+        analysis = _detect_beat_cuts(audio_path, offset, total, min_cut)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Beat analysis failed: {e}")
+    cuts = analysis["cuts"]
+
+    if not req.images:
+        return {
+            "success": True, "probe": True,
+            "bpm": analysis["bpm"], "cuts": len(cuts), "duration": total,
+        }
+
+    image_paths = [_resolve_input_file(name) for name in req.images]
+
+    # Normalize every frame to 1080x1920 (9:16) so the concat demuxer gets uniform streams
+    import tempfile
+    from PIL import Image as PILImage
+    work = Path(tempfile.mkdtemp(prefix="fedda_reel_"))
+    try:
+        frames: List[Path] = []
+        for i, src in enumerate(image_paths):
+            img = PILImage.open(src).convert("RGB")
+            img.thumbnail((1080, 1920), PILImage.LANCZOS)
+            canvas = PILImage.new("RGB", (1080, 1920), (0, 0, 0))
+            canvas.paste(img, ((1080 - img.width) // 2, (1920 - img.height) // 2))
+            frame = work / f"frame_{i:03d}.jpg"
+            canvas.save(frame, quality=92)
+            frames.append(frame)
+
+        # Segments: cut i lasts until cut i+1 (last one until the end); images round-robin
+        durations: List[float] = []
+        for i, t in enumerate(cuts):
+            end = cuts[i + 1] if i + 1 < len(cuts) else total
+            durations.append(max(0.05, end - t))
+
+        concat_lines: List[str] = []
+        for i, dur in enumerate(durations):
+            frame = frames[i % len(frames)]
+            path = str(frame).replace("\\", "/").replace("'", r"'\''")
+            concat_lines.append(f"file '{path}'")
+            concat_lines.append(f"duration {dur:.3f}")
+        # concat demuxer quirk: repeat the last file so the final duration is honored
+        last = str(frames[(len(durations) - 1) % len(frames)]).replace("\\", "/").replace("'", r"'\''")
+        concat_lines.append(f"file '{last}'")
+        concat_file = work / "cuts.txt"
+        concat_file.write_text("\n".join(concat_lines), encoding="utf-8")
+
+        target_name = _safe_unique_name("reel", "mp4")
+        target = OUTPUT_DIR / target_name
+        _run_ffmpeg([
+            "-y",
+            "-f", "concat", "-safe", "0", "-i", str(concat_file),
+            "-ss", f"{offset:.3f}", "-i", str(audio_path),
+            "-map", "0:v:0", "-map", "1:a:0",
+            "-r", "30", "-pix_fmt", "yuv420p",
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+            "-c:a", "aac", "-b:a", "192k",
+            "-t", f"{total:.3f}",
+            str(target),
+        ])
+    finally:
+        try:
+            shutil.rmtree(work, ignore_errors=True)
+        except OSError:
+            pass
+
+    return {
+        "success": True, "filename": target_name, "subfolder": "", "type": "output",
+        "bpm": analysis["bpm"], "cuts": len(cuts), "duration": total,
+    }
+
+
 @app.post("/api/media/trim-video")
 async def trim_video(req: TrimVideoRequest):
     """Trim a ComfyUI input video into a new H.264 mp4 without audio."""
