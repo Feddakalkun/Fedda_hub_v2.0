@@ -767,3 +767,19 @@ NOT DONE / next:
 
 Reminders: two-account split (this file is the handoff channel); one feature ->
 commit -> push -> git checkout -- . && pull in install/app; user launches servers.
+
+## 2026-07-08 - WAN 2.2 Img2Vid: UploadSlot drag-drop + image->prompt caption
+
+- Wan22Img2Vid.tsx: replaced the hand-rolled upload zone with the shared
+  UploadSlot (robust drag-drop + URL + clear + replace, matches LTX img2vid),
+  removed the dead fileInputRef. Added "Build Prompt From Image" button that
+  captions the uploaded reference via /api/ollama/caption context=wan-i2v (NSFW
+  motion-prompt tuned) into Scene 1. Added workflowId=wan22-img2vid so the
+  WorkflowShell download-models banner appears.
+- WAN 2.2 i2v IS NSFW: nsfw_wan_umt5-xxl encoder + NSFW loras + NSFW toggle
+  (default on) + wan-i2v caption context is explicit.
+- BLOCKER for testing: wan22-img2vid models are NOT on disk (wan2.2 i2v high/low
+  14B, nsfw umt5 encoder all MISSING). User must run
+  `download_models.bat wan22-img2vid` or use the in-UI Download button first.
+- LTX img2vid already had UploadSlot + Build From Reference - it's the reference
+  style; WAN now matches. No LTX change needed.

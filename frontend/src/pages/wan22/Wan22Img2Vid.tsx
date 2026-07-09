@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  Video, Upload, RefreshCw, Film, Loader2,
+  Video, RefreshCw, Film, Loader2, Wand2,
   ChevronDown, ChevronUp, Check, FlameKindling,
 } from 'lucide-react';
 import { useToast } from '../../components/ui/Toast';
@@ -11,7 +11,8 @@ import { comfyService } from '../../services/comfyService';
 import { consumeHandoff } from '../../utils/workflowHandoff';
 import { PromptAssistant } from '../../components/ui/PromptAssistant';
 import { LoraSelector } from '../../components/ui/LoraSelector';
-import { FeddaButton, FeddaPanel, FeddaSectionTitle } from '../../components/ui/FeddaPrimitives';
+import { UploadSlot } from '../../components/ui/WorkflowControls';
+import { FeddaButton, FeddaPanel, FeddaSectionTitle, NeutralButton } from '../../components/ui/FeddaPrimitives';
 import { VideoOutputPanel } from '../../components/layout/VideoOutputPanel';
 import { WorkflowShell } from '../../components/layout/WorkflowShell';
 
@@ -66,6 +67,7 @@ export const Wan22Img2Vid = () => {
 
   const [uploadedImageName, setUploadedImageName] = usePersistentState<string | null>('wan22i2v_image_file', null);
   const [uploading,         setUploading]         = useState(false);
+  const [captioning,        setCaptioning]        = useState(false);
 
   const [isGenerating,    setIsGenerating]    = useState(false);
   const [pendingPromptId, setPendingPromptId] = useState<string | null>(null);
@@ -74,7 +76,6 @@ export const Wan22Img2Vid = () => {
   const [availableLoras, setAvailableLoras] = useState<string[]>([]);
   const uploadedImage = uploadedImageName ? `/comfy/view?filename=${encodeURIComponent(uploadedImageName)}&type=input` : null;
 
-  const fileInputRef  = useRef<HTMLInputElement>(null);
   const sessionRef    = useRef<string[]>([]);
   const prevCountRef  = useRef(0);
 
@@ -136,6 +137,30 @@ export const Wan22Img2Vid = () => {
     if (url) uploadFromUrl(url);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Caption the uploaded image into a WAN motion prompt (Scene 1) ──────────
+  const buildPromptFromImage = async () => {
+    if (!uploadedImage || captioning) return;
+    setCaptioning(true);
+    try {
+      const imgRes = await fetch(uploadedImage);
+      if (!imgRes.ok) throw new Error('Could not read the reference image');
+      const blob = await imgRes.blob();
+      const form = new FormData();
+      form.append('file', new File([blob], uploadedImageName || 'reference.png', { type: blob.type || 'image/png' }));
+      form.append('context', 'wan-i2v');
+      const res = await fetch(`${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.OLLAMA_CAPTION}`, { method: 'POST', body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.detail || 'Caption failed');
+      setPrompt1(data.caption ?? '');
+      setExpanded((prev) => prev.map((v, idx) => (idx === 0 ? true : v)));
+      toast(data.model ? `Prompt built with ${data.model}` : 'Prompt built from image', 'success');
+    } catch (err: any) {
+      toast(err.message || 'Could not build prompt from image', 'error');
+    } finally {
+      setCaptioning(false);
+    }
+  };
 
   // ── Stream videos ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -218,6 +243,7 @@ export const Wan22Img2Vid = () => {
       icon={Video}
       isGenerating={isGenerating}
       canGenerate={canGenerate}
+      workflowId="wan22-img2vid"
       output={(
         <VideoOutputPanel
           title="WAN Img2Vid Output"
@@ -232,35 +258,24 @@ export const Wan22Img2Vid = () => {
       <div className="space-y-5">
 
           {/* ── IMAGE UPLOAD ── */}
-          {!uploadedImage ? (
-            <div
-              onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f?.type.startsWith('image/')) handleUpload(f); }}
-              onDragOver={e => e.preventDefault()}
-              onClick={() => fileInputRef.current?.click()}
-              className="cursor-pointer rounded-2xl border-2 border-dashed border-white/10 hover:border-violet-500/40 bg-white/[0.02] hover:bg-white/[0.04] transition-all"
-            >
-              <div className="flex flex-col items-center py-14 gap-3">
-                {uploading ? <Loader2 className="w-9 h-9 text-violet-400 animate-spin" /> : <Upload className="w-9 h-9 text-white/15" />}
-                <div className="text-center">
-                  <p className="text-sm font-bold text-white/25">{uploading ? 'Uploading...' : 'Drop image here'}</p>
-                  <p className="text-xs text-white/15 mt-0.5">or click to browse</p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="relative rounded-2xl overflow-hidden border border-white/5 group cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}>
-              <img src={uploadedImage} alt="Input" className="w-full max-h-[260px] object-contain" />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2">
-                <span className="text-[9px] font-black uppercase tracking-widest text-white/70">Replace</span>
-              </div>
-              <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-                <span className="text-[8px] font-mono bg-black/60 backdrop-blur-sm rounded px-1.5 py-0.5 text-white/40">{uploadedImageName}</span>
-              </div>
-            </div>
-          )}
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
-            onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+          <div className="space-y-2">
+            <UploadSlot
+              preview={uploadedImage}
+              uploading={uploading}
+              onFile={handleUpload}
+              onUrl={uploadFromUrl}
+              label="Reference Image"
+              hint="Click or drop jpg/png"
+              height={260}
+              onClear={() => setUploadedImageName(null)}
+            />
+            {uploadedImage && (
+              <NeutralButton onClick={buildPromptFromImage} disabled={captioning} className="w-full justify-center">
+                {captioning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+                {captioning ? 'Reading image…' : 'Build Prompt From Image'}
+              </NeutralButton>
+            )}
+          </div>
 
           {/* ── FRAME COUNT ── */}
           <FeddaPanel className="p-3 space-y-2">
