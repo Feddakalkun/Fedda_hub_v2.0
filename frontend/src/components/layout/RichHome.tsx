@@ -102,7 +102,7 @@ export const RichHome = ({ onSelect }: RichHomeProps) => {
         {automations.length > 0 && (
           <section className="mb-6 space-y-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">Automations</p>
-            <div className="grid w-full gap-3 grid-cols-2 md:grid-cols-4">
+            <div className="grid w-full max-w-3xl gap-3 grid-cols-4">
               {automationSlots.map((module, i) => (
                 <AutomationCard key={module?.id ?? `soon-${i}`} module={module} onSelect={onSelect} />
               ))}
