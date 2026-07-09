@@ -15,6 +15,7 @@ import { Field } from '../../components/ui/FeddaPrimitives';
 import { WorkflowShell, WorkflowSection } from '../../components/layout/WorkflowShell';
 import { WorkflowVideoPreviewStrip } from '../../components/layout/WorkflowVideoPreviewStrip';
 import { ChipGroup, GenerateButton, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
+import { Lightbox } from '../../components/ui/Lightbox';
 import { cn, inputBase } from '../../lib/styles';
 import { LTX_RATIOS, LTX_RESOLUTIONS, getLtxDimensions, getSafeLtxAspect, type LtxRatio, type LtxResolution } from '../../config/ltx';
 
@@ -113,6 +114,7 @@ export const TransformReelPage = () => {
   // Morph (LTX FLF) control
   const [morphGuide, setMorphGuide] = usePersistentState('treel_morph_guide', 0.85);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [lightbox, setLightbox] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
 
   const { toast } = useToast();
@@ -543,13 +545,13 @@ export const TransformReelPage = () => {
             <div className="flex items-center gap-3">
               <div className="flex-1 overflow-hidden rounded-xl border border-white/10 bg-black/30">
                 {sourcePreview
-                  ? <img src={sourcePreview} alt="before" className="max-h-64 w-full object-contain" />
+                  ? <img src={sourcePreview} alt="before" onClick={() => setLightbox(sourcePreview)} className="max-h-64 w-full cursor-zoom-in object-contain" />
                   : <div className="flex h-32 items-center justify-center text-[10px] text-white/20">source</div>}
               </div>
               <ArrowRight className="h-5 w-5 shrink-0 text-violet-400/60" />
               <div className="flex-1 overflow-hidden rounded-xl border border-white/10 bg-black/30">
                 {transformedUrl
-                  ? <img src={transformedUrl} alt="after" className="max-h-64 w-full object-contain" />
+                  ? <img src={transformedUrl} alt="after" onClick={() => setLightbox(transformedUrl)} className="max-h-64 w-full cursor-zoom-in object-contain" />
                   : (
                     <div className="flex h-32 items-center justify-center text-[10px] text-white/20">
                       {transforming ? 'generating…' : 'character frame appears here'}
@@ -656,6 +658,7 @@ export const TransformReelPage = () => {
           </div>
         </WorkflowSection>
       </div>
+      {lightbox && <Lightbox imageUrl={lightbox} onClose={() => setLightbox(null)} />}
     </WorkflowShell>
   );
 };
