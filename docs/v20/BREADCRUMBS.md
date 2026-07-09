@@ -596,3 +596,14 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   can't do light-face + heavy-clothes; pose needs a full regenerate). Those route
   to Quality mode instead. A dedicated low-denoise face "makeup pass" would be a
   separate future feature if wanted.
+
+## 2026-07-08 - Transform Reel: prompt content pass (hair/accessory presets, more outfits, better morphs)
+
+- Inpaint Hair/Accessories toggles now inject real descriptions: HAIR_PRESETS
+  (8) + ACCESSORY_PRESETS (6) chips + free-text inputs appear when the toggle
+  is on; selected text is added into the inpaint prompt (hair -> "...", acc ->
+  "wearing ...", bg -> "background is <scene>"). No more vague "new hairstyle".
+- Outfits: +7 (Sporty, Evening Gown, Schoolgirl, Maid, Wet Look, Winter Glam)
+  on top of the v3 photoreal set = 17 total.
+- Morph: +2 transition styles (Walk Toward, Slow Reveal - fashion-film moves)
+  = 7 total. All still photographic/music-video worded.

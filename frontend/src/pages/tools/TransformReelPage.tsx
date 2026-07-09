@@ -32,6 +32,34 @@ const CHARACTER_PRESETS: Array<{ label: string; prompt: string }> = [
   { label: 'Angel', prompt: 'a white silk slip mini dress with delicate lace trim, thin straps slipping off one shoulder, soft feathered wings behind her, dewy glowing skin, pearl jewelry, soft romantic makeup' },
   { label: 'Fishnet Goth', prompt: 'a black mesh long-sleeve top over a black bra, a leather mini skirt with a studded belt, ripped fishnet tights, platform boots, layered chokers, dark lipstick and smudged black eyeliner' },
   { label: 'Cosplay Armor', prompt: 'a form-fitting fantasy armor set that looks practically built - a molded chest piece over a black bodysuit, layered thigh plates, worn metal with real scratches and reflections, a long braid, subtle scar makeup' },
+  { label: 'Sporty', prompt: 'a matching seamless sports bra and high-waisted gym leggings hugging her curves, a light sweat sheen on toned skin, athletic and real, gym-lit' },
+  { label: 'Evening Gown', prompt: 'a floor-length silk evening gown with a thigh-high slit and a plunging back, the fabric draping and catching light realistically, statement earrings, red-carpet glam makeup' },
+  { label: 'Schoolgirl', prompt: 'a plaid pleated mini skirt with a fitted white blouse tied at the waist, knee-high socks and mary-jane heels, playful, real cotton and pleats' },
+  { label: 'Maid', prompt: 'a classic black-and-white maid dress with a lace apron, ruffled trim and a choker, real satin sheen and lace texture, styled hair' },
+  { label: 'Wet Look', prompt: 'a soaked sheer white tank top clinging to her skin over a bikini top and tiny denim shorts, water droplets on her body, bright sunlit realism' },
+  { label: 'Winter Glam', prompt: 'an open cream fur coat over a matching knit bralette and mini skirt, thigh-high boots, cold rosy skin, breath-in-the-air realism' },
+];
+
+// Hair presets — used when the Inpaint "Hair" toggle is on (real, describable styles).
+const HAIR_PRESETS: Array<{ label: string; prompt: string }> = [
+  { label: 'Platinum Waves', prompt: 'long platinum blonde soft waves with natural shine' },
+  { label: 'Jet Black', prompt: 'sleek jet-black long straight hair with a middle part' },
+  { label: 'Red Curls', prompt: 'fiery red bouncy shoulder-length curls' },
+  { label: 'Beach Brown', prompt: 'honey-brown tousled beach waves' },
+  { label: 'Silver', prompt: 'long silver-white straight hair, glossy' },
+  { label: 'Pink Pastel', prompt: 'soft pastel-pink wavy hair' },
+  { label: 'Pixie', prompt: 'a short dark textured pixie cut' },
+  { label: 'Braided', prompt: 'long dark hair in a sleek braid with soft baby hairs' },
+];
+
+// Accessory presets — used when the Inpaint "Accessories" toggle is on.
+const ACCESSORY_PRESETS: Array<{ label: string; prompt: string }> = [
+  { label: 'Gold Hoops', prompt: 'gold hoop earrings and thin layered gold necklaces' },
+  { label: 'Diamond Choker', prompt: 'a sparkling diamond choker and matching drop earrings' },
+  { label: 'Sunglasses', prompt: 'oversized designer sunglasses pushed into her hair' },
+  { label: 'Body Chain', prompt: 'a delicate silver body chain and anklet' },
+  { label: 'Rings', prompt: 'chunky silver rings and stacked bracelets' },
+  { label: 'Pearls', prompt: 'pearl stud earrings and a delicate pearl pendant' },
 ];
 
 // Scene / setting presets — photographic, so the new background reads as a real place.
@@ -80,6 +108,19 @@ const TRANSITION_STYLES: Array<{ label: string; prompt: string }> = [
       + 'stares down the camera. Powerful, cinematic, quick.',
   },
   {
+    label: 'Walk Toward',
+    prompt:
+      'She struts confidently toward the camera, hips swaying, in the new outfit from the first step. A quick low-angle '
+      + 'shot as she approaches, hair bouncing, holding eye contact with a slow smirk. Glossy fashion-film look, '
+      + 'shallow depth of field, smooth steady motion, high detail on fabric and skin.',
+  },
+  {
+    label: 'Slow Reveal',
+    prompt:
+      'The camera slowly tilts up her body from her heels to her face, revealing the new outfit piece by piece, ending '
+      + 'on her confident gaze into the lens. Cinematic, sensual, unhurried, warm key light, crisp focus, film grain.',
+  },
+  {
     label: 'Energy Sweep',
     prompt:
       'A burst of glowing energy sweeps across her body and her outfit seamlessly transforms into the new look. '
@@ -113,6 +154,8 @@ export const TransformReelPage = () => {
   const [inpaintHair, setInpaintHair] = usePersistentState('treel_inpaint_hair', false);
   const [inpaintBackground, setInpaintBackground] = usePersistentState('treel_inpaint_bg', false);
   const [inpaintAccessories, setInpaintAccessories] = usePersistentState('treel_inpaint_acc', false);
+  const [hairPrompt, setHairPrompt] = usePersistentState('treel_hair_prompt', HAIR_PRESETS[0].prompt);
+  const [accessoryPrompt, setAccessoryPrompt] = usePersistentState('treel_accessory_prompt', ACCESSORY_PRESETS[0].prompt);
   // Character-frame (Qwen img2img) controls
   const [editStrength, setEditStrength] = usePersistentState('treel_edit_strength', 0.85);
   const [editCfg, setEditCfg] = usePersistentState('treel_edit_cfg', 1.0);
@@ -227,7 +270,8 @@ export const TransformReelPage = () => {
             steps: Math.max(editSteps, 20),
             seed,
             prompt: `a woman wearing ${characterPrompt.trim()}`
-              + (inpaintHair ? ', with a new hairstyle' : '')
+              + (inpaintHair && hairPrompt.trim() ? `, ${hairPrompt.trim()}` : '')
+              + (inpaintAccessories && accessoryPrompt.trim() ? `, wearing ${accessoryPrompt.trim()}` : '')
               + (inpaintBackground && scenePrompt.trim() ? `, background is ${scenePrompt.trim()}` : '')
               + ', real fabric with natural folds and sheen, natural skin texture, photorealistic, sharp focus, same body and pose',
             negative,
@@ -564,6 +608,36 @@ export const TransformReelPage = () => {
                       Background
                     </label>
                   </div>
+                  {inpaintHair && (
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap gap-1">
+                        {HAIR_PRESETS.map((h) => (
+                          <button key={h.label} type="button" onClick={() => setHairPrompt(h.prompt)}
+                            className={cn('rounded border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider transition-all',
+                              hairPrompt === h.prompt ? 'border-violet-500/40 bg-violet-500/15 text-violet-200' : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10')}>
+                            {h.label}
+                          </button>
+                        ))}
+                      </div>
+                      <input type="text" value={hairPrompt} onChange={(e) => setHairPrompt(e.target.value)}
+                        placeholder="Describe the hair..." className={cn(inputBase, 'text-[11px]')} />
+                    </div>
+                  )}
+                  {inpaintAccessories && (
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap gap-1">
+                        {ACCESSORY_PRESETS.map((a) => (
+                          <button key={a.label} type="button" onClick={() => setAccessoryPrompt(a.prompt)}
+                            className={cn('rounded border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider transition-all',
+                              accessoryPrompt === a.prompt ? 'border-violet-500/40 bg-violet-500/15 text-violet-200' : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10')}>
+                            {a.label}
+                          </button>
+                        ))}
+                      </div>
+                      <input type="text" value={accessoryPrompt} onChange={(e) => setAccessoryPrompt(e.target.value)}
+                        placeholder="Describe accessories..." className={cn(inputBase, 'text-[11px]')} />
+                    </div>
+                  )}
                   {inpaintBackground && (
                     <p className="text-[9px] text-white/25">
                       Background uses the Scene picked below — turn on "Change scene too" to choose one.
