@@ -69,13 +69,23 @@ const ACCENT_SPIN: Record<AccentColor, string> = {
   sky:     'text-sky-400',
 };
 
+// Strip LLM chatter: a leading "Here is a prompt...:" style preamble and wrapping quotes.
+function cleanPrompt(s: string): string {
+  let t = s.trim();
+  t = t.replace(/^\s*(here\b|here's|sure\b|okay\b|ok\b|certainly\b|of course\b)[^\n]*:\s*/i, '').trim();
+  if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith('“') && t.endsWith('”')) || (t.startsWith("'") && t.endsWith("'"))) {
+    t = t.slice(1, -1).trim();
+  }
+  return t;
+}
+
 // ─── SSE stream helper ────────────────────────────────────────────────────────
 async function streamPrompt(
   url: string,
   body: object,
   onToken: (partial: string) => void,
   signal: AbortSignal,
-): Promise<void> {
+): Promise<string> {
   const resp = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -102,7 +112,7 @@ async function streamPrompt(
     for (const line of lines) {
       if (!line.startsWith('data: ')) continue;
       const data = line.slice(6);
-      if (data === '[DONE]') return;
+      if (data === '[DONE]') return result;
       try {
         const parsed = JSON.parse(data);
         if (parsed.error) throw new Error(parsed.error);
@@ -112,6 +122,7 @@ async function streamPrompt(
       }
     }
   }
+  return result;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -154,12 +165,14 @@ export const PromptAssistant = ({
     onChange(''); // clear so the user sees fresh text streaming in
 
     try {
-      await streamPrompt(
+      const final = await streamPrompt(
         `${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.OLLAMA_PROMPT}`,
         { context, mode: reqMode, current_prompt: value, workflow_id: workflowId },
         onChange,
         abortRef.current.signal,
       );
+      const cleaned = cleanPrompt(final);
+      if (cleaned !== final) onChange(cleaned); // drop any "Here is a prompt:" preamble / wrapping quotes
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         // Put the original prompt back on error

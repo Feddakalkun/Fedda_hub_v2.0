@@ -694,3 +694,11 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   a manifest (same as the other sdxl workflows). Fine on this machine; provision
   for others is a follow-up.
 - User's original sdxl_simple.json left in place (untracked), superseded.
+
+## 2026-07-08 - PromptAssistant: strip LLM preamble/quotes
+
+- LLM outputs like "Here is a prompt that incorporates all the given elements:"
+  + wrapping quotes were landing in the prompt box. streamPrompt now returns the
+  final text and runStream cleans it (cleanPrompt strips a leading Here/Sure/OK...:
+  preamble line + a single pair of wrapping quotes) on completion. Applies to
+  enhance/inspire/influencer everywhere PromptAssistant is used.
