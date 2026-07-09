@@ -107,6 +107,8 @@ export const TransformReelPage = () => {
   const [beatUploading, setBeatUploading] = useState(false);
   const [beatDropSec, setBeatDropSec] = usePersistentState('treel_beat_drop', 0);
   const [muxing, setMuxing] = useState(false);
+  // Which Qwen edit model makes the character frame
+  const [editModel, setEditModel] = usePersistentState<'fast' | 'quality'>('treel_edit_model', 'fast');
   // Character-frame (Qwen img2img) controls
   const [editStrength, setEditStrength] = usePersistentState('treel_edit_strength', 0.85);
   const [editCfg, setEditCfg] = usePersistentState('treel_edit_cfg', 1.0);
@@ -205,7 +207,7 @@ export const TransformReelPage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          workflow_id: 'qwen-rapid-edit-v23',
+          workflow_id: editModel === 'quality' ? 'qwen-edit-2509-image-reference' : 'qwen-rapid-edit-v23',
           params: {
             image: sourceFilename,
             width: dims.w,
@@ -464,6 +466,33 @@ export const TransformReelPage = () => {
                     </p>
                   </div>
                 )}
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] font-black uppercase tracking-widest text-white/25">Edit model</span>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setEditModel('fast')}
+                    className={cn(
+                      'rounded-md border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest transition-all',
+                      editModel === 'fast' ? 'border-violet-500/40 bg-violet-500/15 text-violet-200' : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10',
+                    )}
+                  >
+                    Fast
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditModel('quality')}
+                    title="Qwen Image Edit 2509 — slower but preserves identity/pose much better"
+                    className={cn(
+                      'rounded-md border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest transition-all',
+                      editModel === 'quality' ? 'border-violet-500/40 bg-violet-500/15 text-violet-200' : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10',
+                    )}
+                  >
+                    Quality
+                  </button>
+                </div>
               </div>
 
               <div className="flex gap-2">
