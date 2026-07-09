@@ -90,6 +90,13 @@ export const TransformReelPage = () => {
   const [beatUploading, setBeatUploading] = useState(false);
   const [beatDropSec, setBeatDropSec] = usePersistentState('treel_beat_drop', 0);
   const [muxing, setMuxing] = useState(false);
+  // Character-frame (Qwen img2img) controls
+  const [editStrength, setEditStrength] = usePersistentState('treel_edit_strength', 0.85);
+  const [editCfg, setEditCfg] = usePersistentState('treel_edit_cfg', 1.0);
+  const [editSteps, setEditSteps] = usePersistentState('treel_edit_steps', 8);
+  // Morph (LTX FLF) control
+  const [morphGuide, setMorphGuide] = usePersistentState('treel_morph_guide', 0.85);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const pollRef = useRef<number | null>(null);
 
   const { toast } = useToast();
@@ -185,6 +192,9 @@ export const TransformReelPage = () => {
             image: sourceFilename,
             width: dims.w,
             height: dims.h,
+            denoise: editStrength,
+            cfg: editCfg,
+            steps: editSteps,
             prompt:
               `Change her outfit: she is now wearing ${characterPrompt.trim()}. `
               + 'Completely replace her clothing. The result must look like a REAL PHOTOGRAPH of her - real fabric '
@@ -261,8 +271,8 @@ export const TransformReelPage = () => {
       height: dims.height,
       length_seconds: lengthSec,
       seed: Math.floor(Math.random() * 10_000_000_000),
-      guide_strength_first: 0.85,
-      guide_strength_last: 0.85,
+      guide_strength_first: morphGuide,
+      guide_strength_last: morphGuide,
     });
   };
 
@@ -406,6 +416,54 @@ export const TransformReelPage = () => {
                   Frame Only
                 </button>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setShowAdvanced((v) => !v)}
+                className="text-[9px] font-black uppercase tracking-widest text-white/25 transition-colors hover:text-white/50"
+              >
+                {showAdvanced ? '− Advanced controls' : '+ Advanced controls'}
+              </button>
+              {showAdvanced && (
+                <div className="space-y-3 rounded-lg border border-white/10 bg-black/20 p-2.5">
+                  <SliderField
+                    label="Edit Strength"
+                    value={editStrength}
+                    onChange={setEditStrength}
+                    min={0.4}
+                    max={1}
+                    step={0.05}
+                    format={(v) => `${v.toFixed(2)} — low keeps her, high changes more`}
+                  />
+                  <SliderField
+                    label="Edit CFG"
+                    value={editCfg}
+                    onChange={setEditCfg}
+                    min={1}
+                    max={7}
+                    step={0.5}
+                    format={(v) => `${v.toFixed(1)} — how hard it follows the costume prompt`}
+                  />
+                  <SliderField
+                    label="Edit Steps"
+                    value={editSteps}
+                    onChange={setEditSteps}
+                    min={4}
+                    max={20}
+                    step={1}
+                    format={(v) => `${v} (rapid AIO — 8 is plenty)`}
+                  />
+                  <SliderField
+                    label="Morph Keyframe Lock"
+                    value={morphGuide}
+                    onChange={setMorphGuide}
+                    min={0.5}
+                    max={1}
+                    step={0.05}
+                    format={(v) => `${v.toFixed(2)} — how tightly the video hits both frames`}
+                  />
+                </div>
+              )}
             </div>
           </WorkflowSection>
         </div>

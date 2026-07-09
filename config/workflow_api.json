@@ -1439,13 +1439,13 @@
         "label": "Negative Prompt"
       },
       "width": {
-        "node_id": "9",
+        "node_id": "11",
         "input_key": "width",
         "type": "number",
         "label": "Width"
       },
       "height": {
-        "node_id": "9",
+        "node_id": "11",
         "input_key": "height",
         "type": "number",
         "label": "Height"
@@ -1473,6 +1473,12 @@
         "input_key": "sampler_name",
         "type": "string",
         "label": "Sampler"
+      },
+      "denoise": {
+        "node_id": "2",
+        "input_key": "denoise",
+        "type": "number",
+        "label": "Edit Strength"
       }
     }
   },

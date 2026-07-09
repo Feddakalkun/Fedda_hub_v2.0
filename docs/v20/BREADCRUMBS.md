@@ -488,3 +488,20 @@ Transform Reel (photo->character frame->morph video, now v3 with photoreal
 outfit presets + transition styles + beat-drop audio mux), one-click automation
 pipelines, instant influencer prompt batches (Fill 10), and per-LoRA Character
 Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
+
+## 2026-07-08 - Transform Reel v4: img2img character frame + exposed controls
+
+- Finished the other account's in-progress work (was uncommitted in repo tree):
+  qwen-rapid-edit-v23 workflow rebuilt from empty-latent generation to proper
+  IMG2IMG - node 11 ImageScale (source -> width/height) -> node 10 VAEEncode
+  -> KSampler latent_image, denoise 0.85. This preserves the source pose/face/
+  framing far better than generating from noise. workflow_api.json: width/height
+  now map to node 11, new "denoise" -> node 2 "Edit Strength".
+- Wired the controls into Transform Reel "+ Advanced controls": Edit Strength
+  (denoise 0.4-1.0), Edit CFG (1-7), Edit Steps (4-20, default 8), Morph
+  Keyframe Lock (guide_strength_first/last 0.5-1.0, was hardcoded 0.85).
+  Character-frame gen now sends denoise/cfg/steps; morph sends morphGuide.
+- NOTE for the other account: this was YOUR uncommitted workflow edit - I
+  validated it (JSON parses, img2img chain coherent), added the UI, committed
+  it together. Backend must restart to reload workflow_api.json mapping before
+  the denoise/node-11 mapping takes effect.
