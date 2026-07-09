@@ -29,11 +29,12 @@ const IMG_NEGATIVE = 'blurry, low quality, deformed, extra limbs, watermark, tex
 
 // Base models for the starter image. loraToken = substring a LoRA path must contain
 // to belong to this family (null = the workflow has no LoRA support). size = send width/height.
-const MODELS: Array<{ id: string; label: string; loraToken: string | null; size: boolean }> = [
-  { id: 'z-image', label: 'Z-Image', loraToken: 'zimage', size: true },
-  { id: 'flux2klein-txt2img', label: 'FLUX2 Klein', loraToken: 'flux', size: false },
-  { id: 'qwen-txt2img', label: 'Qwen', loraToken: 'qwen', size: true },
-  { id: 'chroma1-hd-txt2img', label: 'Chroma HD', loraToken: null, size: true },
+const MODELS: Array<{ id: string; label: string; loraToken: string | null; size: boolean; steps: number; cfg: number }> = [
+  { id: 'z-image', label: 'Z-Image', loraToken: 'zimage', size: true, steps: 11, cfg: 1.0 },
+  { id: 'flux2klein-txt2img', label: 'FLUX2 Klein', loraToken: 'flux', size: false, steps: 20, cfg: 1.0 },
+  { id: 'qwen-txt2img', label: 'Qwen', loraToken: 'qwen', size: true, steps: 8, cfg: 1.0 },
+  { id: 'chroma1-hd-txt2img', label: 'Chroma HD', loraToken: null, size: true, steps: 26, cfg: 4.0 },
+  { id: 'sdxl-txt2img', label: 'SDXL', loraToken: 'sdxl', size: true, steps: 25, cfg: 6.0 },
 ];
 
 // Poll a prompt to completion and return its output images (backend status endpoint).
@@ -153,8 +154,8 @@ export const ScailStudioPage = () => {
             prompt: genPrompt.trim(),
             negative: IMG_NEGATIVE,
             ...(model.size ? { width: 896, height: 1152 } : {}),
-            steps: 11,
-            cfg: 1.0,
+            steps: model.steps,
+            cfg: model.cfg,
             seed: Math.floor(Math.random() * 10_000_000_000),
             ...(activeLoras.length ? { loras: activeLoras } : {}),
           },

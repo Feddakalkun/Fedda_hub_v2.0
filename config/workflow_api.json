@@ -2339,5 +2339,59 @@
         "label": "LoRAs"
       }
     }
+  },
+  "sdxl-txt2img": {
+    "name": "SDXL Text to Image",
+    "filename": "sdxl/sdxl-txt2img.json",
+    "description": "Simple SDXL text-to-image with LoRA support (realism-sdxl checkpoint).",
+    "inputs": {
+      "prompt": {
+        "node_id": "6",
+        "input_key": "text",
+        "type": "string",
+        "label": "Prompt"
+      },
+      "negative": {
+        "node_id": "7",
+        "input_key": "text",
+        "type": "string",
+        "label": "Negative Prompt"
+      },
+      "width": {
+        "node_id": "5",
+        "input_key": "width",
+        "type": "number",
+        "label": "Width"
+      },
+      "height": {
+        "node_id": "5",
+        "input_key": "height",
+        "type": "number",
+        "label": "Height"
+      },
+      "seed": {
+        "node_id": "10",
+        "input_key": "seed",
+        "type": "number",
+        "label": "Seed"
+      },
+      "steps": {
+        "node_id": "10",
+        "input_key": "steps",
+        "type": "number",
+        "label": "Steps"
+      },
+      "cfg": {
+        "node_id": "10",
+        "input_key": "cfg",
+        "type": "number",
+        "label": "CFG Scale"
+      },
+      "loras": {
+        "node_id": "100",
+        "type": "loras",
+        "label": "LoRAs"
+      }
+    }
   }
 }

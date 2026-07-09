@@ -675,3 +675,22 @@ Sheets. See entries above for detail. HANDOFF.md was rewritten for v2.0 reality.
   Switching model clears the LoRA list. Loads ALL loras now, filters per family.
 - SDXL was requested but there is NO sdxl txt2img workflow in the project (only
   inpaint/controlnet/outpaint) - omitted; would need a new workflow to add.
+
+## 2026-07-08 - SDXL txt2img workflow + Scail Studio SDXL model
+
+- Built sdxl-txt2img.json (adapted from the user's ComfyUI base+refiner template
+  sdxl_simple.json into a clean single-model SDXL: CheckpointLoaderSimple
+  realism-sdxl -> LoraLoaderModelOnly (node 100, the 'loras' injection point,
+  mirrors z-image) -> CLIP pos/neg -> KSampler dpmpp_2m/karras 25 steps cfg 6 ->
+  VAEDecode -> SaveImage IMAGE/SDXL/0).
+- Registered in workflow_api.json (prompt/negative/width/height/seed/steps/cfg/
+  loras) AND modules.json (added to sdxl-pack.workflows) - backend rejects a
+  workflow no module owns ('No module owns workflow').
+- Scail Studio MODELS gained SDXL (loraToken 'sdxl', steps 25/cfg 6) and each
+  model now carries its own steps/cfg (fixes Chroma/SDXL which were getting
+  z-image's cfg 1.0): z-image 11/1.0, flux 20/1.0, qwen 8/1.0, chroma 26/4, sdxl 25/6.
+- REQUIRES backend restart (workflow_api.json + modules.json cached at startup).
+- Other-user gap: sdxl-txt2img has no downloader node, so realism-sdxl isn't in
+  a manifest (same as the other sdxl workflows). Fine on this machine; provision
+  for others is a follow-up.
+- User's original sdxl_simple.json left in place (untracked), superseded.

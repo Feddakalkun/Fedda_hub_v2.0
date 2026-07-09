@@ -115,7 +115,8 @@
         "sdxl-inpaint-automask",
         "sdxl-outpaint",
         "sdxl-controlnet-depth",
-        "sdxl-controlnet-openpose"
+        "sdxl-controlnet-openpose",
+        "sdxl-txt2img"
       ],
       "custom_nodes": [
         "comfyui_controlnet_aux",
