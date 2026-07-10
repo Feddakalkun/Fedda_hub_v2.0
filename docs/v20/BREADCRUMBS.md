@@ -985,3 +985,12 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
   So ltx-img2vid-gguf has NO download manifest - fine because the model is on the
   local disk and RunPod uses fp8. If gguf provisioning is ever needed, find the
   gguf source URL and add a downloader node + regenerate manifest.
+
+## 2026-07-09 - Lipsync card poster reroll (venice mascot)
+
+- The other account's lipsync card #37 used a generic woman; regenerated with the
+  recurring venice teal-elf mascot (turquoise/silver hair, pointed ears, blue eyes,
+  freckles, velvet + silver jewelry, vintage mic, cyan waveform, holographic
+  talking-head face-mesh panel). First Z-Image roll, 1456x880. "LIPSYNC" title
+  composited with PIL (cyan glow + white) to avoid Z-Image text mangling. Saved
+  to cards/new/venice/37.jpeg (repo + install).
