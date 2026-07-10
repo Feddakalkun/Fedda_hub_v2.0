@@ -760,7 +760,7 @@
   "wan22-vid2vid": {
     "name": "WAN 2.2 Vid2Vid",
     "filename": "wan22/vid2vid-4frames-wan22.json",
-    "description": "Extend and transform video with WAN 2.2 â€” 4-frame expansion chain",
+    "description": "Extend and transform video with WAN 2.2 \u00e2\u20ac\u201d 4-frame expansion chain",
     "inputs": {
       "video": {
         "node_id": "148",
@@ -874,7 +874,7 @@
   "wan22-img2vid": {
     "name": "WAN 2.2 Img2Vid",
     "filename": "wan22/img2vid-4frames-wan22.json",
-    "description": "Animate a still image into video with WAN 2.2 â€” 4-frame expansion chain",
+    "description": "Animate a still image into video with WAN 2.2 \u00e2\u20ac\u201d 4-frame expansion chain",
     "inputs": {
       "image": {
         "node_id": "25",
@@ -931,7 +931,7 @@
     }
   },
   "ltx-flf": {
-    "name": "LTX 2.3 â€” First/Last Frame",
+    "name": "LTX 2.3 \u00e2\u20ac\u201d First/Last Frame",
     "filename": "ltx/LTX-23-flf.json",
     "description": "Generate video from first and last frame images using LTX Video 2.3",
     "inputs": {
@@ -1531,7 +1531,7 @@
     }
   },
   "ltx-img2vid": {
-    "name": "LTX 2.3 â€” Img2Vid",
+    "name": "LTX 2.3 \u00e2\u20ac\u201d Img2Vid",
     "filename": "ltx/LTX-23-img2vid.json",
     "description": "Animate a single reference image into cinematic video using LTX Video 2.3",
     "inputs": {
@@ -2048,7 +2048,7 @@
   "wan22xxx-img2vid": {
     "name": "WAN 2.2 XXX Img2Vid",
     "filename": "wan22/WAN22XXX-img2video.json",
-    "description": "Animate a reference image with dual high/low noise WAN 2.2 14B fp8 pass — NSFW UMT5 encoder, Power LoRA slots.",
+    "description": "Animate a reference image with dual high/low noise WAN 2.2 14B fp8 pass \u2014 NSFW UMT5 encoder, Power LoRA slots.",
     "inputs": {
       "image": {
         "node_id": "278",
@@ -2118,7 +2118,7 @@
   "hunyuan-i2v": {
     "name": "HunyuanVideo I2V fp8",
     "filename": "hunyuan/HunyuanVideo-i2v.json",
-    "description": "Animate a reference image into video using HunyuanVideo I2V 720p fp8 — native ComfyUI I2V pipeline.",
+    "description": "Animate a reference image into video using HunyuanVideo I2V 720p fp8 \u2014 native ComfyUI I2V pipeline.",
     "inputs": {
       "image": {
         "node_id": "8",
@@ -2523,37 +2523,6 @@
         "input_key": "value",
         "type": "number",
         "label": "Length (s)"
-      }
-    }
-  },
-  "lipsync-sonic": {
-    "name": "Sonic Lipsync",
-    "filename": "lipsync/LIPSYNC_SONIC.json",
-    "description": "SVD-based talking head from a portrait + audio.",
-    "inputs": {
-      "image": {
-        "node_id": "61",
-        "input_key": "image",
-        "type": "string",
-        "label": "Portrait"
-      },
-      "audio": {
-        "node_id": "60",
-        "input_key": "audio",
-        "type": "string",
-        "label": "Audio"
-      },
-      "width": {
-        "node_id": "80",
-        "input_key": "width",
-        "type": "number",
-        "label": "Width"
-      },
-      "height": {
-        "node_id": "80",
-        "input_key": "height",
-        "type": "number",
-        "label": "Height"
       }
     }
   },

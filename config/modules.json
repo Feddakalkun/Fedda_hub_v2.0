@@ -345,12 +345,10 @@
       "area": "video",
       "enabled": true,
       "tabs": [
-        "lipsync-sonic",
         "lipsync-infinitetalk",
         "lipsync-multitalk"
       ],
       "workflows": [
-        "lipsync-sonic",
         "lipsync-infinitetalk",
         "lipsync-multitalk"
       ],
@@ -358,12 +356,10 @@
         "ComfyUI-WanVideoWrapper",
         "ComfyUI-KJNodes",
         "ComfyUI-VideoHelperSuite",
-        "ComfyUI_Sonic",
         "comfyui-reactor-node"
       ],
       "models": [
-        "WAN 2.1 talk models",
-        "SVD"
+        "WAN 2.1 talk models"
       ],
       "notes": "Talking-head lipsync workflows."
     }

@@ -104,13 +104,13 @@
         0
       ],
       "audio": [
-        "215",
+        "214",
         0
       ]
     },
     "class_type": "VHS_VideoCombine",
     "_meta": {
-      "title": "Video Combine 🎥🅥🅗🅢"
+      "title": "Video Combine \ud83c\udfa5\ud83c\udd65\ud83c\udd57\ud83c\udd62"
     }
   },
   "133": {
@@ -271,16 +271,6 @@
       "title": "WanVideo ImageToVideo Encode"
     }
   },
-  "209": {
-    "inputs": {
-      "UNKNOWN": 0.1,
-      "audio": [
-        "215",
-        0
-      ]
-    },
-    "_meta": {}
-  },
   "210": {
     "inputs": {
       "strength_1": 1,
@@ -351,7 +341,7 @@
         0
       ],
       "audio_1": [
-        "215",
+        "214",
         0
       ]
     },
@@ -369,16 +359,6 @@
     "_meta": {
       "title": "Load Audio"
     }
-  },
-  "215": {
-    "inputs": {
-      "UNKNOWN": "1:00",
-      "audio": [
-        "214",
-        0
-      ]
-    },
-    "_meta": {}
   },
   "217": {
     "inputs": {
@@ -420,7 +400,7 @@
     },
     "class_type": "AspectRatioResizeImage",
     "_meta": {
-      "title": "🖼️ Resize to Aspect Ratio"
+      "title": "\ud83d\uddbc\ufe0f Resize to Aspect Ratio"
     }
   }
 }
