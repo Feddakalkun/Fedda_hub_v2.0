@@ -994,3 +994,32 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
   talking-head face-mesh panel). First Z-Image roll, 1456x880. "LIPSYNC" title
   composited with PIL (cyan glow + white) to avoid Z-Image text mangling. Saved
   to cards/new/venice/37.jpeg (repo + install).
+
+## 2026-07-10 - Fix lipsync workflows ("no class_type")
+
+- User: "none of the new lipsync will run: Node 'AudioCrop seconds' has no
+  class_type. Node 'ID #215' has no class_type. Node 'ID #58' has no class_type."
+- Root cause: the other account's three lipsync workflows were exported to API
+  format while the required custom nodes were NOT loaded, so some nodes came out
+  with a BLANK class_type and their widgets collapsed into a single "UNKNOWN" key
+  (widget values destroyed, not just the class name). Tell-tale: input literally
+  named "UNKNOWN". Backend rejects any node lacking class_type.
+- InfiniteTalk (159,465) + MultiTalk (209,215): the broken nodes were grafted-in
+  audio-crop nodes. The canonical WanVideoWrapper example
+  (example_workflows/wanvideo_2_1_14B_I2V_InfiniteTalk_example_03.json) has NO
+  crop node — LoadAudio feeds MultiTalkWav2VecEmbeds/VideoCombine/Preview directly.
+  Fix: deleted the corrupted crop nodes and rewired every audio consumer straight
+  to LoadAudio (125 for InfiniteTalk, 214 for MultiTalk). Both now validate: all
+  nodes have class_type, no dangling refs, all workflow_api injection targets exist
+  (image/audio/prompt/seed/width/height).
+- Sonic: UNSALVAGEABLE by JSON surgery — ComfyUI-Sonic isn't installed and the
+  destroyed nodes (64/66/67) were its core sampler/loader. Removed the dead Sonic
+  tab from the Lipsync card (registry.ts) + modules.json (tabs/workflows/nodes/
+  models) + dropped lipsync-sonic from workflow_api.json. Deleted LIPSYNC_SONIC.json
+  (recoverable from git history). Card default was already InfiniteTalk, so it's now
+  fully functional with two working WAN talk paths and no dead options.
+- To re-enable Sonic later: install ComfyUI-Sonic custom node + its models (sonic
+  weights, whisper-tiny, SVD, RIFE), then rebuild the workflow from a Sonic example
+  (the old JSON is corrupted).
+- NEEDS BACKEND RESTART: workflow_api.json + modules.json are cached at startup.
+- Commit c9420bc, pushed + pulled into install tree.
