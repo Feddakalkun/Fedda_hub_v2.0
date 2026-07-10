@@ -25,6 +25,9 @@ export const LipsyncPage = () => {
   const [audioFile, setAudioFile] = usePersistentState<string | null>('lipsync_audio', null);
   const [imgUp, setImgUp] = useState(false);
   const [audUp, setAudUp] = useState(false);
+  const [audioMode, setAudioMode] = usePersistentState<'upload' | 'tts'>('lipsync_audio_mode', 'tts');
+  const [ttsText, setTtsText] = usePersistentState('lipsync_tts_text', '');
+  const [ttsBusy, setTtsBusy] = useState(false);
 
   const usesPrompt = model !== 'lipsync-sonic';
   const run = useWorkflowRun({
@@ -49,6 +52,27 @@ export const LipsyncPage = () => {
       set(d.filename);
     } catch (e: any) { toast(e.message || 'Upload failed', 'error'); }
     finally { setBusy(false); }
+  };
+
+  // Text-to-speech -> stage the resulting audio as the lipsync input
+  const generateVoice = async () => {
+    if (!ttsText.trim() || ttsBusy) return;
+    setTtsBusy(true);
+    try {
+      const r = await fetch('/api/chat/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: ttsText.trim(), tts_engine: 'edge', voice_name: '', speaking_rate: 1.0, pitch: 0.0 }),
+      });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'TTS failed');
+      const blob = d.audio_url
+        ? await (await fetch(d.audio_url)).blob()
+        : await (await fetch(`data:${d.mime_type || 'audio/wav'};base64,${d.audio_base64}`)).blob();
+      await upload(new File([blob], 'tts_voice.wav', { type: blob.type || 'audio/wav' }), setAudioFile, setAudUp);
+      toast('Voice generated', 'success');
+    } catch (e: any) { toast(e.message || 'Voice generation failed', 'error'); }
+    finally { setTtsBusy(false); }
   };
 
   const generate = () => {
@@ -96,11 +120,38 @@ export const LipsyncPage = () => {
               onFile={(f) => upload(f, setImageFile, setImgUp)}
               label="Portrait" hint="Click or drop a face photo" />
           </WorkflowSection>
-          <WorkflowSection title="Audio">
-            <UploadSlot preview={audPreview} uploading={audUp}
-              onFile={(f) => upload(f, setAudioFile, setAudUp)}
-              accept="audio/*,video/*" label="Audio Clip" hint="mp3/wav - the voice to sync"
-              previewKind="audio" filename={audioFile ?? undefined} />
+          <WorkflowSection
+            title="Audio"
+            actions={(
+              <div className="flex gap-1">
+                {(['tts', 'upload'] as const).map((m) => (
+                  <button key={m} type="button" onClick={() => setAudioMode(m)}
+                    className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition ${
+                      audioMode === m ? 'border-violet-500/50 bg-violet-500/10 text-violet-300' : 'border-white/10 text-zinc-500 hover:text-zinc-300'
+                    }`}>{m === 'tts' ? 'Text to Speech' : 'Upload'}</button>
+                ))}
+              </div>
+            )}
+          >
+            {audioMode === 'tts' ? (
+              <div className="space-y-2">
+                <textarea value={ttsText} onChange={(e) => setTtsText(e.target.value)}
+                  className="w-full min-h-[80px] rounded-xl fedda-input p-3 text-sm"
+                  placeholder="Type what she should say - this becomes her voice..." />
+                <button type="button" onClick={() => void generateVoice()} disabled={ttsBusy || !ttsText.trim()}
+                  className="w-full rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-300 transition hover:bg-violet-500/20 disabled:opacity-40">
+                  {ttsBusy ? 'Generating voice…' : audioFile ? '✓ Voice ready — regenerate' : 'Generate Voice'}
+                </button>
+                {audioFile && audPreview && (
+                  <audio src={audPreview} controls className="h-8 w-full" />
+                )}
+              </div>
+            ) : (
+              <UploadSlot preview={audPreview} uploading={audUp}
+                onFile={(f) => upload(f, setAudioFile, setAudUp)}
+                accept="audio/*,video/*" label="Audio Clip" hint="mp3/wav - the voice to sync"
+                previewKind="audio" filename={audioFile ?? undefined} />
+            )}
           </WorkflowSection>
         </div>
 

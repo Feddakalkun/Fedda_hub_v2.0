@@ -555,7 +555,7 @@ export const FEDDA_MODULES: FeddaModule[] = [
     workflows: ['lipsync-infinitetalk'],
     defaultTab: 'lipsync-infinitetalk',
     Icon: Film,
-    card: {},
+    card: { poster: '/cards/new/venice/37.jpeg' },
   },
 ];
 
