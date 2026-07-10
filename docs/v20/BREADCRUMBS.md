@@ -873,3 +873,18 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
   modest. If it still OOMs, the robust path is GGUF-quantized WAN (Q5 ~10GB via
   ComfyUI-GGUF + UnetLoaderGGUF) - a models download + workflow swap, not done yet.
 - No backend restart needed (workflow read fresh per prompt).
+
+## 2026-07-09 - WAN 2.2 i2v -> GGUF (fixes 3090 OOM for real)
+
+- fp8 14B still OOM'd on the 3090 (14GB unet + 6GB UMT5 encoder + clip_vision).
+  Converted all 8 UNETLoaders in img2vid-4frames-wan22.json to UnetLoaderGGUF
+  (ComfyUI-GGUF, already core/installed): high_noise -> Wan2.2-I2V-A14B-HighNoise-
+  Q4_K_M.gguf, low_noise -> LowNoise-Q4_K_M.gguf (~9.65GB each, QuantStack repo,
+  URLs verified 200). One unet loaded at a time -> peak ~9GB unet + 6GB encoder,
+  fits 24GB. NSFW umt5 encoder kept (still fp8 - no NSFW gguf).
+- Downloader node 151 rewritten to the two GGUF urls; manifest regenerated
+  (wan22-img2vid.txt now lists the GGUFs). Models downloading to ComfyUI/models/
+  unet on this machine; other users get them via download_models.bat wan22-img2vid.
+- fp8 wan2.2 i2v models now unused (user can delete to reclaim disk).
+- No backend restart needed for the workflow (read fresh per prompt); GGUF node
+  already loaded. Still: Purge VRAM before running if another model was used.
