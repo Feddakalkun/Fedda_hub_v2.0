@@ -543,6 +543,20 @@ export const FEDDA_MODULES: FeddaModule[] = [
     Icon: Film,
     card: { poster: '/cards/new/venice/34.jpeg' },
   },
+
+  {
+    id: 'lipsync',
+    sourceModuleId: 'wan-video',
+    label: 'Lipsync',
+    description: 'Talking-head: drive a portrait mouth from an audio clip (InfiniteTalk, MultiTalk, Sonic).',
+    area: 'video',
+    pack: 'booster',
+    tabs: ['lipsync-infinitetalk', 'lipsync-multitalk', 'lipsync-sonic'],
+    workflows: ['lipsync-infinitetalk'],
+    defaultTab: 'lipsync-infinitetalk',
+    Icon: Film,
+    card: {},
+  },
 ];
 
 export const HOME_MODULE_CANDIDATES = FEDDA_MODULES.filter(

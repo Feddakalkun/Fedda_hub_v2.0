@@ -2525,5 +2525,122 @@
         "label": "Length (s)"
       }
     }
+  },
+  "lipsync-sonic": {
+    "name": "Sonic Lipsync",
+    "filename": "lipsync/LIPSYNC_SONIC.json",
+    "description": "SVD-based talking head from a portrait + audio.",
+    "inputs": {
+      "image": {
+        "node_id": "61",
+        "input_key": "image",
+        "type": "string",
+        "label": "Portrait"
+      },
+      "audio": {
+        "node_id": "60",
+        "input_key": "audio",
+        "type": "string",
+        "label": "Audio"
+      },
+      "width": {
+        "node_id": "80",
+        "input_key": "width",
+        "type": "number",
+        "label": "Width"
+      },
+      "height": {
+        "node_id": "80",
+        "input_key": "height",
+        "type": "number",
+        "label": "Height"
+      }
+    }
+  },
+  "lipsync-infinitetalk": {
+    "name": "WAN InfiniteTalk",
+    "filename": "lipsync/WAN-INFINITE-TALK-3.json",
+    "description": "WAN 2.1 InfiniteTalk - phoneme-accurate talking head from portrait + audio.",
+    "inputs": {
+      "image": {
+        "node_id": "284",
+        "input_key": "image",
+        "type": "string",
+        "label": "Portrait"
+      },
+      "audio": {
+        "node_id": "125",
+        "input_key": "audio",
+        "type": "string",
+        "label": "Audio"
+      },
+      "prompt": {
+        "node_id": "241",
+        "input_key": "positive_prompt",
+        "type": "string",
+        "label": "Prompt"
+      },
+      "seed": {
+        "node_id": "128",
+        "input_key": "seed",
+        "type": "number",
+        "label": "Seed"
+      },
+      "width": {
+        "node_id": "537",
+        "input_key": "width",
+        "type": "number",
+        "label": "Width"
+      },
+      "height": {
+        "node_id": "537",
+        "input_key": "height",
+        "type": "number",
+        "label": "Height"
+      }
+    }
+  },
+  "lipsync-multitalk": {
+    "name": "WAN MultiTalk",
+    "filename": "lipsync/WAN-MULTITALK-2.json",
+    "description": "WAN 2.1 MultiTalk - talking head with T5 text control.",
+    "inputs": {
+      "image": {
+        "node_id": "133",
+        "input_key": "image",
+        "type": "string",
+        "label": "Portrait"
+      },
+      "audio": {
+        "node_id": "214",
+        "input_key": "audio",
+        "type": "string",
+        "label": "Audio"
+      },
+      "prompt": {
+        "node_id": "217",
+        "input_key": "positive_prompt",
+        "type": "string",
+        "label": "Prompt"
+      },
+      "seed": {
+        "node_id": "128",
+        "input_key": "seed",
+        "type": "number",
+        "label": "Seed"
+      },
+      "width": {
+        "node_id": "263",
+        "input_key": "width",
+        "type": "number",
+        "label": "Width"
+      },
+      "height": {
+        "node_id": "263",
+        "input_key": "height",
+        "type": "number",
+        "label": "Height"
+      }
+    }
   }
 }

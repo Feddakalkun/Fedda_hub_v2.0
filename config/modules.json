@@ -337,6 +337,35 @@
         "flux2-vae.safetensors"
       ],
       "notes": "Local Ideogram 4 text-to-image with precise text/object placement via KJNodes prompt builder."
+    },
+    {
+      "id": "lipsync",
+      "label": "Lipsync",
+      "pack": "booster",
+      "area": "video",
+      "enabled": true,
+      "tabs": [
+        "lipsync-sonic",
+        "lipsync-infinitetalk",
+        "lipsync-multitalk"
+      ],
+      "workflows": [
+        "lipsync-sonic",
+        "lipsync-infinitetalk",
+        "lipsync-multitalk"
+      ],
+      "custom_nodes": [
+        "ComfyUI-WanVideoWrapper",
+        "ComfyUI-KJNodes",
+        "ComfyUI-VideoHelperSuite",
+        "ComfyUI_Sonic",
+        "comfyui-reactor-node"
+      ],
+      "models": [
+        "WAN 2.1 talk models",
+        "SVD"
+      ],
+      "notes": "Talking-head lipsync workflows."
     }
   ]
 }
