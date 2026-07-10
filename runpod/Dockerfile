@@ -47,74 +47,33 @@ RUN git clone https://github.com/comfyanonymous/ComfyUI.git /app/ComfyUI \
     && cd /app/ComfyUI \
     && python3 -m pip install --no-cache-dir -r requirements.txt
 
+# Custom nodes installed from config/nodes.json (single source of truth -
+# never hand-sync a second list again). Clone + pip requirements for each,
+# skipping local:true and skip_req_update:true nodes; failures are non-fatal.
+COPY --from=frontend-builder /app/config/nodes.json /tmp/nodes.json
 WORKDIR /app/ComfyUI/custom_nodes
 RUN set -eux; \
-    clone_required() { \
-      repo="$1"; name="$2"; \
-      echo "[FEDDA] Cloning required node: ${name}"; \
-      git clone --depth 1 "${repo}" "${name}"; \
-    }; \
-    clone_optional() { \
-      repo="$1"; name="$2"; \
-      echo "[FEDDA] Cloning optional node: ${name}"; \
-      if ! git clone --depth 1 "${repo}" "${name}"; then \
-        echo "[FEDDA] WARN: optional node clone failed: ${name} (${repo})"; \
-        rm -rf "${name}"; \
+    count=$(jq length /tmp/nodes.json); \
+    i=0; \
+    while [ "$i" -lt "$count" ]; do \
+      url=$(jq -r ".[$i].url // empty" /tmp/nodes.json); \
+      folder=$(jq -r ".[$i].folder // .[$i].name" /tmp/nodes.json); \
+      is_local=$(jq -r ".[$i].local // false" /tmp/nodes.json); \
+      skip_req=$(jq -r ".[$i].skip_req_update // false" /tmp/nodes.json); \
+      i=$((i+1)); \
+      if [ "$is_local" = "true" ] || [ -z "$url" ] || [ -d "$folder" ]; then continue; fi; \
+      echo "[FEDDA] node: $folder"; \
+      if ! git clone --depth 1 --recurse-submodules "$url" "$folder"; then \
+        echo "[FEDDA] WARN clone failed: $folder ($url)"; rm -rf "$folder"; continue; \
       fi; \
-    }; \
-    clone_required https://github.com/ltdrdata/ComfyUI-Manager.git ComfyUI-Manager; \
-    clone_required https://github.com/rgthree/rgthree-comfy.git rgthree-comfy; \
-    clone_required https://github.com/comfyanonymous/ComfyUI_bitsandbytes_NF4.git ComfyUI_bitsandbytes_NF4; \
-    clone_required https://github.com/city96/ComfyUI-GGUF.git ComfyUI-GGUF; \
-    clone_required https://github.com/ltdrdata/ComfyUI-Impact-Pack.git ComfyUI-Impact-Pack; \
-    clone_required https://github.com/kijai/ComfyUI-WanVideoWrapper.git ComfyUI-WanVideoWrapper; \
-    clone_required https://github.com/kijai/ComfyUI-WanAnimatePreprocess.git ComfyUI-WanAnimatePreprocess; \
-    clone_required https://github.com/kijai/ComfyUI-KJNodes.git ComfyUI-KJNodes; \
-    clone_required https://github.com/yolain/ComfyUI-Easy-Use.git ComfyUI-Easy-Use; \
-    clone_required https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git ComfyUI-Custom-Scripts; \
-    clone_required https://github.com/comfyuistudio/ComfyUI-Studio-nodes.git ComfyUI-Studio-nodes; \
-    clone_required https://github.com/theUpsider/ComfyUI-Styles_CSV_Loader.git ComfyUI-Styles_CSV_Loader; \
-    clone_required https://github.com/lquesada/ComfyUI-Inpaint-CropAndStitch.git ComfyUI-Inpaint-CropAndStitch; \
-    clone_required https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git ComfyUI_Comfyroll_CustomNodes; \
-    clone_required https://github.com/chflame163/ComfyUI_LayerStyle_Advance.git ComfyUI_LayerStyle_Advance; \
-    clone_required https://github.com/WhatDreamsCost/WhatDreamsCost-ComfyUI.git WhatDreamsCost-ComfyUI; \
-    clone_required https://github.com/SeargeDP/ComfyUI_Searge_LLM.git ComfyUI_Searge_LLM; \
-    clone_required https://github.com/DonutsDelivery/ComfyUI-DonutNodes.git ComfyUI-DonutNodes; \
-    clone_required https://github.com/giriss/comfy-image-saver.git comfy-image-saver; \
-    clone_required https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git ComfyUI_UltimateSDUpscale; \
-    ( cd ComfyUI_UltimateSDUpscale && git submodule update --init --recursive || true ); \
-    clone_optional https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git ComfyUI-VideoHelperSuite; \
-    clone_optional https://github.com/jtydhr88/ComfyUI-qwenmultiangle.git ComfyUI-qwenmultiangle; \
-    clone_optional https://github.com/kijai/ComfyUI-Florence2.git ComfyUI-Florence2; \
-    clone_optional https://github.com/kijai/ComfyUI-SeedVR2_VideoUpscaler.git ComfyUI-SeedVR2_VideoUpscaler; \
-    clone_optional https://github.com/Fannovel16/ComfyUI-Frame-Interpolation.git ComfyUI-Frame-Interpolation; \
-    clone_optional https://github.com/Saganaki22/ComfyUI-FishAudioS2.git ComfyUI-FishAudioS2
-
-RUN cd /app/ComfyUI/custom_nodes/ComfyUI-Manager && python3 -m pip install --no-cache-dir -r requirements.txt || true
-RUN cd /app/ComfyUI/custom_nodes/ComfyUI-Impact-Pack && python3 -m pip install --no-cache-dir -r requirements.txt || true
-RUN cd /app/ComfyUI/custom_nodes/ComfyUI-WanVideoWrapper && python3 -m pip install --no-cache-dir -r requirements.txt || true
-RUN cd /app/ComfyUI/custom_nodes/ComfyUI-WanAnimatePreprocess && python3 -m pip install --no-cache-dir -r requirements.txt || true
-RUN set -eux; \
-    for req in \
-      /app/ComfyUI/custom_nodes/ComfyUI-KJNodes/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI-Easy-Use/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI-Studio-nodes/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI-Styles_CSV_Loader/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI-Inpaint-CropAndStitch/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI_Comfyroll_CustomNodes/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI_LayerStyle_Advance/requirements.txt \
-      /app/ComfyUI/custom_nodes/WhatDreamsCost-ComfyUI/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI-DonutNodes/requirements.txt \
-      /app/ComfyUI/custom_nodes/comfy-image-saver/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI_UltimateSDUpscale/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI-VideoHelperSuite/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI-qwenmultiangle/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI-Florence2/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI-SeedVR2_VideoUpscaler/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI-Frame-Interpolation/requirements.txt \
-      /app/ComfyUI/custom_nodes/ComfyUI-FishAudioS2/requirements.txt; do \
-      if [ -f "$req" ]; then python3 -m pip install --no-cache-dir -r "$req" || true; fi; \
+      if [ "$skip_req" != "true" ] && [ -f "$folder/requirements.txt" ]; then \
+        python3 -m pip install --no-cache-dir -r "$folder/requirements.txt" || true; \
+      fi; \
     done
+
+# llama-cpp-python prebuilt wheel for Searge LLM (source build needs MSVC/scikit-build)
+RUN python3 -m pip install --no-cache-dir llama-cpp-python --prefer-binary \
+      --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu || true
 
 RUN python3 -m pip install --no-cache-dir \
     insightface \
