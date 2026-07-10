@@ -967,3 +967,21 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
   input/VOICES already persist via the input link.
 - WAN 2.2 i2v GGUF models finished + validated (1095 tensors each) - the earlier
   reshape error was just the incomplete HighNoise download (7.5 of 9.65GB).
+
+## 2026-07-09 - LTX img2vid: GGUF option (fixes 22B fp8 OOM on 3090)
+
+- OOM was in comfy_kitchen stochastic_rounding_fp8 loading the 22B
+  ltx-2.3-22b-dev_transformer_only_fp8_scaled (~22GB fp8 weights + rounding
+  overhead -> peak 21.7GB, reserved 23.8GB on the 24GB 3090). The workflow ALREADY
+  uses distilled-style sampling (ManualSigmas 8 steps, cfg 1), so the distilled
+  Q6_K GGUF (16.6GB, already on disk) is the correct match.
+- Same both-options pattern as WAN: LTX-23-img2vid-gguf.json (node 4989 ->
+  UnetLoaderGGUF, ltx-2.3-22b-distilled-1.1-Q6_K.gguf) registered as
+  ltx-img2vid-gguf (workflow_api + modules ltx-video). LtxImg2VidPage precision
+  toggle: GGUF (fits 24GB, default) / fp8 (big GPU). workflowId reactive via
+  useWorkflowRun (submit deps include workflowId).
+- KNOWN GAP (low pri): couldn't find a verified public download URL for the
+  distilled Q6_K gguf (Kijai/LTX2.3_comfy has the fp8; wsbagnsv1 gguf repo 401).
+  So ltx-img2vid-gguf has NO download manifest - fine because the model is on the
+  local disk and RunPod uses fp8. If gguf provisioning is ever needed, find the
+  gguf source URL and add a downloader node + regenerate manifest.

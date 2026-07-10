@@ -272,7 +272,8 @@
       "workflows": [
         "ltx-flf",
         "ltx-img2vid",
-        "ltx-ai2v"
+        "ltx-ai2v",
+        "ltx-img2vid-gguf"
       ],
       "custom_nodes": [
         "ComfyUI-LTXVideo",

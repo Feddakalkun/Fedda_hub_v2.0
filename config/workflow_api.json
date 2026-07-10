@@ -2464,5 +2464,66 @@
         "label": "NSFW"
       }
     }
+  },
+  "ltx-img2vid-gguf": {
+    "name": "LTX 2.3 Image to Video (GGUF)",
+    "filename": "ltx/LTX-23-img2vid-gguf.json",
+    "description": "LTX 2.3 img2vid, distilled Q6_K GGUF - fits a 24GB card (no fp8 OOM).",
+    "inputs": {
+      "image": {
+        "node_id": "2004",
+        "input_key": "image",
+        "type": "string",
+        "label": "Reference Image"
+      },
+      "prompt": {
+        "node_id": "2483",
+        "input_key": "text",
+        "type": "string",
+        "label": "Motion Prompt"
+      },
+      "negative": {
+        "node_id": "2612",
+        "input_key": "text",
+        "type": "string",
+        "label": "Negative Prompt"
+      },
+      "seed": {
+        "node_id": "4832",
+        "input_key": "noise_seed",
+        "type": "number",
+        "label": "Seed"
+      },
+      "lora_name": {
+        "node_id": "4922",
+        "input_key": "lora_name",
+        "type": "string",
+        "label": "LoRA"
+      },
+      "lora_strength": {
+        "node_id": "4922",
+        "input_key": "strength_model",
+        "type": "number",
+        "label": "LoRA Strength"
+      },
+      "width": {
+        "node_id": "4995",
+        "input_key": "width",
+        "type": "number",
+        "label": "Width"
+      },
+      "height": {
+        "node_id": "4995",
+        "input_key": "height",
+        "type": "number",
+        "label": "Height"
+      },
+      "length_seconds": {
+        "node_id": "4997",
+        "input_key": "value",
+        "type": "number",
+        "label": "Length (s)"
+      }
+    }
   }
 }

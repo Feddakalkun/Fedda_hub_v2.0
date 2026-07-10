@@ -32,10 +32,12 @@ export const LtxImg2VidPage = () => {
   const [imageUploading, setImageUploading] = useState(false);
   const [referenceCaptioning, setReferenceCaptioning] = useState(false);
   const [availableLoras, setAvailableLoras] = useState<string[]>([]);
+  const [precision, setPrecision] = usePersistentState<'gguf' | 'fp8'>('ltx_img2vid_precision', 'gguf');
+  const workflowId = precision === 'gguf' ? 'ltx-img2vid-gguf' : 'ltx-img2vid';
 
   const { toast } = useToast();
   const run = useWorkflowRun({
-    workflowId: 'ltx-img2vid',
+    workflowId,
     currentKey: 'ltx_img2vid_current_video',
     historyKey: 'ltx_img2vid_history',
     outputKind: 'video',
@@ -164,7 +166,7 @@ export const LtxImg2VidPage = () => {
       icon={Play}
       isGenerating={run.isGenerating}
       canGenerate={canGenerate}
-      workflowId="ltx-img2vid"
+      workflowId={workflowId}
       output={(
         <WorkflowVideoPreviewStrip
           currentVideo={run.currentMedia}
@@ -291,6 +293,26 @@ export const LtxImg2VidPage = () => {
                 step={1}
                 format={(v) => `${v}s`}
               />
+              <Field label="Model precision">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPrecision('gguf')}
+                    className={cn('flex-1 rounded-lg border px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all',
+                      precision === 'gguf' ? 'border-violet-500/40 bg-violet-500/15 text-violet-200' : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10')}
+                  >
+                    GGUF · fits 24GB
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrecision('fp8')}
+                    className={cn('flex-1 rounded-lg border px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all',
+                      precision === 'fp8' ? 'border-violet-500/40 bg-violet-500/15 text-violet-200' : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10')}
+                  >
+                    fp8 · big GPU
+                  </button>
+                </div>
+              </Field>
             </div>
           </div>
 
