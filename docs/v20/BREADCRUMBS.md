@@ -913,3 +913,24 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
   "typecheck": "tsc -b" for optional local checking. Runtime unaffected.
 - The 44 baseline errors are still worth cleaning up someday but no longer gate
   the deploy build.
+
+## 2026-07-09 - RunPod Dockerfile: add this-session deps + nodes
+
+- runpod/Dockerfile was stale. My build-script fix (vite build) already unblocks
+  the image's `npm run build` (line 8). Added the missing pieces so the image
+  runs the current app:
+  - Custom nodes: ComfyUI_LayerStyle_Advance (PersonMaskUltra - needed by ALL
+    inpaint: Transform Reel/Reel Machine/Scail Studio/SDXL pages), WhatDreamsCost
+    (LTX audio2video), ComfyUI_Searge_LLM, ComfyUI-DonutNodes, comfy-image-saver,
+    ComfyUI_UltimateSDUpscale (+submodule init) + their requirements.
+  - Python deps: librosa+soundfile (beat-cut/Reel Machine), edge-tts (TTS),
+    yt-dlp (media downloader), piexif/imageio-ffmpeg/rembg/pillow-heif, llama-cpp
+    prebuilt (Searge), chatterbox-tts --no-deps + extras + setuptools<81 (optional).
+- Deploy path: push main -> GH Actions (.github/workflows/docker-build.yml) builds
+  runpod/Dockerfile -> ghcr.io/feddakalkun/fedda-runpod:latest -> RunPod template
+  (entrypoint runpod_start.sh, expose 3000, /workspace volume) -> first boot
+  symlinks models/input/output to /workspace -> provision models via
+  download_models per workflow -> app at https://<pod>-3000.proxy.runpod.net.
+- STILL TODO for a clean RunPod run: verify runpod_start.sh provisions/points at
+  the model download flow; models are NOT baked into the image (correct) so a
+  network volume + per-workflow download is the model story; test one full build.

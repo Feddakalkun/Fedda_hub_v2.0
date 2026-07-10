@@ -76,6 +76,13 @@ RUN set -eux; \
     clone_required https://github.com/theUpsider/ComfyUI-Styles_CSV_Loader.git ComfyUI-Styles_CSV_Loader; \
     clone_required https://github.com/lquesada/ComfyUI-Inpaint-CropAndStitch.git ComfyUI-Inpaint-CropAndStitch; \
     clone_required https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git ComfyUI_Comfyroll_CustomNodes; \
+    clone_required https://github.com/chflame163/ComfyUI_LayerStyle_Advance.git ComfyUI_LayerStyle_Advance; \
+    clone_required https://github.com/WhatDreamsCost/WhatDreamsCost-ComfyUI.git WhatDreamsCost-ComfyUI; \
+    clone_required https://github.com/SeargeDP/ComfyUI_Searge_LLM.git ComfyUI_Searge_LLM; \
+    clone_required https://github.com/DonutsDelivery/ComfyUI-DonutNodes.git ComfyUI-DonutNodes; \
+    clone_required https://github.com/giriss/comfy-image-saver.git comfy-image-saver; \
+    clone_required https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git ComfyUI_UltimateSDUpscale; \
+    ( cd ComfyUI_UltimateSDUpscale && git submodule update --init --recursive || true ); \
     clone_optional https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git ComfyUI-VideoHelperSuite; \
     clone_optional https://github.com/jtydhr88/ComfyUI-qwenmultiangle.git ComfyUI-qwenmultiangle; \
     clone_optional https://github.com/kijai/ComfyUI-Florence2.git ComfyUI-Florence2; \
@@ -95,6 +102,11 @@ RUN set -eux; \
       /app/ComfyUI/custom_nodes/ComfyUI-Styles_CSV_Loader/requirements.txt \
       /app/ComfyUI/custom_nodes/ComfyUI-Inpaint-CropAndStitch/requirements.txt \
       /app/ComfyUI/custom_nodes/ComfyUI_Comfyroll_CustomNodes/requirements.txt \
+      /app/ComfyUI/custom_nodes/ComfyUI_LayerStyle_Advance/requirements.txt \
+      /app/ComfyUI/custom_nodes/WhatDreamsCost-ComfyUI/requirements.txt \
+      /app/ComfyUI/custom_nodes/ComfyUI-DonutNodes/requirements.txt \
+      /app/ComfyUI/custom_nodes/comfy-image-saver/requirements.txt \
+      /app/ComfyUI/custom_nodes/ComfyUI_UltimateSDUpscale/requirements.txt \
       /app/ComfyUI/custom_nodes/ComfyUI-VideoHelperSuite/requirements.txt \
       /app/ComfyUI/custom_nodes/ComfyUI-qwenmultiangle/requirements.txt \
       /app/ComfyUI/custom_nodes/ComfyUI-Florence2/requirements.txt \
@@ -110,6 +122,18 @@ RUN python3 -m pip install --no-cache-dir \
     onnxruntime-gpu opencv-python-headless pillow tqdm requests psutil \
     fastapi "uvicorn[standard]" python-multipart httpx \
     jupyterlab ipykernel terminado jupyter_server_terminals
+
+# FEDDA backend + feature deps: media downloader (yt-dlp), beat-cut reels
+# (librosa/soundfile), local TTS (edge-tts), image-saver (piexif), Searge LLM
+# (prebuilt llama-cpp wheel - source build needs MSVC). Chatterbox TTS is optional
+# (heavy pins) - installed no-deps + minimal extras, setuptools<81 for pkg_resources.
+RUN python3 -m pip install --no-cache-dir \
+    librosa soundfile edge-tts yt-dlp piexif imageio-ffmpeg rembg pillow-heif \
+    && python3 -m pip install --no-cache-dir llama-cpp-python --prefer-binary \
+       --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu || true
+RUN python3 -m pip install --no-cache-dir --no-deps chatterbox-tts \
+    && python3 -m pip install --no-cache-dir conformer s3tokenizer resemble-perth pydub \
+    && python3 -m pip install --no-cache-dir "setuptools==80.9.0" || true
 
 COPY --from=frontend-builder /app/backend /app/backend
 COPY --from=frontend-builder /app/config /app/config
