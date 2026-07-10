@@ -11,7 +11,7 @@
   "122": {
     "inputs": {
       "model": "wan2.1_i2v_480p_14B_fp8_e4m3fn.safetensors",
-      "base_precision": "fp16_fast",
+      "base_precision": "fp16",
       "quantization": "disabled",
       "load_device": "offload_device",
       "attention_mode": "sdpa",
