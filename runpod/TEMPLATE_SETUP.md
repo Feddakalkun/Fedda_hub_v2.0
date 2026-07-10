@@ -7,9 +7,11 @@ Use this repo with:
 - `Dockerfile`: `runpod/Dockerfile`
 - Build context: repo root
 
-Recommended image tags:
-- Stable (`main`): `ghcr.io/feddakalkun/fedda-runpod:latest`
-- Dev (`codex/runpod-template-setup`): `ghcr.io/feddakalkun/fedda-runpod:runpod-dev`
+Recommended image tags (published to the repo's GHCR package):
+- Stable (`main`): `ghcr.io/feddakalkun/fedda_hub_v2.0:latest`
+- Per-commit: `ghcr.io/feddakalkun/fedda_hub_v2.0:<short-sha>`
+
+Make the package **public** once (GitHub → your packages → fedda_hub_v2.0 → Package settings → Change visibility → Public) so RunPod can pull it without auth.
 
 ## 2. RunPod Template Fields
 Set these in the template:

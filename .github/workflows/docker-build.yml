@@ -50,9 +50,10 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
+          # Publish only to the repo-owned package; the default GITHUB_TOKEN can
+          # write it. (A separate feddakalkun/fedda-runpod package would need a PAT.)
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            ${{ env.REGISTRY }}/${{ env.RUNPOD_IMAGE }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=runpod-dev,enable=${{ github.ref == 'refs/heads/codex/runpod-template-setup' }}

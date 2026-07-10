@@ -934,3 +934,18 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
 - STILL TODO for a clean RunPod run: verify runpod_start.sh provisions/points at
   the model download flow; models are NOT baked into the image (correct) so a
   network volume + per-workflow download is the model story; test one full build.
+
+## 2026-07-09 - RunPod image: BUILD SUCCEEDS, fix push perms
+
+- Pulled the real CI log (via git-credential token). The Dockerfile BUILD is
+  GOOD - disk-space fix worked, all node clones + pip installs completed at 16min
+  (the "pip dependency resolver" lines are warnings, not errors). The ONLY failure
+  was the final PUSH: the workflow published to TWO images, and the second
+  (ghcr.io/feddakalkun/fedda-runpod, a non-repo package name) got
+  "denied: permission_denied: write_package" - the default GITHUB_TOKEN can only
+  write the repo-owned package.
+- Fix: metadata images list now publishes ONLY ghcr.io/${IMAGE_NAME}
+  (= ghcr.io/feddakalkun/fedda_hub_v2.0). Updated TEMPLATE_SETUP.md image name +
+  a note to make the GHCR package public once.
+- So after this run: image at ghcr.io/feddakalkun/fedda_hub_v2.0:latest, ready for
+  the RunPod template.
