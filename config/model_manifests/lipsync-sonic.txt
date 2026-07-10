@@ -1,0 +1,3 @@
+# Models for Sonic / SVD lipsync
+https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt/resolve/main/svd_xt.safetensors checkpoints
+https://huggingface.co/FacehugmanIII/4x_foolhardy_Remacri/resolve/main/4x_foolhardy_Remacri.pth upscale_models
