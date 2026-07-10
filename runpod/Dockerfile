@@ -99,6 +99,10 @@ COPY --from=frontend-builder /app/config /app/config
 COPY --from=frontend-builder /app/assets /app/assets
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
+# Build stamp: check which image a pod runs at  https://<pod>-3000.proxy.runpod.net/version.txt
+ARG GIT_SHA=dev
+RUN echo "sha=${GIT_SHA} built=$(date -u +%Y-%m-%dT%H:%M:%SZ)" > /app/frontend/dist/version.txt
+
 COPY runpod/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY runpod/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY runpod/runpod_start.sh /app/runpod_start.sh
