@@ -835,3 +835,11 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
 - TODO next: venice card art after user approves; Send-to-workflow on feed
   items; possible Reddit research pass on more formats (web search was rate-
   limited this session).
+
+## 2026-07-09 - LTX AI2V: Audio Start control
+
+- LoadAudioUI node 5778 had an unmapped start_time. Mapped audio_start ->
+  5778.start_time in workflow_api.json; added an "Audio Start" slider (0-120s)
+  to LtxAi2vPage. Because end_time is ABSOLUTE (not a length), Video Length now
+  sends duration as start+length (0 = to end). REQUIRES backend restart
+  (workflow_api cached at startup).

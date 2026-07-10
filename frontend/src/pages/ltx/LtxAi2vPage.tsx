@@ -35,6 +35,7 @@ export const LtxAi2vPage = () => {
   const [seed, setSeed] = usePersistentState('ltx_ai2v_seed', -1);
   const [steps, setSteps] = usePersistentState('ltx_ai2v_steps', 4);
   const [duration, setDuration] = usePersistentState('ltx_ai2v_duration', 5);
+  const [audioStart, setAudioStart] = usePersistentState('ltx_ai2v_audio_start', 0);
   const [width, setWidth] = usePersistentState('ltx_ai2v_width', '1024');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -200,7 +201,9 @@ export const LtxAi2vPage = () => {
     seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
     steps,
     width: parseInt(width, 10),
-    duration,
+    // end_time is an absolute position: start + length; 0 = play to end of clip
+    duration: duration === 0 ? 0 : audioStart + duration,
+    audio_start: audioStart,
   });
 
   const handleGenerate = () => {
@@ -411,13 +414,22 @@ export const LtxAi2vPage = () => {
                 <ChipGroup options={WIDTH_PRESETS} value={width} onChange={setWidth} />
               </Field>
               <SliderField
+                label="Audio Start"
+                value={audioStart}
+                onChange={setAudioStart}
+                min={0}
+                max={120}
+                step={1}
+                format={(v) => `${v}s into the clip`}
+              />
+              <SliderField
                 label="Video Length"
                 value={duration}
                 onChange={setDuration}
                 min={0}
                 max={30}
                 step={1}
-                format={(v) => (v === 0 ? 'full audio clip' : `first ${v}s of audio`)}
+                format={(v) => (v === 0 ? 'to end of audio' : `${v}s from the start point`)}
               />
               <SliderField
                 label="Steps"

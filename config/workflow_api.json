@@ -2289,6 +2289,12 @@
         "input_key": "end_time",
         "type": "number",
         "label": "Use First N Seconds (0 = full clip)"
+      },
+      "audio_start": {
+        "node_id": "5778",
+        "input_key": "start_time",
+        "type": "number",
+        "label": "Audio Start (s)"
       }
     }
   },
