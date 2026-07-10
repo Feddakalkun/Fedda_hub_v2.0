@@ -345,5 +345,17 @@
         "url": "https://github.com/chrisgoringe/cg-use-everywhere.git",
         "folder": "cg-use-everywhere",
         "note": "Anything Everywhere, Prompt Everywhere, Seed Everywhere — broadcast outputs to all matching inputs without explicit wires"
+    },
+    {
+        "name": "ComfyUI_Sonic",
+        "url": "https://github.com/smthemex/ComfyUI_Sonic.git",
+        "folder": "ComfyUI_Sonic",
+        "note": "Sonic lipsync nodes"
+    },
+    {
+        "name": "comfyui-reactor-node",
+        "url": "https://codeberg.org/Gourieff/comfyui-reactor-node.git",
+        "folder": "comfyui-reactor-node",
+        "note": "ReActor face swap/restore (GitHub repo removed - Codeberg is the maintained home)"
     }
 ]
