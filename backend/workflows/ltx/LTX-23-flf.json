@@ -212,9 +212,9 @@
   },
   "5622": {
     "inputs": {
-      "tile_size": 768,
-      "overlap": 96,
-      "temporal_size": 96,
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 48,
       "temporal_overlap": 24,
       "samples": [
         "5620",

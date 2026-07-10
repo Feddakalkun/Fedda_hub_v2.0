@@ -843,3 +843,21 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
   to LtxAi2vPage. Because end_time is ABSOLUTE (not a length), Video Length now
   sends duration as start+length (0 = to end). REQUIRES backend restart
   (workflow_api cached at startup).
+
+## 2026-07-09 - LTX img2vid/flf: fix intermittent forever-hang (decode VRAM spill)
+
+- Symptom: LTX img2vid sometimes fast+good, sometimes runs forever/never finishes.
+  Not the sampler (logs show it completing normally). Cause: VAEDecodeTiled
+  spilling to system RAM (NVIDIA sysmem fallback) when VRAM is partly occupied
+  (e.g. right after a Qwen/SDXL/WAN gen) - it crawls ~100x slower instead of
+  erroring. The earlier seam-fix (temporal_size 32->96, tile 768) raised decode
+  VRAM and made the spill more likely.
+- Fix: dialed both LTX-23-img2vid.json (4851) and LTX-23-flf.json (5622) decode to
+  tile_size 512, overlap 64, temporal_size 48, temporal_overlap 24. Half the
+  temporal footprint of the 96 setting, but 50% overlap (24/48) blends seams
+  BETTER than the original 25% (8/32) - so still seam-safe, far less spill risk.
+- Root-cause note for the user: the definitive fix is the NVIDIA driver setting
+  "CUDA - Sysmem Fallback Policy" = "Prefer No Sysmem Fallback" for the python
+  process, which makes an OOM fail fast instead of hanging. Also: Purge VRAM
+  (header button) before an LTX run when another model was just used.
+- No backend restart needed (ComfyUI reads workflow JSON fresh per prompt).
