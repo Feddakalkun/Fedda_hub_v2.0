@@ -29,7 +29,10 @@ export const SUGGESTED_EDGE_VOICES = [
 const DEFAULT_NEGATIVE = 'blurry, low quality, still frame, frames, watermark, overlay, titles, has blurbox, has subtitles';
 
 export const LtxAi2vPage = () => {
-  const [prompt, setPrompt] = usePersistentState('ltx_ai2v_prompt', '');
+  const [prompt, setPrompt] = usePersistentState(
+    'ltx_ai2v_prompt',
+    'close-up, she is talking, her lips moving in sync with the audio, natural mouth and jaw movement, subtle head motion and blinking, expressive face',
+  );
   const [batchRaw, setBatchRaw] = usePersistentState('ltx_ai2v_batch_raw', '');
   const [negative, setNegative] = usePersistentState('ltx_ai2v_negative', DEFAULT_NEGATIVE);
   const [seed, setSeed] = usePersistentState('ltx_ai2v_seed', -1);
