@@ -861,3 +861,15 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
   process, which makes an OOM fail fast instead of hanging. Also: Purge VRAM
   (header button) before an LTX run when another model was just used.
 - No backend restart needed (ComfyUI reads workflow JSON fresh per prompt).
+
+## 2026-07-09 - WAN 2.2 i2v: fix immediate OOM (fp8_fast -> fp8 on 3090)
+
+- User: OOM right away on WAN 2.2 image-to-video. Cause: all 8 UNETLoaders used
+  weight_dtype fp8_e4m3fn_fast. The "_fast" fp8 matmul path is a 4090+ feature -
+  on a 3090 (Ampere, no native fp8) it gives no speedup and uses extra VRAM, so
+  the 14B unet (~14GB) + NSFW UMT5 encoder (~6GB) + clip_vision tips over 24GB at
+  load. Switched all 8 to plain fp8_e4m3fn in img2vid-4frames-wan22.json.
+- Still borderline on a 3090: advise Purge VRAM before running, keep frames/res
+  modest. If it still OOMs, the robust path is GGUF-quantized WAN (Q5 ~10GB via
+  ComfyUI-GGUF + UnetLoaderGGUF) - a models download + workflow swap, not done yet.
+- No backend restart needed (workflow read fresh per prompt).
