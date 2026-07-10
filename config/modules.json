@@ -237,7 +237,8 @@
         "wan21-scail2",
         "wan22-vid2vid",
         "wan22-img2vid",
-        "wan22-img2vid-6frames"
+        "wan22-img2vid-6frames",
+        "wan22-img2vid-gguf"
       ],
       "custom_nodes": [
         "ComfyUI-WanVideoWrapper",

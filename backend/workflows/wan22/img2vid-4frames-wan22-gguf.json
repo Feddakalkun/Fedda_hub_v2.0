@@ -1,10 +1,9 @@
 {
   "1": {
     "inputs": {
-      "unet_name": "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
-      "weight_dtype": "fp8_e4m3fn"
+      "unet_name": "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf"
     },
-    "class_type": "UNETLoader",
+    "class_type": "UnetLoaderGGUF",
     "_meta": {
       "title": "Load Diffusion Model"
     }
@@ -144,10 +143,9 @@
   },
   "12": {
     "inputs": {
-      "unet_name": "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
-      "weight_dtype": "fp8_e4m3fn"
+      "unet_name": "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf"
     },
-    "class_type": "UNETLoader",
+    "class_type": "UnetLoaderGGUF",
     "_meta": {
       "title": "Load Diffusion Model"
     }
@@ -394,10 +392,9 @@
   },
   "30": {
     "inputs": {
-      "unet_name": "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
-      "weight_dtype": "fp8_e4m3fn"
+      "unet_name": "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf"
     },
-    "class_type": "UNETLoader",
+    "class_type": "UnetLoaderGGUF",
     "_meta": {
       "title": "Load Diffusion Model"
     }
@@ -547,10 +544,9 @@
   },
   "41": {
     "inputs": {
-      "unet_name": "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
-      "weight_dtype": "fp8_e4m3fn"
+      "unet_name": "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf"
     },
-    "class_type": "UNETLoader",
+    "class_type": "UnetLoaderGGUF",
     "_meta": {
       "title": "Load Diffusion Model"
     }
@@ -811,10 +807,9 @@
   },
   "72": {
     "inputs": {
-      "unet_name": "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
-      "weight_dtype": "fp8_e4m3fn"
+      "unet_name": "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf"
     },
-    "class_type": "UNETLoader",
+    "class_type": "UnetLoaderGGUF",
     "_meta": {
       "title": "Load Diffusion Model"
     }
@@ -891,10 +886,9 @@
   },
   "77": {
     "inputs": {
-      "unet_name": "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
-      "weight_dtype": "fp8_e4m3fn"
+      "unet_name": "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf"
     },
-    "class_type": "UNETLoader",
+    "class_type": "UnetLoaderGGUF",
     "_meta": {
       "title": "Load Diffusion Model"
     }
@@ -1222,10 +1216,9 @@
   },
   "101": {
     "inputs": {
-      "unet_name": "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
-      "weight_dtype": "fp8_e4m3fn"
+      "unet_name": "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf"
     },
-    "class_type": "UNETLoader",
+    "class_type": "UnetLoaderGGUF",
     "_meta": {
       "title": "Load Diffusion Model"
     }
@@ -1302,10 +1295,9 @@
   },
   "106": {
     "inputs": {
-      "unet_name": "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
-      "weight_dtype": "fp8_e4m3fn"
+      "unet_name": "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf"
     },
-    "class_type": "UNETLoader",
+    "class_type": "UnetLoaderGGUF",
     "_meta": {
       "title": "Load Diffusion Model"
     }
@@ -1781,7 +1773,7 @@
   },
   "151": {
     "inputs": {
-      "download_links": "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors diffusion_models\nhttps://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors diffusion_models\n\nhttps://huggingface.co/NSFW-API/NSFW-Wan-UMT5-XXL/resolve/main/nsfw_wan_umt5-xxl_fp8_scaled.safetensors clip\nhttps://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors clip_vision\n\nhttps://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors vae\n\nhttps://huggingface.co/comfyuistudio/orins/resolve/main/CumShot-High.safetensors loras\nhttps://huggingface.co/comfyuistudio/orins/resolve/main/CumShot-Low.safetensors loras\nhttps://huggingface.co/comfyuistudio/orins/resolve/main/Oral-Ins-High.safetensors loras\nhttps://huggingface.co/comfyuistudio/orins/resolve/main/Oral-Ins-Low.safetensors loras\nhttps://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Lightx2v/lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank32_bf16.safetensors loras\nhttps://huggingface.co/lightx2v/Wan2.2-Lightning/resolve/main/Wan2.2-I2V-A14B-4steps-lora-rank64-Seko-V1/high_noise_model.safetensors loras Wan2.2-I2V-HIGH-4steps-lora-rank64-Seko-V1.safetensors\nhttps://huggingface.co/lightx2v/Wan2.2-Lightning/resolve/main/Wan2.2-I2V-A14B-4steps-lora-rank64-Seko-V1/low_noise_model.safetensors loras Wan2.2-I2V-LOW-4steps-lora-rank64-Seko-V1.safetensors\n\n",
+      "download_links": "https://huggingface.co/QuantStack/Wan2.2-I2V-A14B-GGUF/resolve/main/HighNoise/Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf unet\nhttps://huggingface.co/QuantStack/Wan2.2-I2V-A14B-GGUF/resolve/main/LowNoise/Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf unet\n\nhttps://huggingface.co/NSFW-API/NSFW-Wan-UMT5-XXL/resolve/main/nsfw_wan_umt5-xxl_fp8_scaled.safetensors clip\nhttps://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors clip_vision\n\nhttps://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors vae\n\nhttps://huggingface.co/comfyuistudio/orins/resolve/main/CumShot-High.safetensors loras\nhttps://huggingface.co/comfyuistudio/orins/resolve/main/CumShot-Low.safetensors loras\nhttps://huggingface.co/comfyuistudio/orins/resolve/main/Oral-Ins-High.safetensors loras\nhttps://huggingface.co/comfyuistudio/orins/resolve/main/Oral-Ins-Low.safetensors loras\nhttps://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Lightx2v/lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank32_bf16.safetensors loras\nhttps://huggingface.co/lightx2v/Wan2.2-Lightning/resolve/main/Wan2.2-I2V-A14B-4steps-lora-rank64-Seko-V1/high_noise_model.safetensors loras Wan2.2-I2V-HIGH-4steps-lora-rank64-Seko-V1.safetensors\nhttps://huggingface.co/lightx2v/Wan2.2-Lightning/resolve/main/Wan2.2-I2V-A14B-4steps-lora-rank64-Seko-V1/low_noise_model.safetensors loras Wan2.2-I2V-LOW-4steps-lora-rank64-Seko-V1.safetensors\n",
       "auto_download": true,
       "max_concurrent_downloads": 3,
       "max_download_speed_mbps": 0,

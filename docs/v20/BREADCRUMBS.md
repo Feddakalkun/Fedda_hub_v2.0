@@ -888,3 +888,15 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
 - fp8 wan2.2 i2v models now unused (user can delete to reclaim disk).
 - No backend restart needed for the workflow (read fresh per prompt); GGUF node
   already loaded. Still: Purge VRAM before running if another model was used.
+
+## 2026-07-09 - WAN 2.2 i2v: keep BOTH fp8 + GGUF (precision toggle)
+
+- Restored the fp8 workflow (img2vid-4frames-wan22.json, fp8_e4m3fn) and split the
+  GGUF into img2vid-4frames-wan22-gguf.json (wan22-img2vid-gguf, registered in
+  workflow_api + modules.json wan-video, manifest generated). Wan22Img2Vid page
+  got a "Model precision" toggle: GGUF Q4 (fits 24GB, default) / fp8 (faster, big
+  GPU / RunPod). workflowId switches per choice. Rationale: RunPod has big GPUs
+  where fp8 is faster; 3090 needs GGUF.
+- LTX: DOES have a gguf on disk (ltx-2.3-22b-distilled-1.1-Q6_K.gguf) but the
+  img2vid workflow uses fp8 (ltx-2.3-22b-dev_transformer_only_fp8_scaled). LTX 22B
+  fp8 seems to run OK on the 3090 already, so no LTX gguf swap done yet - offered.

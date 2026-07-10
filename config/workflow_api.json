@@ -2405,5 +2405,64 @@
         "label": "LoRAs"
       }
     }
+  },
+  "wan22-img2vid-gguf": {
+    "name": "WAN 2.2 Image to Video (GGUF Q4)",
+    "filename": "wan22/img2vid-4frames-wan22-gguf.json",
+    "description": "WAN 2.2 i2v, Q4_K_M GGUF - fits a 24GB card.",
+    "inputs": {
+      "image": {
+        "node_id": "25",
+        "input_key": "image",
+        "type": "string",
+        "label": "Input Image"
+      },
+      "frame_count": {
+        "node_id": "29",
+        "input_key": "value",
+        "type": "number",
+        "label": "Frame Count"
+      },
+      "prompt1": {
+        "node_id": "70",
+        "input_key": "text",
+        "type": "string",
+        "label": "Scene 1 Prompt"
+      },
+      "prompt2": {
+        "node_id": "71",
+        "input_key": "text",
+        "type": "string",
+        "label": "Scene 2 Prompt"
+      },
+      "prompt3": {
+        "node_id": "98",
+        "input_key": "text",
+        "type": "string",
+        "label": "Scene 3 Prompt"
+      },
+      "seed": {
+        "node_id": "138",
+        "input_key": "value",
+        "type": "number",
+        "label": "Seed"
+      },
+      "lora_high": {
+        "node_id": "9",
+        "input_key": "lora_1",
+        "type": "object",
+        "label": "High Noise LoRA"
+      },
+      "lora_low": {
+        "node_id": "10",
+        "input_key": "lora_1",
+        "type": "object",
+        "label": "Low Noise LoRA"
+      },
+      "nsfw": {
+        "type": "nsfw_toggle",
+        "label": "NSFW"
+      }
+    }
   }
 }

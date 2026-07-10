@@ -57,6 +57,8 @@ export const Wan22Img2Vid = () => {
   const [frameCount, setFrameCount] = usePersistentState('wan22i2v_frames', 81);
   const [seed, setSeed]             = usePersistentState('wan22i2v_seed', -1);
   const [nsfw, setNsfw]             = usePersistentState('wan22i2v_nsfw', true);
+  const [precision, setPrecision]  = usePersistentState<'gguf' | 'fp8'>('wan22i2v_precision', 'gguf');
+  const workflowId = precision === 'gguf' ? 'wan22-img2vid-gguf' : 'wan22-img2vid';
   const [loraHigh, setLoraHigh]     = usePersistentState('wan22i2v_lora_high', '');
   const [loraLow, setLoraLow]       = usePersistentState('wan22i2v_lora_low', '');
   const [loraStrengthHigh, setLoraStrengthHigh] = usePersistentState('wan22i2v_lora_high_strength', 1.0);
@@ -196,14 +198,14 @@ export const Wan22Img2Vid = () => {
     setSessionVideos([]);
     setIsGenerating(true);
 
-    fetch(`${BACKEND_API.BASE_URL}/api/workflow/node-map/wan22-img2vid`)
+    fetch(`${BACKEND_API.BASE_URL}/api/workflow/node-map/${workflowId}`)
       .then(r => r.json()).then(d => { if (d.success) registerNodeMap(d.node_map); }).catch(() => {});
 
     try {
       const res = await fetch(`${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.GENERATE}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          workflow_id: 'wan22-img2vid',
+          workflow_id: workflowId,
           params: {
             image:       uploadedImageName,
             frame_count: frameCount,
@@ -243,7 +245,7 @@ export const Wan22Img2Vid = () => {
       icon={Video}
       isGenerating={isGenerating}
       canGenerate={canGenerate}
-      workflowId="wan22-img2vid"
+      workflowId={workflowId}
       output={(
         <VideoOutputPanel
           title="WAN Img2Vid Output"
@@ -353,6 +355,33 @@ export const Wan22Img2Vid = () => {
               options={availableLoras}
               accent="violet"
             />
+          </div>
+
+          <div className="h-px bg-white/5" />
+
+          {/* ── PRECISION ── */}
+          <div>
+            <div className="mb-1 text-[9px] font-black uppercase tracking-widest text-slate-600">Model precision</div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPrecision('gguf')}
+                className={`flex-1 rounded-xl border px-3 py-2 text-[10px] font-bold transition-all ${
+                  precision === 'gguf' ? 'border-violet-500/40 bg-violet-500/15 text-violet-200' : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10'
+                }`}
+              >
+                GGUF Q4
+                <span className="block text-[8px] font-normal uppercase tracking-wider opacity-60">fits 24GB · 3090</span>
+              </button>
+              <button
+                onClick={() => setPrecision('fp8')}
+                className={`flex-1 rounded-xl border px-3 py-2 text-[10px] font-bold transition-all ${
+                  precision === 'fp8' ? 'border-violet-500/40 bg-violet-500/15 text-violet-200' : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10'
+                }`}
+              >
+                fp8
+                <span className="block text-[8px] font-normal uppercase tracking-wider opacity-60">faster · big GPU / RunPod</span>
+              </button>
+            </div>
           </div>
 
           <div className="h-px bg-white/5" />
