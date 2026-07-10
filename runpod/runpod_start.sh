@@ -11,13 +11,15 @@ BACKEND_PORT="${BACKEND_PORT:-8000}"
 
 # 1. Setup Network Volume links
 echo "💾 [FEDDA] Linking Persistent Storage (/workspace)..."
-mkdir -p "$MODELS_DIR"/{checkpoints,diffusion_models,clip,text_encoders,vae,loras,sams,upscale_models,unet,controlnet,clip_vision,embeddings,style_models}
+mkdir -p "$MODELS_DIR"/{checkpoints,diffusion_models,clip,text_encoders,vae,loras,sams,upscale_models,unet,controlnet,clip_vision,embeddings,style_models,ultralytics,insightface}
+mkdir -p "$MODELS_DIR"/ultralytics/{bbox,segm}
 mkdir -p "$WORKSPACE"/output
 mkdir -p "$WORKSPACE"/input
 
-# Link Comfy models
-for dir in checkpoints diffusion_models clip text_encoders vae loras sams unet controlnet clip_vision embeddings style_models; do
-    if [ -d "$COMFY_DIR/models/$dir" ] && [ ! -L "$COMFY_DIR/models/$dir" ]; then
+# Link Comfy model subfolders to the volume so downloads persist across pods
+for dir in checkpoints diffusion_models clip text_encoders vae loras sams upscale_models unet controlnet clip_vision embeddings style_models ultralytics insightface; do
+    mkdir -p "$MODELS_DIR/$dir"
+    if [ ! -L "$COMFY_DIR/models/$dir" ]; then
         rm -rf "$COMFY_DIR/models/$dir"
         ln -sf "$MODELS_DIR/$dir" "$COMFY_DIR/models/$dir"
     fi
@@ -26,6 +28,13 @@ done
 # Link IO
 rm -rf "$COMFY_DIR/output" && ln -sf "$WORKSPACE/output" "$COMFY_DIR/output"
 rm -rf "$COMFY_DIR/input" && ln -sf "$WORKSPACE/input" "$COMFY_DIR/input"
+
+# Persist UI settings (HF token, Civitai key, saved prompts) on the volume
+if [ ! -f "$WORKSPACE/runtime_settings.json" ]; then
+    if [ -f /app/config/runtime_settings.json ]; then cp /app/config/runtime_settings.json "$WORKSPACE/runtime_settings.json"; else echo '{}' > "$WORKSPACE/runtime_settings.json"; fi
+fi
+ln -sf "$WORKSPACE/runtime_settings.json" /app/config/runtime_settings.json
+# (TTS voice library lives in input/VOICES, already persisted via the input link above)
 
 # 2. Config Tweaks
 echo "⚙️ [FEDDA] Configuring ComfyUI-Manager..."

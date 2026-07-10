@@ -949,3 +949,21 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
   a note to make the GHCR package public once.
 - So after this run: image at ghcr.io/feddakalkun/fedda_hub_v2.0:latest, ready for
   the RunPod template.
+
+## 2026-07-09 - RunPod: image GREEN + start-script persistence fixes
+
+- Docker build/push SUCCEEDED -> ghcr.io/feddakalkun/fedda_hub_v2.0:latest.
+  (Full saga: tsc gate -> runner disk (free-disk-space action) -> push perms
+  (drop non-repo image target). Build itself was always fine once disk freed.)
+- Verified model-download flow works on RunPod: /health route exists (start
+  script gate ok); model_downloader writes to COMFY_DIR/models/<folder> which the
+  start script symlinks to /workspace -> downloads persist on the network volume.
+  In-app Download buttons are cross-platform Python (the .bat is Windows-only, not
+  used on Linux).
+- Fixed 2 persistence gaps in runpod_start.sh: added upscale_models + ultralytics
+  (+bbox/segm) + insightface to the symlink loop (were lost on restart); and
+  symlink config/runtime_settings.json -> /workspace so the HF token / Civitai key
+  / settings survive pod restarts (gated downloads need the token). TTS voices in
+  input/VOICES already persist via the input link.
+- WAN 2.2 i2v GGUF models finished + validated (1095 tensors each) - the earlier
+  reshape error was just the incomplete HighNoise download (7.5 of 9.65GB).
