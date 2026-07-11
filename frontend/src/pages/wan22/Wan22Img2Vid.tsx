@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  Video, RefreshCw, Film, Loader2, Wand2,
-  ChevronDown, ChevronUp, Check, FlameKindling,
+  Video, RefreshCw, Film, Loader2, Wand2, FlameKindling,
 } from 'lucide-react';
 import { useToast } from '../../components/ui/Toast';
 import { BACKEND_API } from '../../config/api';
@@ -52,9 +51,7 @@ void SceneSlot;
 // ── Page ──────────────────────────────────────────────────────────────────────
 export const Wan22Img2Vid = () => {
   const [prompt1, setPrompt1] = usePersistentState('wan22i2v_p1', '');
-  const [prompt2, setPrompt2] = usePersistentState('wan22i2v_p2', '');
-  const [prompt3, setPrompt3] = usePersistentState('wan22i2v_p3', '');
-  const [frameCount, setFrameCount] = usePersistentState('wan22i2v_frames', 81);
+  const [lengthSec, setLengthSec] = usePersistentState('wan22i2v_len', 5);
   const [seed, setSeed]             = usePersistentState('wan22i2v_seed', -1);
   const [nsfw, setNsfw]             = usePersistentState('wan22i2v_nsfw', true);
   const [precision, setPrecision]  = usePersistentState<'gguf' | 'fp8'>('wan22i2v_precision', 'gguf');
@@ -64,8 +61,6 @@ export const Wan22Img2Vid = () => {
   const [loraStrengthHigh, setLoraStrengthHigh] = usePersistentState('wan22i2v_lora_high_strength', 1.0);
   const [loraStrengthLow, setLoraStrengthLow]   = usePersistentState('wan22i2v_lora_low_strength', 1.0);
 
-  const [expanded, setExpanded] = useState<boolean[]>([true, true, true]);
-  const toggleExpand = (i: number) => setExpanded(prev => prev.map((v, idx) => idx === i ? !v : v));
 
   const [uploadedImageName, setUploadedImageName] = usePersistentState<string | null>('wan22i2v_image_file', null);
   const [uploading,         setUploading]         = useState(false);
@@ -155,7 +150,6 @@ export const Wan22Img2Vid = () => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.detail || 'Caption failed');
       setPrompt1(data.caption ?? '');
-      setExpanded((prev) => prev.map((v, idx) => (idx === 0 ? true : v)));
       toast(data.model ? `Prompt built with ${data.model}` : 'Prompt built from image', 'success');
     } catch (err: any) {
       toast(err.message || 'Could not build prompt from image', 'error');
@@ -207,12 +201,10 @@ export const Wan22Img2Vid = () => {
         body: JSON.stringify({
           workflow_id: workflowId,
           params: {
-            image:       uploadedImageName,
-            frame_count: frameCount,
-            prompt1:     prompt1.trim(),
-            prompt2:     prompt2.trim() || prompt1.trim(),
-            prompt3:     prompt3.trim() || prompt1.trim(),
-            seed:        seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
+            image:          uploadedImageName,
+            length_seconds: lengthSec,
+            prompt:         prompt1.trim(),
+            seed:           seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
             nsfw,
             ...(loraHigh ? { lora_high: { on: true, lora: loraHigh, strength: loraStrengthHigh } } : {}),
             ...(loraLow ? { lora_low: { on: true, lora: loraLow, strength: loraStrengthLow } } : {}),
@@ -229,11 +221,6 @@ export const Wan22Img2Vid = () => {
     }
   };
 
-  const prompts = [
-    { label: 'Scene 1', value: prompt1, set: setPrompt1 },
-    { label: 'Scene 2', value: prompt2, set: setPrompt2 },
-    { label: 'Scene 3', value: prompt3, set: setPrompt3 },
-  ];
   const currentVideo = sessionVideos.length > 0 ? sessionVideos[sessionVideos.length - 1] : (history[0] ?? null);
   const canGenerate = !!uploadedImageName && !!prompt1.trim() && !isGenerating;
 
@@ -279,58 +266,36 @@ export const Wan22Img2Vid = () => {
             )}
           </div>
 
-          {/* ── FRAME COUNT ── */}
+          {/* ── LENGTH (seconds) ── */}
           <FeddaPanel className="p-3 space-y-2">
             <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-slate-600">
-              <span>Frame Count</span>
-              <span className="font-mono text-violet-400/60">{frameCount}f · {(frameCount / 24).toFixed(1)}s</span>
+              <span>Length</span>
+              <span className="font-mono text-violet-400/60">{lengthSec}s · 30fps</span>
             </div>
-            <input type="range" min={17} max={161} step={8} value={frameCount}
-              onChange={e => setFrameCount(Number(e.target.value))}
+            <input type="range" min={2} max={15} step={1} value={lengthSec}
+              onChange={e => setLengthSec(Number(e.target.value))}
               className="w-full accent-violet-500" />
             <div className="flex justify-between text-[8px] font-mono text-slate-600">
-              <span>17f · 0.7s</span>
-              <span className="text-white/15">81f · 3.4s</span>
-              <span>161f · 6.7s</span>
+              <span>2s</span>
+              <span className="text-white/15">8s</span>
+              <span>15s</span>
             </div>
           </FeddaPanel>
 
           <div className="h-px bg-white/5" />
 
-          {/* ── 3 SCENE PROMPTS ── */}
+          {/* ── MOTION PROMPT ── */}
           <div className="space-y-2">
-            <FeddaSectionTitle className="text-slate-500">Scene Expansions</FeddaSectionTitle>
-            {prompts.map(({ label, value, set }, i) => (
-              <div key={i} className={`rounded-xl border transition-all ${value.trim() ? 'border-violet-500/20 bg-violet-500/5' : 'border-white/5 bg-white/[0.02]'}`}>
-                <button onClick={() => toggleExpand(i)}
-                  className="w-full flex items-center justify-between px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${value.trim() ? 'bg-violet-400' : 'bg-white/10'}`} />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-white/50">{label}</span>
-                    {i > 0 && !value.trim() && <span className="text-[8px] text-white/20 font-mono">→ uses Scene 1</span>}
-                    {value.trim() && <span className="text-[8px] text-violet-400/50 truncate max-w-[140px]">{value.slice(0, 30)}{value.length > 30 ? '…' : ''}</span>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {value.trim() && <Check className="w-3 h-3 text-violet-400" />}
-                    {expanded[i] ? <ChevronUp className="w-3 h-3 text-white/20" /> : <ChevronDown className="w-3 h-3 text-white/20" />}
-                  </div>
-                </button>
-                {expanded[i] && (
-                  <div className="px-4 pb-3">
-                    <PromptAssistant
-                      context="wan-scene"
-                      accent="violet"
-                      compact={i > 0}
-                      value={value}
-                      onChange={set}
-                      placeholder={i === 0 ? 'Describe the motion / action...' : 'Leave empty to reuse Scene 1'}
-                      minRows={i === 0 ? 4 : 3}
-                      enableCaption={false}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
+            <FeddaSectionTitle className="text-slate-500">Motion Prompt</FeddaSectionTitle>
+            <PromptAssistant
+              context="wan-scene"
+              accent="violet"
+              value={prompt1}
+              onChange={setPrompt1}
+              placeholder="Describe the motion / action..."
+              minRows={4}
+              enableCaption={false}
+            />
           </div>
 
           <div className="h-px bg-white/5" />

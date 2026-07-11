@@ -872,57 +872,60 @@
     }
   },
   "wan22-img2vid": {
-    "name": "WAN 2.2 Img2Vid",
-    "filename": "wan22/img2vid-4frames-wan22.json",
-    "description": "Animate a still image into video with WAN 2.2 \u00e2\u20ac\u201d 4-frame expansion chain",
+    "name": "WAN 2.2 Image to Video",
+    "filename": "wan22/img2vid-single-wan22.json",
+    "description": "WAN 2.2 single-shot image-to-video (lightning 4-step, NSFW encoder, RIFE 30fps).",
     "inputs": {
       "image": {
-        "node_id": "25",
+        "node_id": "278",
         "input_key": "image",
         "type": "string",
-        "label": "Input Image"
+        "label": "Image"
       },
-      "frame_count": {
-        "node_id": "29",
+      "prompt": {
+        "node_id": "265",
+        "input_key": "text",
+        "type": "string",
+        "label": "Motion prompt"
+      },
+      "length_seconds": {
+        "node_id": "266",
         "input_key": "value",
         "type": "number",
-        "label": "Frame Count"
-      },
-      "prompt1": {
-        "node_id": "70",
-        "input_key": "text",
-        "type": "string",
-        "label": "Scene 1 Prompt"
-      },
-      "prompt2": {
-        "node_id": "71",
-        "input_key": "text",
-        "type": "string",
-        "label": "Scene 2 Prompt"
-      },
-      "prompt3": {
-        "node_id": "98",
-        "input_key": "text",
-        "type": "string",
-        "label": "Scene 3 Prompt"
+        "label": "Length (s)"
       },
       "seed": {
-        "node_id": "138",
-        "input_key": "value",
+        "node_ids": [
+          "271",
+          "272"
+        ],
+        "input_key": "noise_seed",
         "type": "number",
         "label": "Seed"
       },
+      "aspect": {
+        "node_id": "314",
+        "input_key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect"
+      },
+      "direction": {
+        "node_id": "314",
+        "input_key": "direction",
+        "type": "string",
+        "label": "Direction"
+      },
       "lora_high": {
-        "node_id": "9",
-        "input_key": "lora_1",
+        "node_id": "480",
+        "input_key": "lora_2",
         "type": "object",
-        "label": "High Noise LoRA"
+        "label": "LoRA (high)"
       },
       "lora_low": {
-        "node_id": "10",
-        "input_key": "lora_1",
+        "node_id": "479",
+        "input_key": "lora_2",
         "type": "object",
-        "label": "Low Noise LoRA"
+        "label": "LoRA (low)"
       },
       "nsfw": {
         "type": "nsfw_toggle",
@@ -2407,57 +2410,60 @@
     }
   },
   "wan22-img2vid-gguf": {
-    "name": "WAN 2.2 Image to Video (GGUF Q4)",
-    "filename": "wan22/img2vid-4frames-wan22-gguf.json",
-    "description": "WAN 2.2 i2v, Q4_K_M GGUF - fits a 24GB card.",
+    "name": "WAN 2.2 Image to Video (GGUF)",
+    "filename": "wan22/img2vid-single-wan22-gguf.json",
+    "description": "WAN 2.2 single-shot image-to-video (lightning 4-step, NSFW encoder, RIFE 30fps).",
     "inputs": {
       "image": {
-        "node_id": "25",
+        "node_id": "278",
         "input_key": "image",
         "type": "string",
-        "label": "Input Image"
+        "label": "Image"
       },
-      "frame_count": {
-        "node_id": "29",
+      "prompt": {
+        "node_id": "265",
+        "input_key": "text",
+        "type": "string",
+        "label": "Motion prompt"
+      },
+      "length_seconds": {
+        "node_id": "266",
         "input_key": "value",
         "type": "number",
-        "label": "Frame Count"
-      },
-      "prompt1": {
-        "node_id": "70",
-        "input_key": "text",
-        "type": "string",
-        "label": "Scene 1 Prompt"
-      },
-      "prompt2": {
-        "node_id": "71",
-        "input_key": "text",
-        "type": "string",
-        "label": "Scene 2 Prompt"
-      },
-      "prompt3": {
-        "node_id": "98",
-        "input_key": "text",
-        "type": "string",
-        "label": "Scene 3 Prompt"
+        "label": "Length (s)"
       },
       "seed": {
-        "node_id": "138",
-        "input_key": "value",
+        "node_ids": [
+          "271",
+          "272"
+        ],
+        "input_key": "noise_seed",
         "type": "number",
         "label": "Seed"
       },
+      "aspect": {
+        "node_id": "314",
+        "input_key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect"
+      },
+      "direction": {
+        "node_id": "314",
+        "input_key": "direction",
+        "type": "string",
+        "label": "Direction"
+      },
       "lora_high": {
-        "node_id": "9",
-        "input_key": "lora_1",
+        "node_id": "480",
+        "input_key": "lora_2",
         "type": "object",
-        "label": "High Noise LoRA"
+        "label": "LoRA (high)"
       },
       "lora_low": {
-        "node_id": "10",
-        "input_key": "lora_1",
+        "node_id": "479",
+        "input_key": "lora_2",
         "type": "object",
-        "label": "Low Noise LoRA"
+        "label": "LoRA (low)"
       },
       "nsfw": {
         "type": "nsfw_toggle",
