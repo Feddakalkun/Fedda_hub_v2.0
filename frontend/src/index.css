@@ -219,44 +219,45 @@ body {
   border-color: rgba(255, 255, 255, 0.24);
 }
 
-/* Shared workflow workbench */
+/* Shared workflow workbench — header on top, full-width output strip, controls below */
 .workflow-shell {
   height: 100%;
-  display: grid;
-  grid-template-columns: minmax(480px, 1fr) minmax(380px, 420px);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   background: #050506;
 }
 
-.workflow-shell-no-output {
-  grid-template-columns: 1fr;
-}
-
-.workflow-shell-no-output .workflow-control-pane {
-  border-right: 0;
-}
-
 .workflow-control-pane {
   min-width: 0;
+  min-height: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-right: 1px solid rgba(255,255,255,0.06);
   background: linear-gradient(180deg, rgba(12,13,18,0.96), rgba(5,6,10,1));
 }
 
-.workflow-output-pane {
+.workflow-output-strip {
+  flex: 0 0 auto;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  max-height: 42vh;
+  overflow-y: auto;
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
   background: #05060a;
 }
 
-.workflow-output-pane > aside {
+.workflow-output-strip > aside {
   width: 100%;
   max-width: none;
   border-left: 0;
+}
+
+/* Tame tall media inside the top strip */
+.workflow-output-strip img,
+.workflow-output-strip video {
+  max-height: 32vh;
 }
 
 .workflow-header {
@@ -1359,10 +1360,6 @@ body {
 }
 
 @media (max-width: 1100px) {
-  .workflow-shell {
-    grid-template-columns: 1fr;
-  }
-
   .cockpit-control-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1373,8 +1370,9 @@ body {
     grid-row: auto;
   }
 
-  .workflow-output-pane {
-    display: none;
+  .workflow-output-strip {
+    max-height: 34vh;
+    padding: 8px 12px;
   }
 
   .workflow-header {

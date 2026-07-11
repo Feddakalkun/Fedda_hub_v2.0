@@ -37,6 +37,7 @@ export const TopPreviewStrip = ({ maxItems = 8, storageKey = 'global' }: TopPrev
         historyCount={stripImages.length}
         storageKey={`${storageKey}_preview`}
         maxItems={maxItems}
+        onRemoveImage={(url) => setHistory((prev) => prev.filter((h) => h !== url))}
       />
     </div>
   );

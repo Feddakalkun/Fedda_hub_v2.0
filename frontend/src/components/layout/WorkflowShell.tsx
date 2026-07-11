@@ -35,8 +35,7 @@ export const WorkflowShell = ({
 }: WorkflowShellProps) => {
   return (
     <div className={`workflow-shell ${hideOutputPane ? 'workflow-shell-no-output' : ''}`.trim()}>
-      <section className={`workflow-control-pane ${leftClassName}`.trim()}>
-        <div className="workflow-header">
+      <div className="workflow-header">
           <div className="workflow-header-icon">
             {Icon ? <Icon className="h-4 w-4" /> : null}
           </div>
@@ -59,8 +58,15 @@ export const WorkflowShell = ({
               Setup
             </div>
           )}
-        </div>
+      </div>
 
+      {!hideOutputPane && (
+        <section className={`workflow-output-strip ${outputClassName}`.trim()}>
+          {output}
+        </section>
+      )}
+
+      <section className={`workflow-control-pane ${leftClassName}`.trim()}>
         {preview ? <div className="workflow-shell-preview">{preview}</div> : null}
 
         {workflowId && <WorkflowDownloadBanner workflowId={workflowId} />}
@@ -69,12 +75,6 @@ export const WorkflowShell = ({
           {children}
         </div>
       </section>
-
-      {!hideOutputPane && (
-        <section className={`workflow-output-pane ${outputClassName}`.trim()}>
-          {output}
-        </section>
-      )}
     </div>
   );
 };

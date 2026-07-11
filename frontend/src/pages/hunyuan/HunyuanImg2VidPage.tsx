@@ -181,6 +181,7 @@ export const HunyuanImg2VidPage = () => {
           currentVideo={run.currentMedia}
           history={run.history}
           onSelectVideo={run.setCurrentMedia}
+          onRemoveVideo={(url) => run.setHistory((prev) => prev.filter((v) => v !== url))}
           isGenerating={run.isGenerating}
           title="HunyuanVideo I2V Output"
           emptyHint="Upload an image and generate to see results here."

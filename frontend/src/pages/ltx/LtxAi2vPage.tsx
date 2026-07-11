@@ -239,6 +239,7 @@ export const LtxAi2vPage = () => {
           currentVideo={run.currentMedia}
           history={run.history}
           onSelectVideo={run.setCurrentMedia}
+          onRemoveVideo={(url) => run.setHistory((prev) => prev.filter((v) => v !== url))}
           isGenerating={run.isGenerating}
           title="LTX AI2V Output"
           emptyHint="Upload an image and an audio clip, then generate to see results here."

@@ -260,7 +260,7 @@ export const BatchQueuePanel = ({
   disabledHint,
   autoFillContext,
 }: BatchQueuePanelProps) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(() => value.trim().length > 0);
   const [filling, setFilling] = useState(false);
   const prompts = value.split('\n').map((line) => line.trim()).filter(Boolean);
 
@@ -279,18 +279,22 @@ export const BatchQueuePanel = ({
   };
 
   return (
-    <div>
+    <div className="rounded-xl border border-violet-500/15 bg-violet-500/[0.04] p-3">
       <div className="flex items-center justify-between">
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-white/25 transition-colors hover:text-white/50"
+          className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-violet-200/80 transition-colors hover:text-violet-100"
         >
-          <ListOrdered className="h-3 w-3" />
+          <ListOrdered className="h-3.5 w-3.5 text-violet-400" />
           Batch Queue
-          {prompts.length > 0 && (
-            <span className="ml-1 rounded bg-violet-500/20 px-1.5 py-0.5 font-mono text-[8px] text-violet-400">
-              {prompts.length}
+          {prompts.length > 0 ? (
+            <span className="rounded bg-violet-500/25 px-1.5 py-0.5 font-mono text-[9px] text-violet-300">
+              {prompts.length} queued
+            </span>
+          ) : (
+            <span className="text-[9px] font-medium normal-case tracking-normal text-zinc-500">
+              — one prompt per line, run many jobs at once
             </span>
           )}
         </button>

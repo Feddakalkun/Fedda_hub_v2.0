@@ -156,6 +156,7 @@ export const Wan22XxxImg2VidPage = () => {
           currentVideo={run.currentMedia}
           history={run.history}
           onSelectVideo={run.setCurrentMedia}
+          onRemoveVideo={(url) => run.setHistory((prev) => prev.filter((v) => v !== url))}
           isGenerating={run.isGenerating}
           title="WAN XXX Output"
           emptyHint="Upload an image and generate to see results here."

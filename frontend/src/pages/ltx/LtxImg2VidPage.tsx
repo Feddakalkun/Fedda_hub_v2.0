@@ -172,6 +172,7 @@ export const LtxImg2VidPage = () => {
           currentVideo={run.currentMedia}
           history={run.history}
           onSelectVideo={run.setCurrentMedia}
+          onRemoveVideo={(url) => run.setHistory((prev) => prev.filter((v) => v !== url))}
           isGenerating={run.isGenerating}
           title="LTX Img2Vid Output"
           emptyHint="Upload an image and generate to see motion results here."

@@ -21,7 +21,6 @@ import { TransformReelPage } from './pages/tools/TransformReelPage';
 import { ScailStudioPage } from './pages/tools/ScailStudioPage';
 import { ReelMachinePage } from './pages/tools/ReelMachinePage';
 import { ModuleUnavailablePage } from './pages/ModuleUnavailablePage';
-import { GlobalGalleryPanel } from './components/layout/GlobalGalleryPanel';
 import {
   ACTIVE_TAB_STORAGE_KEY,
   APP_VERSION_LABEL,
@@ -246,7 +245,6 @@ function FeddaApp() {
               renderWorkspace()
             )}
           </div>
-          <GlobalGalleryPanel />
         </div>
       </main>
     </div>

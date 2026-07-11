@@ -446,6 +446,7 @@ export const TransformReelPage = () => {
           currentVideo={run.currentMedia}
           history={run.history}
           onSelectVideo={run.setCurrentMedia}
+          onRemoveVideo={(url) => run.setHistory((prev) => prev.filter((v) => v !== url))}
           isGenerating={run.isGenerating}
           title="Transformation Reels"
           emptyHint="Create a character frame, then morph — the reel lands here."

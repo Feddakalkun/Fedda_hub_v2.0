@@ -145,6 +145,7 @@ export const LtxFlfPage = () => {
           history={run.history}
           isGenerating={run.isGenerating}
           onSelectVideo={run.setCurrentMedia}
+          onRemoveVideo={(url) => run.setHistory((prev) => prev.filter((v) => v !== url))}
           emptyHint="Upload both frames and generate to see motion here."
         />
       )}

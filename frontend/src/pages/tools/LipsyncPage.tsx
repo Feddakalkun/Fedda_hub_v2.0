@@ -230,6 +230,7 @@ export const LipsyncPage = () => {
           currentVideo={run.currentMedia}
           history={run.history}
           onSelectVideo={run.setCurrentMedia}
+          onRemoveVideo={(url) => run.setHistory((prev) => prev.filter((v) => v !== url))}
           isGenerating={run.isGenerating}
           title="Lipsync Output"
           emptyHint="Upload a portrait and add a voice, then generate."

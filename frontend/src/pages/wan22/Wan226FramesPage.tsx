@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import {
   RefreshCw, Loader2,
   ChevronDown, ChevronUp, Check, FlameKindling,
-  Layers, Sparkles, Film,
-  Trash2, Plus, Zap, Play, Eye
+  Layers, Sparkles,
+  Trash2, Plus, Zap, Play
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../../components/ui/Toast';
@@ -13,6 +13,8 @@ import { usePersistentState } from '../../hooks/usePersistentState';
 import { comfyService } from '../../services/comfyService';
 import { PromptAssistant } from '../../components/ui/PromptAssistant';
 import { LoraSelector } from '../../components/ui/LoraSelector';
+import { WorkflowShell } from '../../components/layout/WorkflowShell';
+import { WorkflowVideoPreviewStrip } from '../../components/layout/WorkflowVideoPreviewStrip';
 
 const FRAME_COUNT = 6;
 
@@ -349,30 +351,29 @@ ${combinedNarrative}`;
   const currentGenVideo = sessionVideos.length > 0 ? sessionVideos[sessionVideos.length - 1] : null;
 
   return (
-    <div className="flex h-full bg-[#030303] overflow-hidden">
-      {/* ══ LEFT PANEL ══════════════════════════════════════════════════════ */}
-      <motion.div 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="flex-1 min-w-0 flex flex-col border-r border-white-[0.03] overflow-y-auto custom-scrollbar relative"
-      >
-        {/* Subtle Background Glows */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/5 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-fuchsia-600/5 blur-[100px] pointer-events-none" />
-
+    <WorkflowShell
+      title="Storyboard"
+      eyebrow="WAN 2.2"
+      description="Narrative-driven 6-frame cinematic sequence."
+      icon={Layers}
+      isGenerating={isGenerating}
+      canGenerate={imageNames.filter(Boolean).length > 0}
+      workflowId="wan22-img2vid-6frames"
+      output={(
+        <WorkflowVideoPreviewStrip
+          currentVideo={currentGenVideo}
+          history={sessionVideos}
+          onSelectVideo={(url) => setSessionVideos((prev) => [...prev.filter((v) => v !== url), url])}
+          onRemoveVideo={(url) => setSessionVideos((prev) => prev.filter((v) => v !== url))}
+          isGenerating={isGenerating}
+          title="Storyboard Output"
+          emptyHint="Fill frames and generate to see the sequence."
+        />
+      )}
+    >
         <div className="px-8 py-8 space-y-8 relative z-10">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-violet-600/10 border border-violet-500/20">
-                  <Layers className="w-4 h-4 text-violet-400" />
-                </div>
-                <h2 className="fedda-kicker">WAN 2.2 Storyboard</h2>
-              </div>
-              <p className="text-[10px] text-white/20 font-medium ml-8">Narrative-driven 6-frame cinematic sequence</p>
-            </div>
-            
+          {/* Actions */}
+          <div className="flex items-center justify-end">
             <div className="flex items-center gap-3">
               <button 
                 onClick={resetAll}
@@ -656,81 +657,6 @@ ${combinedNarrative}`;
           </div>
 
         </div>
-      </motion.div>
-
-      {/* ══ RIGHT PREVIEW ════════════════════════════════════════════════════ */}
-      <div className="w-[45%] flex flex-col bg-black relative">
-        <div className="absolute inset-0 bg-[#050505]" />
-        
-        {/* Animated Background Gradients */}
-        <div className="absolute top-1/4 left-1/4 w-[50%] h-[50%] bg-violet-600/10 rounded-full blur-[160px] animate-pulse" />
-        
-        {/* Output Previews */}
-        <div className="p-12 flex-1 flex flex-col items-center justify-center relative z-10">
-          <AnimatePresence mode="wait">
-            {currentGenVideo ? (
-              <motion.div 
-                key="player"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="w-full relative group"
-              >
-                <div className="absolute -inset-1 bg-gradient-to-tr from-violet-600/20 to-fuchsia-600/20 rounded-[2rem] blur-xl opacity-50 group-hover:opacity-100 transition-opacity" />
-                <div className="relative rounded-[1.8rem] overflow-hidden bg-black ring-1 ring-white/10 shadow-2xl">
-                  <video src={currentGenVideo} className="w-full aspect-video bg-black object-contain" autoPlay loop controls />
-                  <div className="absolute top-6 left-6 flex items-center gap-3 px-4 py-2 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 shadow-xl">
-                    <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Cinematic Master</span>
-                  </div>
-                </div>
-                
-                {/* Result Controls */}
-                <div className="mt-8 flex justify-center gap-4">
-                  <button className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-white/70 text-[10px] font-black uppercase tracking-widest">
-                    <Trash2 className="w-4 h-4" /> Clear
-                  </button>
-                  <button className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-violet-600 text-white shadow-lg shadow-violet-600/20 text-[10px] font-black uppercase tracking-widest">
-                    <Eye className="w-4 h-4" /> Fullscreen
-                  </button>
-                </div>
-              </motion.div>
-            ) : isGenerating ? (
-              <motion.div 
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-col items-center gap-8"
-              >
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-violet-600/20 blur-2xl animate-pulse" />
-                  <div className="relative w-24 h-24 rounded-full border-2 border-dashed border-violet-500/30 animate-spin-slow flex items-center justify-center">
-                    <Loader2 className="w-10 h-10 text-violet-500 animate-spin" />
-                  </div>
-                </div>
-                <div className="text-center space-y-2">
-                  <p className="text-xl font-serif italic text-white/80">"The art of storytelling is the art of sequence."</p>
-                  <p className="text-[10px] font-black text-violet-400/50 uppercase tracking-[0.3em]">Processing Frames {outputReadyCount} of 1</p>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div 
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.4 }}
-                className="text-center space-y-6"
-              >
-                <div className="w-32 h-32 rounded-3xl border border-dashed border-white/10 flex items-center justify-center mx-auto">
-                  <Film className="w-12 h-12 text-white/10" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-black uppercase tracking-[0.3em] text-white/50">Director's Monitor</p>
-                  <p className="text-[10px] text-white/20 font-medium">Ready for capture sequence</p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-    </div>
+    </WorkflowShell>
   );
 };

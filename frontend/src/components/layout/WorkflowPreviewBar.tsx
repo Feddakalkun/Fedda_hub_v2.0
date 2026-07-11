@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Expand, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Expand, Loader2, X } from 'lucide-react';
 import { Lightbox } from '../ui/Lightbox';
 import { SendToWorkflowMenu } from '../ui/SendToWorkflowMenu';
 
@@ -13,6 +13,7 @@ interface WorkflowPreviewBarProps {
   maxItems?: number;
   emptyHint?: string;
   onSelectImage?: (url: string) => void;
+  onRemoveImage?: (url: string) => void;
 }
 
 export const WorkflowPreviewBar = ({
@@ -25,6 +26,7 @@ export const WorkflowPreviewBar = ({
   maxItems = 12,
   emptyHint = 'Generate something to see previews here.',
   onSelectImage,
+  onRemoveImage,
 }: WorkflowPreviewBarProps) => {
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -80,7 +82,7 @@ export const WorkflowPreviewBar = ({
                     type="button"
                     key={`${url}-${idx}`}
                     onClick={() => openImage(url)}
-                    className={`workflow-preview-thumb ${isLive ? 'is-live' : ''} ${isSelected ? 'is-selected' : ''}`.trim()}
+                    className={`workflow-preview-thumb group relative ${isLive ? 'is-live' : ''} ${isSelected ? 'is-selected' : ''}`.trim()}
                     title={`Preview ${idx + 1}`}
                   >
                     <img src={url} alt={`Preview ${idx + 1}`} />
@@ -90,6 +92,16 @@ export const WorkflowPreviewBar = ({
                         <SendToWorkflowMenu url={url} kind="image" compact />
                       </span>
                     </span>
+                    {onRemoveImage && !isLive && (
+                      <span
+                        role="button"
+                        title="Remove preview"
+                        onClick={(e) => { e.stopPropagation(); onRemoveImage(url); }}
+                        className="absolute right-1 top-1 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-black/70 text-zinc-400 opacity-0 transition hover:text-white group-hover:opacity-100"
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </span>
+                    )}
                     {isLive && (
                       <span className="workflow-preview-thumb-live">
                         <Loader2 className="h-2 w-2 animate-spin" />
