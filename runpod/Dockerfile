@@ -1,5 +1,5 @@
 # ============================================================================
-# FEDDA RUNPOD IMAGE (GPU-flexible, CUDA 12.4, PyTorch cu124)
+# FEDDA RUNPOD IMAGE (GPU-flexible, PyTorch cu128 — Blackwell + older NVIDIA)
 # ============================================================================
 
 FROM node:22-alpine AS frontend-builder
@@ -32,13 +32,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN python3 -m pip install --no-cache-dir --upgrade pip wheel setuptools
 
-# PyTorch cu124 works across common RunPod NVIDIA GPUs (30/40/ADA/50 where supported by drivers)
+# PyTorch cu128: supports Blackwell (RTX PRO 6000 / 50-series, sm_120) AND older
+# GPUs (30/40/ADA/A/L). cu124 has no Blackwell kernels -> ComfyUI crash-loops on those cards.
 RUN python3 -m pip install --no-cache-dir \
     torch torchvision torchaudio \
-    --index-url https://download.pytorch.org/whl/cu124
+    --index-url https://download.pytorch.org/whl/cu128
 
 # Optional acceleration (never fail whole build)
-RUN python3 -m pip install --no-cache-dir xformers --index-url https://download.pytorch.org/whl/cu124 || true
+RUN python3 -m pip install --no-cache-dir xformers --index-url https://download.pytorch.org/whl/cu128 || true
 RUN python3 -m pip install --no-cache-dir torchao || true
 RUN python3 -m pip install --no-cache-dir sageattention || true
 
