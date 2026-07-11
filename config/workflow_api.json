@@ -2566,6 +2566,24 @@
         "input_key": "height",
         "type": "number",
         "label": "Height"
+      },
+      "aspect_ratio": {
+        "node_id": "537",
+        "input_key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio"
+      },
+      "direction": {
+        "node_id": "537",
+        "input_key": "direction",
+        "type": "string",
+        "label": "Direction"
+      },
+      "steps": {
+        "node_id": "128",
+        "input_key": "steps",
+        "type": "number",
+        "label": "Steps"
       }
     }
   },
@@ -2609,6 +2627,24 @@
         "input_key": "height",
         "type": "number",
         "label": "Height"
+      },
+      "aspect_ratio": {
+        "node_id": "263",
+        "input_key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio"
+      },
+      "direction": {
+        "node_id": "263",
+        "input_key": "direction",
+        "type": "string",
+        "label": "Direction"
+      },
+      "steps": {
+        "node_id": "128",
+        "input_key": "steps",
+        "type": "number",
+        "label": "Steps"
       }
     }
   }

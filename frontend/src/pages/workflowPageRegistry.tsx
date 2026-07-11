@@ -61,7 +61,6 @@ export const VIDEO_WORKFLOW_PAGES: Record<string, ComponentType> = {
   'ltx-ai2v': LtxAi2vPage,
   'hunyuan-i2v': HunyuanImg2VidPage,
   'wan22xxx-img2vid': Wan22XxxImg2VidPage,
-  'lipsync-sonic': LipsyncPage,
   'lipsync-infinitetalk': LipsyncPage,
   'lipsync-multitalk': LipsyncPage,
 };
