@@ -3509,7 +3509,7 @@ async def get_workflow_download_live_progress(workflow_id: str):
                     else:
                         current_bytes = sz
                 # Some download managers write partial files with these suffixes
-                for suffix in (".incomplete", ".part", ".tmp"):
+                for suffix in (".incomplete", ".part", ".tmp", ".fedda_tmp"):
                     partial = Path(str(target) + suffix)
                     try:
                         if partial.exists() and partial.is_file():
