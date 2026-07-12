@@ -94,8 +94,12 @@ try {
     # -NoNewWindow keeps services attached to THIS console, so closing the
     # window (X) takes them down with it instead of orphaning hidden children.
     Write-Host "  [1/3] Starting ComfyUI on port 8199..." -ForegroundColor White
+    # Windows shares the GPU with the desktop (Explorer/Discord/browser/etc.), whose
+    # VRAM use fluctuates. Reserve a safety margin so model loads offload instead of
+    # OOM-crashing, and use expandable_segments to avoid fragmentation OOMs on the 3090.
+    $env:PYTORCH_CUDA_ALLOC_CONF = "expandable_segments:True"
     $ComfyProc = Start-Process -FilePath $Python `
-        -ArgumentList "-s", $ComfyMain, "--windows-standalone-build", "--port", "8199" `
+        -ArgumentList "-s", $ComfyMain, "--windows-standalone-build", "--port", "8199", "--reserve-vram", "2" `
         -PassThru -NoNewWindow `
         -RedirectStandardOutput $Services[0].Out -RedirectStandardError $Services[0].Err
 
