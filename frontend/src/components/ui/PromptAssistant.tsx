@@ -18,6 +18,7 @@ import { useRef, useState, useCallback } from 'react';
 import type { DragEvent, ClipboardEvent } from 'react';
 import { Wand2, Sparkles, Loader2, ImageIcon, X, Dices } from 'lucide-react';
 import { BACKEND_API } from '../../config/api';
+import { QuickPromptBuilder } from './QuickPromptBuilder';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export type PromptContext =
@@ -378,6 +379,9 @@ export const PromptAssistant = ({
           )}
         </div>
       </div>
+
+      {/* Quick Build — pick girl/outfit/scene, no typing */}
+      <QuickPromptBuilder context={context} onCompose={onChange} />
 
       {/* Textarea with drop zone */}
       <div
