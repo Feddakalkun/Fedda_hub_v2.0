@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Activity, BrainCircuit, Loader2, Trash2, Zap, DownloadCloud, Play, KeyRound } from 'lucide-react';
+import { Activity, BrainCircuit, Loader2, Trash2, Zap, DownloadCloud, Play, KeyRound, RotateCcw } from 'lucide-react';
 import { useComfyStatus } from '../../hooks/useComfyStatus';
 import { useOllamaStatus } from '../../hooks/useOllamaStatus';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
@@ -119,6 +119,18 @@ export const TopSystemStrip = () => {
     } finally {
       setPurging(false);
     }
+  };
+
+  // Clears the app's saved UI state (localStorage/sessionStorage) and reloads,
+  // so stale prompts/selections/defaults reset without clearing Chrome by hand.
+  // Server settings (HF/Civitai keys) live in runtime_settings.json and are unaffected.
+  const handleResetUi = () => {
+    if (!confirm('Reset UI state? Clears saved prompts, selections and cached page state, then reloads. Your models, outputs and API keys are NOT touched.')) return;
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch { /* ignore storage errors */ }
+    window.location.reload();
   };
 
   const comfyLabel = comfy.isLoading
@@ -299,6 +311,17 @@ export const TopSystemStrip = () => {
       >
         {purging ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
         {purging ? 'Purging' : 'Purge VRAM'}
+      </button>
+
+      {/* Reset UI state (clear localStorage) button */}
+      <button
+        id="reset-ui-btn"
+        onClick={handleResetUi}
+        title="Reset UI — clear saved prompts/selections & cached page state, then reload (models, outputs and API keys are kept)"
+        className="h-8 px-3 rounded-lg border border-amber-500/25 bg-amber-500/8 hover:bg-amber-500/18 text-amber-300 text-xs font-semibold transition-all flex items-center gap-1.5"
+      >
+        <RotateCcw className="w-3.5 h-3.5" />
+        Reset UI
       </button>
 
       <button
