@@ -2273,6 +2273,9 @@ def _sheet_path_for_lora(lora_path: Path) -> Path:
 
 
 def _parse_sheet(text: str) -> Dict[str, str]:
+    # Tolerate sheets saved with escaped markdown (\#, \*\*, \_, \- ...) — some
+    # editors/agents backslash-escape punctuation, which broke the regexes below.
+    text = re.sub(r"\\([#*_~`\-])", r"\1", text)
     trigger = ""
     m = re.search(r"\*\*Trigger:\*\*\s*(.+)", text)
     if m:
