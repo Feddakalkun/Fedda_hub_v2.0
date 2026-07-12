@@ -47,10 +47,36 @@ const TARGET_CHOICES = [
 ];
 
 const GENDERS = ['woman', 'man'];
-const SCENES = ['neutral studio background', 'soft window light interior', 'minimal black and grey set', 'editorial photo studio', 'cinematic apartment light'];
-const STYLES = ['photorealistic, natural skin, coherent faces', 'editorial photography, clean lighting, sharp focus', 'cinematic realism, balanced contrast, detailed texture', 'high-end fashion photo, realistic anatomy, soft shadows'];
+const SCENES = [
+  'neutral studio background',
+  'soft window light interior',
+  'cozy cafe with warm bokeh background',
+  'city street at golden hour, blurred traffic',
+  'rooftop bar at night, neon city lights behind',
+  'sandy beach at sunset, ocean waves',
+  'green park with soft dappled sunlight',
+  'modern apartment with big windows',
+  'nightclub with colorful moving lights',
+  'autumn forest path, warm fallen leaves',
+  'snowy street with soft winter light',
+  'luxury hotel lobby, marble and gold',
+  'backstage of a concert, moody lighting',
+  'poolside on a bright summer day',
+  'graffiti alley, urban streetwear vibe',
+];
+const STYLES = [
+  'photorealistic, natural skin, coherent faces',
+  'editorial photography, clean lighting, sharp focus',
+  'cinematic realism, balanced contrast, detailed texture',
+  'high-end fashion photo, realistic anatomy, soft shadows',
+  'candid iPhone photo, natural flash, slightly grainy',
+  'film photography look, 35mm, warm color grade',
+  'moody low-key lighting, dramatic shadows',
+  'bright airy daylight, soft pastel tones',
+];
 
 const randomSeed = () => Math.floor(Math.random() * 9_000_000_000_000) + 1;
+const randomFrom = <T,>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)];
 
 const shortLoraLabel = (name: string) => (name.replace(/\\/g, '/').split('/').pop() || name).replace(/\.safetensors$/i, '');
 
@@ -359,8 +385,13 @@ export const ZImageDualLoraPage = () => {
     setRunningWorkflow(true);
 
     try {
-      const finalDetectionPhrase = targetPhraseForSide(selectedTargetSide);
-      setDetectionPhrase(finalDetectionPhrase);
+      // Ground BOTH people (Florence returns them left-to-right), then pick the
+      // box by the chosen side. The phrase must not contain 'left'/'right' —
+      // Florence ignores spatial words, so grounding "woman"/"person" returns
+      // every instance and the index below is what actually selects the side.
+      const groundingPhrase = genderA === genderB ? genderA : 'person';
+      const boxIndexForSide = selectedTargetSide === 'left' ? '0' : '1';
+      setDetectionPhrase(targetPhraseForSide(selectedTargetSide));
       await registerWorkflowNodeMap('z-image-dual-lora');
       const payload = {
         workflow_id: 'z-image-dual-lora',
@@ -368,8 +399,8 @@ export const ZImageDualLoraPage = () => {
           main_prompt: prompts.base,
           detail_prompt: prompts.detail,
           negative: negativePrompt,
-          detection_phrase: finalDetectionPhrase,
-          selected_box_index: '0',
+          detection_phrase: groundingPhrase,
+          selected_box_index: boxIndexForSide,
           seed,
           lora_main_name: loraMainName,
           lora_main_strength: Number(loraMainStrength),
@@ -563,15 +594,27 @@ export const ZImageDualLoraPage = () => {
                     ))}
                   </div>
 
-                  <div className="grid gap-2 md:grid-cols-2">
+                  <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
                     <label className="space-y-1 text-[11px] font-semibold uppercase tracking-wide text-white/45">
                       Scene
-                      <input value={scene} onChange={(e) => setScene(e.target.value)} className={inputBase} />
+                      <input list="dual-scenes" value={scene} onChange={(e) => setScene(e.target.value)} placeholder="Pick or type a scene…" className={inputBase} />
+                      <datalist id="dual-scenes">{SCENES.map((s) => <option key={s} value={s} />)}</datalist>
                     </label>
                     <label className="space-y-1 text-[11px] font-semibold uppercase tracking-wide text-white/45">
                       Style
-                      <input value={style} onChange={(e) => setStyle(e.target.value)} className={inputBase} />
+                      <input list="dual-styles" value={style} onChange={(e) => setStyle(e.target.value)} placeholder="Pick or type a style…" className={inputBase} />
+                      <datalist id="dual-styles">{STYLES.map((s) => <option key={s} value={s} />)}</datalist>
                     </label>
+                    <div className="flex items-end">
+                      <button
+                        onClick={() => { setScene(randomFrom(SCENES)); setStyle(randomFrom(STYLES)); }}
+                        title="Shuffle scene + style"
+                        className={`${buttonBase} h-[38px] border-white/10 bg-white/[0.04] px-3 text-white/70 hover:bg-white/[0.08]`}
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" />
+                        Shuffle
+                      </button>
+                    </div>
                   </div>
                 </div>
 
