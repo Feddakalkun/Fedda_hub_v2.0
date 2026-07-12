@@ -228,6 +228,7 @@
         "video",
         "wan22-vid2vid",
         "wan22-img2vid",
+        "wan22xxx-img2vid",
         "wan22-img2vid-6frames",
         "wan21-steady-dancer",
         "wan21-scail2"
@@ -237,6 +238,7 @@
         "wan21-scail2",
         "wan22-vid2vid",
         "wan22-img2vid",
+        "wan22xxx-img2vid",
         "wan22-img2vid-6frames",
         "wan22-img2vid-gguf"
       ],

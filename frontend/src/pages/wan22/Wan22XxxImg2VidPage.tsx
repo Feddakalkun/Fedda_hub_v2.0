@@ -145,8 +145,8 @@ export const Wan22XxxImg2VidPage = () => {
   return (
     <WorkflowShell
       title="Image to Video"
-      eyebrow="WAN 2.2 XXX"
-      description="Dual high/low noise pass with NSFW UMT5 encoder and Power LoRA slots."
+      eyebrow="WAN 2.2"
+      description="Single-shot image-to-video with dual high/low noise pass and Power LoRA slots."
       icon={Play}
       isGenerating={run.isGenerating}
       canGenerate={canGenerate}
@@ -158,7 +158,7 @@ export const Wan22XxxImg2VidPage = () => {
           onSelectVideo={run.setCurrentMedia}
           onRemoveVideo={(url) => run.setHistory((prev) => prev.filter((v) => v !== url))}
           isGenerating={run.isGenerating}
-          title="WAN XXX Output"
+          title="WAN Img2Vid Output"
           emptyHint="Upload an image and generate to see results here."
         />
       )}
