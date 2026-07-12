@@ -15,6 +15,7 @@ export type SourceModuleId =
   | 'ltx-video'
   | 'flux-klein'
   | 'flux-klein-uncensored'
+  | 'krea2-txt2img'
   | 'ideogram';
 
 export interface FeddaModule {
@@ -290,6 +291,20 @@ export const FEDDA_MODULES: FeddaModule[] = [
     defaultTab: 'flux-txt2img',
     Icon: Sparkles,
     card: veniceCard(31),
+  },
+  {
+    id: 'krea2',
+    sourceModuleId: 'krea2-txt2img',
+    label: 'Krea2 Turbo',
+    description: 'Krea2 Turbo text-to-image (fast 8-step, LoRA-ready).',
+    area: 'image',
+    pack: 'booster',
+
+    tabs: ['krea2-turbo-txt2img'],
+    workflows: ['krea2-turbo-txt2img'],
+    defaultTab: 'krea2-turbo-txt2img',
+    Icon: Sparkles,
+    card: veniceCard(11),
   },
   {
     id: 'ideogram',

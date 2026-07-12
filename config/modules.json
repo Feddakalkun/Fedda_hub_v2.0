@@ -362,6 +362,26 @@
         "WAN 2.1 talk models"
       ],
       "notes": "Talking-head lipsync workflows."
+    },
+    {
+      "id": "krea2-txt2img",
+      "label": "Krea2 Turbo",
+      "pack": "booster",
+      "area": "image",
+      "enabled": true,
+      "tabs": [
+        "krea2-turbo-txt2img"
+      ],
+      "workflows": [
+        "krea2-turbo-txt2img"
+      ],
+      "custom_nodes": [
+        "ComfyUI-GGUF"
+      ],
+      "models": [
+        "Krea2 Turbo"
+      ],
+      "notes": "Krea2 Turbo text-to-image."
     }
   ]
 }

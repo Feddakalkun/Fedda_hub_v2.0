@@ -2671,5 +2671,54 @@
         "label": "Steps"
       }
     }
+  },
+  "krea2-turbo-txt2img": {
+    "name": "Krea2 Turbo",
+    "filename": "krea2/krea2-turbo-txt2img.json",
+    "description": "Krea2 Turbo text-to-image (fp8, 8-step, LoRA-ready).",
+    "inputs": {
+      "prompt": {
+        "node_id": "6",
+        "input_key": "text",
+        "type": "string",
+        "label": "Prompt"
+      },
+      "seed": {
+        "node_id": "3",
+        "input_key": "seed",
+        "type": "number",
+        "label": "Seed"
+      },
+      "steps": {
+        "node_id": "3",
+        "input_key": "steps",
+        "type": "number",
+        "label": "Steps"
+      },
+      "cfg": {
+        "node_id": "3",
+        "input_key": "cfg",
+        "type": "number",
+        "label": "CFG"
+      },
+      "width": {
+        "node_id": "5",
+        "input_key": "width",
+        "type": "number",
+        "label": "Width"
+      },
+      "height": {
+        "node_id": "5",
+        "input_key": "height",
+        "type": "number",
+        "label": "Height"
+      },
+      "loras": {
+        "node_id": "15",
+        "input_key": "lora_name",
+        "type": "loras",
+        "label": "LoRAs"
+      }
+    }
   }
 }
