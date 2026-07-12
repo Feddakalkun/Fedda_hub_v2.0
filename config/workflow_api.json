@@ -225,6 +225,12 @@
         ],
         "type": "number",
         "label": "Detail LoRA Strength"
+      },
+      "detail_denoise": {
+        "node_id": "25",
+        "input_key": "denoise",
+        "type": "number",
+        "label": "Change Strength"
       }
     }
   },
@@ -319,6 +325,12 @@
         ],
         "type": "number",
         "label": "Detail LoRA Strength"
+      },
+      "detail_denoise": {
+        "node_id": "25",
+        "input_key": "denoise",
+        "type": "number",
+        "label": "Change Strength"
       }
     }
   },
@@ -413,6 +425,12 @@
         ],
         "type": "number",
         "label": "Person 2 LoRA Strength"
+      },
+      "detail_denoise": {
+        "node_id": "25",
+        "input_key": "denoise",
+        "type": "number",
+        "label": "Change Strength"
       }
     }
   },

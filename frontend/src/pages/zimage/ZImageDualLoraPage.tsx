@@ -32,15 +32,6 @@ type DualBox = {
 
 type DragPoint = { x: number; y: number };
 
-type TraitSet = {
-  gender: string;
-  archetype: string;
-  hair: string;
-  wardrobe: string;
-  face: string;
-  pose: string;
-};
-
 type StageStatus = {
   success: boolean;
   status?: 'pending' | 'running' | 'completed' | 'not_found';
@@ -55,17 +46,13 @@ const TARGET_CHOICES = [
   { label: 'Person 2', hint: 'right side', side: 'right' },
 ];
 
-const ARCHETYPES = ['editorial model', 'cinematic character', 'streetwear creator', 'fashion portrait subject', 'studio muse'];
 const GENDERS = ['woman', 'man'];
-const HAIR = ['long blonde hair', 'black bob haircut', 'soft brown waves', 'silver ponytail', 'dark curly hair'];
-const WARDROBE = ['minimal modern outfit', 'tailored black blazer', 'clean white top', 'luxury fashion styling', 'soft neutral wardrobe'];
-const FACES = ['natural skin texture', 'calm confident expression', 'soft smile', 'sharp editorial gaze', 'realistic facial detail'];
-const POSES = ['standing side by side', 'three-quarter portrait pose', 'relaxed fashion pose', 'shoulders angled toward camera', 'clean studio composition'];
 const SCENES = ['neutral studio background', 'soft window light interior', 'minimal black and grey set', 'editorial photo studio', 'cinematic apartment light'];
 const STYLES = ['photorealistic, natural skin, coherent faces', 'editorial photography, clean lighting, sharp focus', 'cinematic realism, balanced contrast, detailed texture', 'high-end fashion photo, realistic anatomy, soft shadows'];
 
-const randomFrom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)] || '';
 const randomSeed = () => Math.floor(Math.random() * 9_000_000_000_000) + 1;
+
+const shortLoraLabel = (name: string) => (name.replace(/\\/g, '/').split('/').pop() || name).replace(/\.safetensors$/i, '');
 
 const buttonBase = 'inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-45';
 const panelBase = 'rounded-lg border border-white/10 bg-[#0d0e12]';
@@ -150,28 +137,24 @@ export const ZImageDualLoraPage = () => {
   const { clearOutputs, registerNodeMap } = useComfyExecution();
 
   const [loraMainName, setLoraMainName] = usePersistentState('zimage_dual_lora_main_name', '');
-  const [loraMainStrength, setLoraMainStrength] = usePersistentState('zimage_dual_lora_main_strength', 1);
+  const [loraMainStrength, setLoraMainStrength] = usePersistentState('zimage_dual_lora_main_strength', 1.2);
   const [loraDetailName, setLoraDetailName] = usePersistentState('zimage_dual_lora_detail_name', '');
-  const [loraDetailStrength, setLoraDetailStrength] = usePersistentState('zimage_dual_lora_detail_strength', 1);
+  const [loraDetailStrength, setLoraDetailStrength] = usePersistentState('zimage_dual_lora_detail_strength', 1.2);
+
+  // How strongly the selected person is repainted into Person 2 (DetailerForEach denoise).
+  const [changeStrength, setChangeStrength] = usePersistentState('zimage_dual_change_strength', 0.75);
 
   const [scene, setScene] = usePersistentState('zimage_dual_scene', SCENES[0]);
   const [style, setStyle] = usePersistentState('zimage_dual_style', STYLES[0]);
-  const [personA, setPersonA] = usePersistentState<TraitSet>('zimage_dual_trait_a', {
-    gender: 'woman',
-    archetype: ARCHETYPES[0],
-    hair: HAIR[0],
-    wardrobe: WARDROBE[0],
-    face: FACES[0],
-    pose: POSES[0],
-  });
-  const [personB, setPersonB] = usePersistentState<TraitSet>('zimage_dual_trait_b', {
-    gender: 'woman',
-    archetype: ARCHETYPES[1],
-    hair: HAIR[1],
-    wardrobe: WARDROBE[1],
-    face: FACES[1],
-    pose: POSES[1],
-  });
+
+  // Character descriptions pulled from each LoRA's .md sheet (editable).
+  const [genderA, setGenderA] = usePersistentState('zimage_dual_gender_a', 'woman');
+  const [genderB, setGenderB] = usePersistentState('zimage_dual_gender_b', 'woman');
+  const [triggerA, setTriggerA] = usePersistentState('zimage_dual_trigger_a', '');
+  const [triggerB, setTriggerB] = usePersistentState('zimage_dual_trigger_b', '');
+  const [appearanceA, setAppearanceA] = usePersistentState('zimage_dual_appearance_a', '');
+  const [appearanceB, setAppearanceB] = usePersistentState('zimage_dual_appearance_b', '');
+  const [sheetLoading, setSheetLoading] = useState<{ a: boolean; b: boolean }>({ a: false, b: false });
 
   const [mainPrompt, setMainPrompt] = usePersistentState('zimage_dual_main_prompt', '');
   const [detailPrompt, setDetailPrompt] = usePersistentState('zimage_dual_detail_prompt', '');
@@ -224,6 +207,50 @@ export const ZImageDualLoraPage = () => {
     }).catch(() => setAvailableLoras([]));
   }, []);
 
+  // Pull a LoRA's character sheet (.md sidecar) → trigger + appearance.
+  const loadSheet = async (
+    loraName: string,
+    slot: 'a' | 'b',
+    setTrigger: (v: string) => void,
+    setAppearance: (v: string) => void,
+    { force = false }: { force?: boolean } = {},
+  ) => {
+    if (!loraName) return;
+    setSheetLoading((s) => ({ ...s, [slot]: true }));
+    try {
+      const res = await fetch(`${BACKEND_API.BASE_URL}/api/lora/sheet?file=${encodeURIComponent(loraName)}`);
+      const data = await res.json();
+      if (data.success && data.exists) {
+        if (data.trigger) setTrigger(data.trigger);
+        if (data.appearance) setAppearance(data.appearance);
+        if (force) toast(`Loaded ${shortLoraLabel(loraName)}'s description`, 'success');
+      } else if (force) {
+        toast('No character sheet (.md) found next to that LoRA.', 'info');
+      }
+    } catch {
+      if (force) toast('Could not read the character sheet.', 'error');
+    } finally {
+      setSheetLoading((s) => ({ ...s, [slot]: false }));
+    }
+  };
+
+  // Auto-load a sheet only when the LoRA actually changes (not on every remount),
+  // so persisted manual edits survive a page reload.
+  const mainSheetRef = useRef<string | null>(loraMainName || null);
+  const detailSheetRef = useRef<string | null>(loraDetailName || null);
+  useEffect(() => {
+    if (loraMainName && mainSheetRef.current !== loraMainName) {
+      mainSheetRef.current = loraMainName;
+      void loadSheet(loraMainName, 'a', setTriggerA, setAppearanceA);
+    }
+  }, [loraMainName]);
+  useEffect(() => {
+    if (loraDetailName && detailSheetRef.current !== loraDetailName) {
+      detailSheetRef.current = loraDetailName;
+      void loadSheet(loraDetailName, 'b', setTriggerB, setAppearanceB);
+    }
+  }, [loraDetailName]);
+
   const buildFallbackBoxes = (w: number, h: number, phrase: string) => {
     const left: DualBox = { x1: w * 0.06, y1: h * 0.08, x2: w * 0.49, y2: h * 0.96 };
     const right: DualBox = { x1: w * 0.51, y1: h * 0.08, x2: w * 0.94, y2: h * 0.96 };
@@ -247,34 +274,18 @@ export const ZImageDualLoraPage = () => {
     };
   };
 
-  const randomizePromptParts = () => {
-    setPersonA({
-      gender: personA.gender || 'woman',
-      archetype: randomFrom(ARCHETYPES),
-      hair: randomFrom(HAIR),
-      wardrobe: randomFrom(WARDROBE),
-      face: randomFrom(FACES),
-      pose: randomFrom(POSES),
-    });
-    setPersonB({
-      gender: personB.gender || 'woman',
-      archetype: randomFrom(ARCHETYPES),
-      hair: randomFrom(HAIR),
-      wardrobe: randomFrom(WARDROBE),
-      face: randomFrom(FACES),
-      pose: randomFrom(POSES),
-    });
-    setScene(randomFrom(SCENES));
-    setStyle(randomFrom(STYLES));
-  };
+  // Build the scene + refine prompts straight from the two character sheets.
+  const describe = (trigger: string, gender: string, appearance: string) =>
+    [trigger.trim(), gender.trim(), appearance.trim()].filter(Boolean).join(', ');
 
   const composePrompts = () => {
-    const left = `left person: ${personA.gender || 'woman'}, ${personA.archetype}, ${personA.hair}, ${personA.wardrobe}, ${personA.face}, ${personA.pose}`;
-    const right = `right person: ${personB.gender || 'woman'}, ${personB.archetype}, ${personB.hair}, ${personB.wardrobe}, ${personB.face}, ${personB.pose}`;
-    const base = `two people side by side, ${left}, ${right}, ${scene}, ${style}, realistic proportions, separate identities, clean composition`;
-    const target = detectionPhrase.toLowerCase().includes('left') ? personA : personB;
-    const side = detectionPhrase.toLowerCase().includes('left') ? 'left' : 'right';
-    const detail = `refine only the ${side} ${target.gender || 'person'} inside the mask, preserve the other person unchanged, preserve pose and composition, ${target.gender || 'person'}, ${target.archetype}, ${target.hair}, ${target.face}, natural skin texture, coherent face, realistic lighting`;
+    const left = describe(triggerA, genderA, appearanceA);
+    const right = describe(triggerB, genderB, appearanceB);
+    const base = `two people side by side, left person: ${left}; right person: ${right}, ${scene}, ${style}, realistic proportions, separate identities, clean composition`;
+    const onLeft = detectionPhrase.toLowerCase().includes('left');
+    const side = onLeft ? 'left' : 'right';
+    const target = onLeft ? left : right;
+    const detail = `refine only the ${side} person inside the mask, preserve the other person unchanged, preserve pose and composition, ${target}, natural skin texture, coherent face, realistic lighting`;
     setMainPrompt(base);
     setDetailPrompt(detail);
     return { base, detail };
@@ -318,8 +329,8 @@ export const ZImageDualLoraPage = () => {
   };
 
   const targetPhraseForSide = (side: string) => {
-    const target = side === 'left' ? personA : personB;
-    return `${side} ${target.gender || 'person'}`;
+    const gender = side === 'left' ? genderA : genderB;
+    return `${side} ${gender || 'person'}`;
   };
 
   const selectedTargetSide = detectionPhrase.toLowerCase().includes('left') ? 'left' : 'right';
@@ -364,6 +375,7 @@ export const ZImageDualLoraPage = () => {
           lora_main_strength: Number(loraMainStrength),
           lora_detail_name: loraDetailName,
           lora_detail_strength: Number(loraDetailStrength),
+          detail_denoise: Number(changeStrength),
           client_id: comfyService.clientId,
         },
       };
@@ -481,9 +493,22 @@ export const ZImageDualLoraPage = () => {
               </select>
             </label>
             <label className="space-y-1 text-[11px] font-semibold uppercase tracking-wide text-white/45">
-              Person 2 {Number(loraDetailStrength).toFixed(2)}
+              Person 2 likeness {Number(loraDetailStrength).toFixed(2)}
               <input type="range" min={0.1} max={1.8} step={0.01} value={loraDetailStrength} onChange={(e) => setLoraDetailStrength(Number(e.target.value))} className="mt-2 w-full accent-zinc-300" />
             </label>
+          </div>
+
+          <div className="mt-3 rounded-lg border border-emerald-400/20 bg-emerald-400/[0.04] p-3">
+            <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-emerald-200/70">
+              <span>Change Strength (how fully Person 2 replaces the selected person)</span>
+              <span className="font-mono text-emerald-300">{Number(changeStrength).toFixed(2)}</span>
+            </div>
+            <input type="range" min={0.3} max={1} step={0.01} value={changeStrength} onChange={(e) => setChangeStrength(Number(e.target.value))} className="mt-2 w-full accent-emerald-400" />
+            <div className="mt-1 flex justify-between text-[9px] font-mono text-white/30">
+              <span>0.30 · subtle</span>
+              <span className="text-white/20">0.75 · balanced</span>
+              <span>1.00 · full swap</span>
+            </div>
           </div>
         </section>
 
@@ -493,42 +518,47 @@ export const ZImageDualLoraPage = () => {
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <div className="text-sm font-semibold text-white/85">People + Prompt</div>
-                      <p className="mt-1 text-[11px] text-white/35">Describe both people, then FEDDA builds the full scene and selected-person prompt.</p>
+                      <div className="text-sm font-semibold text-white/85">Characters + Prompt</div>
+                      <p className="mt-1 text-[11px] text-white/35">Descriptions load from each LoRA's character sheet. Edit if you want, then build the prompts.</p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button onClick={randomizePromptParts} className={`${buttonBase} border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08]`}>
-                        <RefreshCw className="h-3.5 w-3.5" />
-                        Randomize
-                      </button>
-                      <button onClick={composePrompts} className={`${buttonBase} border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08]`}>
-                        <Wand2 className="h-3.5 w-3.5" />
-                        Build Prompts
-                      </button>
-                    </div>
+                    <button onClick={composePrompts} className={`${buttonBase} border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08]`}>
+                      <Wand2 className="h-3.5 w-3.5" />
+                      Build Prompts
+                    </button>
                   </div>
 
                   <div className="grid gap-2 md:grid-cols-2">
                     {[
-                      { title: 'Person 1 (left)', value: personA, setValue: setPersonA },
-                      { title: 'Person 2 (right)', value: personB, setValue: setPersonB },
-                    ].map((person) => (
-                      <div key={person.title} className="rounded-lg border border-white/10 bg-black/25 p-2.5">
-                        <div className="mb-2 text-xs font-semibold text-white/75">{person.title}</div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <select
-                            value={person.value.gender || 'woman'}
-                            onChange={(e) => person.setValue({ ...person.value, gender: e.target.value })}
-                            className={inputBase}
-                          >
-                            {GENDERS.map((gender) => <option key={gender} value={gender}>{gender}</option>)}
-                          </select>
-                          <input value={person.value.archetype} onChange={(e) => person.setValue({ ...person.value, archetype: e.target.value })} className={inputBase} />
-                          <input value={person.value.hair} onChange={(e) => person.setValue({ ...person.value, hair: e.target.value })} className={inputBase} />
-                          <input value={person.value.wardrobe} onChange={(e) => person.setValue({ ...person.value, wardrobe: e.target.value })} className={inputBase} />
-                          <input value={person.value.face} onChange={(e) => person.setValue({ ...person.value, face: e.target.value })} className={inputBase} />
-                          <input value={person.value.pose} onChange={(e) => person.setValue({ ...person.value, pose: e.target.value })} className={`${inputBase} col-span-2`} />
+                      { title: 'Person 1 · full scene', slot: 'a' as const, lora: loraMainName, gender: genderA, setGender: setGenderA, trigger: triggerA, appearance: appearanceA, setAppearance: setAppearanceA, setTrigger: setTriggerA, accent: 'sky' },
+                      { title: 'Person 2 · the change', slot: 'b' as const, lora: loraDetailName, gender: genderB, setGender: setGenderB, trigger: triggerB, appearance: appearanceB, setAppearance: setAppearanceB, setTrigger: setTriggerB, accent: 'emerald' },
+                    ].map((p) => (
+                      <div key={p.slot} className={`rounded-lg border p-2.5 ${p.accent === 'sky' ? 'border-sky-400/20 bg-sky-400/[0.03]' : 'border-emerald-400/20 bg-emerald-400/[0.03]'}`}>
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <div className="text-xs font-semibold text-white/75">{p.title}</div>
+                          <div className="flex items-center gap-1.5">
+                            <select value={p.gender} onChange={(e) => p.setGender(e.target.value)} className={`${inputBase} h-7 w-24 py-0`}>
+                              {GENDERS.map((g) => <option key={g} value={g}>{g}</option>)}
+                            </select>
+                            <button
+                              title="Reload description from the LoRA's sheet"
+                              onClick={() => void loadSheet(p.lora, p.slot, p.setTrigger, p.setAppearance, { force: true })}
+                              disabled={!p.lora || sheetLoading[p.slot]}
+                              className={`${buttonBase} h-7 border-white/10 bg-white/[0.04] px-2 py-0 text-white/60 hover:bg-white/[0.08]`}
+                            >
+                              {sheetLoading[p.slot] ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                            </button>
+                          </div>
                         </div>
+                        {p.lora
+                          ? <div className="mb-1.5 text-[10px] text-white/40">{shortLoraLabel(p.lora)}{p.trigger ? <> · trigger <span className="font-mono text-white/60">{p.trigger}</span></> : ' · no sheet found'}</div>
+                          : <div className="mb-1.5 text-[10px] text-white/25">Pick this person's LoRA above ↑</div>}
+                        <textarea
+                          value={p.appearance}
+                          onChange={(e) => p.setAppearance(e.target.value)}
+                          rows={5}
+                          placeholder="Appearance description (auto-loads from the LoRA sheet)…"
+                          className={`${inputBase} resize-none text-[11px] leading-relaxed`}
+                        />
                       </div>
                     ))}
                   </div>
@@ -708,7 +738,7 @@ export const ZImageDualLoraPage = () => {
                             className={`${buttonBase} flex-col gap-0.5 py-2.5 ${selectedTargetSide === choice.side ? 'border-white/25 bg-white/12 text-white' : 'border-white/10 bg-white/[0.03] text-white/55 hover:bg-white/[0.07]'}`}
                           >
                             <span>{choice.label}</span>
-                            <span className="text-[9px] font-normal uppercase tracking-wide text-white/35">{choice.hint} / {choice.side === 'left' ? personA.gender || 'person' : personB.gender || 'person'}</span>
+                            <span className="text-[9px] font-normal uppercase tracking-wide text-white/35">{choice.hint} / {choice.side === 'left' ? genderA || 'person' : genderB || 'person'}</span>
                           </button>
                         ))}
                       </div>
