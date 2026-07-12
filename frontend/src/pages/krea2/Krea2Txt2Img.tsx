@@ -9,8 +9,8 @@ export const Krea2Txt2Img = () => {
       capabilityLabel="Text to Image"
       promptContext="zimage"
       accent="violet"
-      // Krea2 LoRAs (e.g. app/Aurora/aurora_krea2_*.safetensors) — match the family token.
-      loraPrefixes={['krea2']}
+      // Match any "krea" LoRA so naming variants (krea2, krea_2, krea-2) all show up.
+      loraPrefixes={['krea']}
       defaultSteps={8}
       maxSteps={20}
       defaultCfg={1}
