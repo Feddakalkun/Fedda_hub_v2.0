@@ -96,8 +96,10 @@ try {
     Write-Host "  [1/3] Starting ComfyUI on port 8199..." -ForegroundColor White
     # Windows shares the GPU with the desktop (Explorer/Discord/browser/etc.), whose
     # VRAM use fluctuates. Reserve a safety margin so model loads offload instead of
-    # OOM-crashing, and use expandable_segments to avoid fragmentation OOMs on the 3090.
-    $env:PYTORCH_CUDA_ALLOC_CONF = "expandable_segments:True"
+    # OOM-crashing. NOTE: do NOT set PYTORCH_CUDA_ALLOC_CONF=expandable_segments here —
+    # it is incompatible with ComfyUI's default cudaMallocAsync backend on Windows and
+    # causes spurious OOM even with the GPU nearly empty.
+    Remove-Item Env:\PYTORCH_CUDA_ALLOC_CONF -ErrorAction SilentlyContinue
     $ComfyProc = Start-Process -FilePath $Python `
         -ArgumentList "-s", $ComfyMain, "--windows-standalone-build", "--port", "8199", "--reserve-vram", "2" `
         -PassThru -NoNewWindow `
