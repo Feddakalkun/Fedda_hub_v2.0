@@ -2720,5 +2720,54 @@
         "label": "LoRAs"
       }
     }
+  },
+  "krea2-turbo-txt2img-gguf": {
+    "name": "Krea2 Turbo (GGUF)",
+    "filename": "krea2/krea2-turbo-txt2img-gguf.json",
+    "description": "Krea2 Turbo text-to-image (GGUF Q6_K - fits 24GB with LoRA patching, no mixed-precision OOM).",
+    "inputs": {
+      "prompt": {
+        "node_id": "6",
+        "input_key": "text",
+        "type": "string",
+        "label": "Prompt"
+      },
+      "seed": {
+        "node_id": "3",
+        "input_key": "seed",
+        "type": "number",
+        "label": "Seed"
+      },
+      "steps": {
+        "node_id": "3",
+        "input_key": "steps",
+        "type": "number",
+        "label": "Steps"
+      },
+      "cfg": {
+        "node_id": "3",
+        "input_key": "cfg",
+        "type": "number",
+        "label": "CFG"
+      },
+      "width": {
+        "node_id": "5",
+        "input_key": "width",
+        "type": "number",
+        "label": "Width"
+      },
+      "height": {
+        "node_id": "5",
+        "input_key": "height",
+        "type": "number",
+        "label": "Height"
+      },
+      "loras": {
+        "node_id": "15",
+        "input_key": "lora_name",
+        "type": "loras",
+        "label": "LoRAs"
+      }
+    }
   }
 }

@@ -4,7 +4,10 @@ export const Krea2Txt2Img = () => {
   return (
     <Txt2ImgPage
       storageKey="krea2_txt2img"
-      workflowId="krea2-turbo-txt2img"
+      // GGUF Q6_K: the fp8 mixed-precision file OOMs on the 3090 while LoRA-patching
+      // (fp8 is emulated on Ampere + torch 2.6 legacy patcher). GGUF patches clean.
+      // fp8 variant stays registered as 'krea2-turbo-txt2img' for big-GPU pods.
+      workflowId="krea2-turbo-txt2img-gguf"
       familyLabel="KREA2"
       capabilityLabel="Text to Image"
       promptContext="zimage"

@@ -370,10 +370,12 @@
       "area": "image",
       "enabled": true,
       "tabs": [
-        "krea2-turbo-txt2img"
+        "krea2-turbo-txt2img",
+        "krea2-turbo-txt2img-gguf"
       ],
       "workflows": [
-        "krea2-turbo-txt2img"
+        "krea2-turbo-txt2img",
+        "krea2-turbo-txt2img-gguf"
       ],
       "custom_nodes": [
         "ComfyUI-GGUF"
