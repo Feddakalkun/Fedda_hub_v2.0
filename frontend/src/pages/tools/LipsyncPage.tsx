@@ -109,14 +109,34 @@ export const LipsyncPage = () => {
       .then((d) => { if (d.success) setCbVoices(d.voices || []); }).catch(() => {});
   };
 
-  // read duration of the active audio for the trim editor
+  // read the TRUE duration of the active audio for the trim editor.
+  // <audio>.duration is unreliable for streamed/range-less sources (often reports
+  // a wrong short value like 10s), so decode the samples for the exact length.
   useEffect(() => {
     setAudioDuration(0); setTrimStart(0); setTrimEnd(0);
     if (!audPreview) return;
-    const el = new Audio(audPreview);
-    el.addEventListener('loadedmetadata', () => {
-      if (isFinite(el.duration)) { setAudioDuration(el.duration); setTrimEnd(el.duration); }
-    });
+    let cancelled = false;
+    (async () => {
+      try {
+        const raw = await (await fetch(audPreview)).arrayBuffer();
+        const ctx = new AudioContext();
+        const buf = await ctx.decodeAudioData(raw);
+        void ctx.close();
+        if (!cancelled && isFinite(buf.duration) && buf.duration > 0) {
+          setAudioDuration(buf.duration);
+          setTrimEnd(buf.duration);
+          return;
+        }
+      } catch { /* fall through to metadata read */ }
+      // fallback: <audio> metadata (skip Infinity/NaN)
+      const el = new Audio(audPreview);
+      el.addEventListener('loadedmetadata', () => {
+        if (!cancelled && isFinite(el.duration) && el.duration > 0) {
+          setAudioDuration(el.duration); setTrimEnd(el.duration);
+        }
+      });
+    })();
+    return () => { cancelled = true; };
   }, [audioFile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const upload = async (file: File, set: (f: string) => void, setBusy: (b: boolean) => void) => {
