@@ -1841,6 +1841,16 @@ def _get_enhancer_messages(req: "OllamaPromptRequest") -> tuple[str, str]:
     return base, user
 
 
+# Appended to portrait/photo caption prompts to prevent multi-subject drift.
+# Dense captions that repeat "she/the girl" or describe bystanders ("a person's
+# shoulder beside her") teach the model to render a second person.
+_SINGLE_SUBJECT_RULE = (
+    " Feature exactly ONE person. Never mention additional people or partial figures "
+    "(no 'another person', no 'someone's shoulder/arm/hand', no crowd). Refer to the "
+    "subject sparingly — avoid repeating 'she/her/the girl' in every sentence."
+)
+
+
 def _caption_prompt_for_context(context: str) -> str:
     """Return image->prompt conversion instruction tuned by workflow context."""
     ctx = (context or "zimage").strip().lower()
@@ -1852,6 +1862,7 @@ def _caption_prompt_for_context(context: str) -> str:
             "Do NOT invent facts not clearly visible (e.g., pregnancy, sauna, unseen body posture, unseen location). "
             "Do NOT mention fisheye, ultra-wide, or lens distortion unless clearly visible. "
             "No meta wording like 'the image shows'. 55-95 words. Output only the final prompt."
+            + _SINGLE_SUBJECT_RULE
         )
     if ctx == "ltx-flf":
         return (
@@ -1899,6 +1910,7 @@ def _caption_prompt_for_context(context: str) -> str:
     return (
         "Describe this image as a high-quality AI generation prompt with subject, composition, lighting, mood, and style. "
         "Output only the prompt."
+        + _SINGLE_SUBJECT_RULE
     )
 
 
@@ -2354,11 +2366,16 @@ async def describe_for_sheet(file: UploadFile = File(...)):
         raise HTTPException(status_code=503, detail="No vision model available. Install one with: ollama pull llava")
     img_b64 = _b64.b64encode(await file.read()).decode()
     prompt = (
-        "Describe ONLY this person's permanent physical appearance, for reuse in AI image prompts: "
+        "Describe ONLY the permanent physical appearance of the SINGLE main person, for reuse in AI image prompts: "
         "hair color, length and texture; skin tone and any freckles or marks; eye color and shape; "
         "eyebrows; nose; lips; face shape and jawline; build; apparent age; jewelry only if clearly "
         "always worn. Do NOT mention clothing, outfit, background, setting, lighting, pose, camera, "
-        "expression or image quality. Write flowing sentences starting with 'She has'. 80-140 words."
+        "expression or image quality. "
+        "CRITICAL: describe exactly ONE person. Never mention any other person, and never describe body parts "
+        "belonging to someone else (no 'another person', no 'a person's shoulder/arm/hand beside her'). "
+        "Write as a single flowing description of attributes (e.g. 'Long auburn hair with loose waves, fair "
+        "freckled skin, green almond eyes...'). Do NOT start every sentence with 'She has' — keep pronouns "
+        "minimal and avoid repeating 'she/her'. 70-120 words."
     )
     payload = {
         "model": model,
