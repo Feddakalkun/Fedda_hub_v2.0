@@ -304,7 +304,7 @@ export const FEDDA_MODULES: FeddaModule[] = [
     workflows: ['krea2-turbo-txt2img'],
     defaultTab: 'krea2-turbo-txt2img',
     Icon: Sparkles,
-    card: veniceCard(11),
+    card: veniceCard(38),
   },
   {
     id: 'ideogram',
