@@ -184,7 +184,7 @@ export const ZImageDualLoraPage = () => {
 
   const [mainPrompt, setMainPrompt] = usePersistentState('zimage_dual_main_prompt', '');
   const [detailPrompt, setDetailPrompt] = usePersistentState('zimage_dual_detail_prompt', '');
-  const [negativePrompt, setNegativePrompt] = usePersistentState('zimage_dual_negative_prompt', 'blurry, low quality, bad anatomy, deformed, extra limbs, distorted face, plastic skin');
+  const [negativePrompt, setNegativePrompt] = usePersistentState('zimage_dual_negative_prompt', 'blurry, low quality, bad anatomy, deformed, extra limbs, distorted face, plastic skin, split image, split screen, collage, diptych, two separate photos, different backgrounds, panel border, seam down the middle');
   const [detectionPhrase, setDetectionPhrase] = usePersistentState('zimage_dual_detection_phrase', 'person on right');
 
   const [lockedSeed, setLockedSeed] = usePersistentState<number>('zimage_dual_locked_seed', randomSeed());
@@ -307,7 +307,9 @@ export const ZImageDualLoraPage = () => {
   const composePrompts = () => {
     const left = describe(triggerA, genderA, appearanceA);
     const right = describe(triggerB, genderB, appearanceB);
-    const base = `two people side by side, left person: ${left}; right person: ${right}, ${scene}, ${style}, realistic proportions, separate identities, clean composition`;
+    const plural = genderA === genderB ? `two ${genderA}s` : 'two people';
+    // Lead with ONE shared scene so Z-Image renders a single photo (not a diptych).
+    const base = `a single candid photograph of ${plural} standing close together in the same place, ${scene}, one shared continuous background, same lighting and same camera angle, left person: ${left}; right person: ${right}, both fully in frame, natural realistic proportions, ${style}, one seamless image`;
     const onLeft = detectionPhrase.toLowerCase().includes('left');
     const side = onLeft ? 'left' : 'right';
     const target = onLeft ? left : right;
@@ -391,6 +393,11 @@ export const ZImageDualLoraPage = () => {
       // every instance and the index below is what actually selects the side.
       const groundingPhrase = genderA === genderB ? genderA : 'person';
       const boxIndexForSide = selectedTargetSide === 'left' ? '0' : '1';
+      // Guarantee anti-diptych terms even if the saved negative predates them.
+      const antiSplit = 'split image, collage, diptych, two separate photos, different backgrounds';
+      const negativeForRun = /split image|collage|diptych/i.test(negativePrompt)
+        ? negativePrompt
+        : `${negativePrompt}, ${antiSplit}`;
       setDetectionPhrase(targetPhraseForSide(selectedTargetSide));
       await registerWorkflowNodeMap('z-image-dual-lora');
       const payload = {
@@ -398,7 +405,7 @@ export const ZImageDualLoraPage = () => {
         params: {
           main_prompt: prompts.base,
           detail_prompt: prompts.detail,
-          negative: negativePrompt,
+          negative: negativeForRun,
           detection_phrase: groundingPhrase,
           selected_box_index: boxIndexForSide,
           seed,
