@@ -4,6 +4,7 @@ import { RichHome } from './components/layout/RichHome';
 import { ImageSectionCards } from './components/layout/ImageSectionCards';
 import { VideoSectionCards } from './components/layout/VideoSectionCards';
 import { TopSystemStrip } from './components/ui/TopSystemStrip';
+import { GlobalOutputStrip } from './components/layout/GlobalOutputStrip';
 import { ToastProvider } from './components/ui/Toast';
 import { ComfyExecutionProvider } from './contexts/ComfyExecutionContext';
 import { ModuleProvider, useModules } from './contexts/ModuleContext';
@@ -224,6 +225,9 @@ function FeddaApp() {
           </div>
           <TopSystemStrip />
         </header>
+
+        {/* Global recent-generations rail — same strip on every page */}
+        {view !== 'home' && <GlobalOutputStrip />}
 
         <div className="flex-1 min-h-0 flex overflow-hidden">
           <div className="flex-1 min-w-0 overflow-hidden">

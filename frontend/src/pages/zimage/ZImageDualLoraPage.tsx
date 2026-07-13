@@ -12,7 +12,6 @@ import {
   Wand2,
 } from 'lucide-react';
 import { BACKEND_API } from '../../config/api';
-import { TopPreviewStrip } from '../../components/layout/TopPreviewStrip';
 import { WorkflowShell } from '../../components/layout/WorkflowShell';
 import { PromptAssistant } from '../../components/ui/PromptAssistant';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
@@ -481,7 +480,6 @@ export const ZImageDualLoraPage = () => {
       icon={CircleDot}
       isGenerating={isRunning}
       canGenerate={canRun && !isRunning}
-      preview={<TopPreviewStrip storageKey="zimage_dual_lora" maxItems={12} />}
       hideOutputPane
       output={null}
     >
