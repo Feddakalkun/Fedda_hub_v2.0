@@ -4041,9 +4041,11 @@ async def get_generation_status(prompt_id: str, workflow_id: str = ""):
                 audios = []
                 detected_boxes = []
                 for node_id, output in outputs.items():
-                    # Still images. Some custom nodes (e.g. QwenMultiangleCameraNode)
-                    # emit under 'preview_images' instead of the standard 'images'.
-                    for img in output.get("images", []) + output.get("preview_images", []):
+                    # Still images. NOTE: do NOT collect 'preview_images' —
+                    # QwenMultiangleCameraNode emits the *unchanged input image*
+                    # under that key as a 3D-widget echo, so surfacing it masks a
+                    # failed/OOM render as a fake "result" (same input, no angle).
+                    for img in output.get("images", []):
                         images.append({
                             "filename": img["filename"],
                             "subfolder": img.get("subfolder", ""),
