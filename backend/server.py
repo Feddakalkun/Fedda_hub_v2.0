@@ -2238,6 +2238,7 @@ async def ollama_caption_image(file: UploadFile = File(...), context: str = Form
         "prompt": _caption_prompt_for_context(context),
         "images": [img_b64],
         "stream": False,
+        "keep_alive": 0,
         "options": {"temperature": 0.2, "num_predict": 200},
     }
 
@@ -2382,6 +2383,7 @@ async def describe_for_sheet(file: UploadFile = File(...)):
         "prompt": prompt,
         "images": [img_b64],
         "stream": False,
+        "keep_alive": 0,
         "options": {"temperature": 0.2, "num_predict": 350},
     }
     try:
@@ -2428,6 +2430,7 @@ async def ollama_storyboard(req: StoryboardRequest):
                 ),
                 "images": [img_b64],
                 "stream": False,
+                "keep_alive": 0,
                 "options": {"temperature": 0.2, "num_predict": 120},
             }, timeout=120)
             captions.append(_clean_caption_text(r.json().get("response", "")) if r.ok else "(no caption)")
@@ -2458,6 +2461,7 @@ async def ollama_storyboard(req: StoryboardRequest):
             "model": model,
             "prompt": f"{system}\n\n{user_msg}",
             "stream": False,
+            "keep_alive": 0,
             "options": {"temperature": 0.7, "num_predict": 90 * max(2, n), "repeat_penalty": 1.08},
         }, timeout=180)
         raw = str(r.json().get("response", "")).strip()
