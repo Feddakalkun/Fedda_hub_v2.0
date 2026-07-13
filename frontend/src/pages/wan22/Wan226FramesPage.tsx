@@ -99,6 +99,16 @@ export const Wan226FramesPage = () => {
     }
   };
 
+  const handleDrop = (index: number) => (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      uploadTargetRef.current = index;
+      void handleUpload(file);
+    }
+  };
+  const allowDrop = (e: React.DragEvent) => e.preventDefault();
+
   const removeFrame = (index: number) => {
     setFrames((prev) => prev.filter((_, i) => i !== index));
     setPrompts((prev) => prev.filter((_, i) => i !== index));
@@ -297,7 +307,7 @@ export const Wan226FramesPage = () => {
               <div key={`${name}-${i}`}>
                 <div className="flex items-start gap-3">
                   <div className="group relative shrink-0">
-                    <button type="button" onClick={() => pickFile(i)} title="Replace frame"
+                    <button type="button" onClick={() => pickFile(i)} onDrop={handleDrop(i)} onDragOver={allowDrop} title="Replace frame (or drop an image)"
                       className="block h-20 w-20 overflow-hidden rounded-xl border border-white/10 bg-black/40">
                       {uploadingIdx === i
                         ? <span className="flex h-full items-center justify-center"><Loader2 className="h-4 w-4 animate-spin text-violet-400" /></span>
@@ -334,11 +344,13 @@ export const Wan226FramesPage = () => {
               <button
                 type="button"
                 onClick={() => pickFile(-1)}
+                onDrop={handleDrop(-1)}
+                onDragOver={allowDrop}
                 disabled={uploadingIdx !== null}
                 className="flex h-20 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 text-xs font-semibold text-zinc-500 transition hover:border-violet-500/40 hover:text-violet-300 disabled:opacity-40"
               >
                 {uploadingIdx === -1 ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                Add keyframe {frames.length + 1}
+                Add keyframe {frames.length + 1} — click or drop an image
               </button>
             )}
           </div>
