@@ -16,7 +16,15 @@ type StoryRatio = '1:1' | '3:4' | '9:16' | '4:3' | '16:9';
 const RATIOS: StoryRatio[] = ['1:1', '3:4', '9:16', '4:3', '16:9'];
 const RATIO_ASPECT: Record<StoryRatio, string> = { '1:1': '1:1', '3:4': '4:3', '9:16': '16:9', '4:3': '4:3', '16:9': '16:9' };
 const RATIO_DIRECTION: Record<StoryRatio, string> = { '1:1': 'Horizontal', '3:4': 'Vertical', '9:16': 'Vertical', '4:3': 'Horizontal', '16:9': 'Horizontal' };
-const RES_PRESETS = ['480', '576', '640', '720', '832'] as const;
+// Safe per-ratio widths for WAN 2.2 on 24GB cards (portrait ratios must stay narrow -
+// activation memory scales with total pixels, and height grows fast on 9:16)
+type Quality = 'fast' | 'balanced' | 'high';
+const QUALITIES: Quality[] = ['fast', 'balanced', 'high'];
+const TIER_WIDTH: Record<Quality, Record<StoryRatio, number>> = {
+  fast:     { '1:1': 512, '3:4': 448, '9:16': 384, '4:3': 576, '16:9': 640 },
+  balanced: { '1:1': 672, '3:4': 576, '9:16': 480, '4:3': 768, '16:9': 832 },
+  high:     { '1:1': 768, '3:4': 640, '9:16': 544, '4:3': 832, '16:9': 960 },
+};
 
 const DEFAULT_TRANSITION = 'smooth cinematic transition, natural motion, consistent subject';
 
@@ -30,7 +38,7 @@ export const Wan226FramesPage = () => {
   const [prompts, setPrompts] = usePersistentState<string[]>('wanstory_prompts', []);
   const [seed, setSeed] = usePersistentState('wanstory_seed', -1);
   const [ratio, setRatio] = usePersistentState<StoryRatio>('wanstory_ratio', '9:16');
-  const [resolution, setResolution] = usePersistentState('wanstory_resolution', '640');
+  const [quality, setQuality] = usePersistentState<Quality>('wanstory_quality', 'balanced');
   const [segSeconds, setSegSeconds] = usePersistentState('wanstory_seg_seconds', 5);
   const [loraHigh, setLoraHigh] = usePersistentState('wanstory_lora_high', '');
   const [loraLow, setLoraLow] = usePersistentState('wanstory_lora_low', '');
@@ -156,7 +164,7 @@ export const Wan226FramesPage = () => {
     seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
     aspect_ratio: RATIO_ASPECT[ratio],
     direction: RATIO_DIRECTION[ratio],
-    width: parseInt(resolution, 10),
+    width: TIER_WIDTH[quality][ratio],
     length: segSeconds,
     ...(loraHigh ? { lora_high: { on: true, lora: loraHigh, strength: loraHighStr } } : {}),
     ...(loraLow ? { lora_low: { on: true, lora: loraLow, strength: loraLowStr } } : {}),
@@ -347,8 +355,10 @@ export const Wan226FramesPage = () => {
               <ChipGroup options={RATIOS} value={ratio} onChange={setRatio} />
             </div>
             <div>
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Resolution</p>
-              <ChipGroup options={[...RES_PRESETS]} value={resolution} onChange={setResolution} />
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Quality</p>
+              <ChipGroup options={QUALITIES} value={quality} onChange={setQuality}
+                renderLabel={(q) => `${q} · ${TIER_WIDTH[q][ratio]}px`} />
+              <p className="mt-1 text-[10px] text-zinc-600">Widths are tuned per aspect ratio to stay inside 24GB VRAM.</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <SliderField label="Seconds per transition" value={segSeconds} onChange={setSegSeconds} min={2} max={10} step={1} format={(v) => `${v}s`} />
