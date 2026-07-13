@@ -43,6 +43,7 @@ export const Wan226FramesPage = () => {
   const [progress, setProgress] = useState('');
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
   const [isStoryboarding, setIsStoryboarding] = useState(false);
+  const [storyStyle, setStoryStyle] = usePersistentState('wanstory_style', '');
   const [availableLoras, setAvailableLoras] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetRef = useRef<number>(-1); // -1 = append
@@ -106,66 +107,21 @@ export const Wan226FramesPage = () => {
 
   const segments = Math.max(0, frames.length - 1);
 
-  // ── Auto-Storyboard: caption every frame, then LLM writes the transitions ──
+  // ── Auto-Storyboard: backend brain reads every frame and writes one continuous story ──
   const generateStoryboard = async () => {
     if (isStoryboarding || frames.length < 2) return;
     setIsStoryboarding(true);
     try {
-      toast('Analyzing frames...', 'info');
-      const captions = await Promise.all(frames.map(async (name, i) => {
-        try {
-          const blob = await (await fetch(frameUrl(name))).blob();
-          const fd = new FormData();
-          fd.append('file', new File([blob], name, { type: blob.type }));
-          fd.append('context', 'wan-scene');
-          const controller = new AbortController();
-          const tid = setTimeout(() => controller.abort(), 60000);
-          const r = await fetch(`${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.OLLAMA_CAPTION}`, { method: 'POST', body: fd, signal: controller.signal });
-          clearTimeout(tid);
-          if (r.ok) return `[FRAME ${i + 1}]: ${(await r.json()).caption}`;
-        } catch { /* skip frame */ }
-        return `[FRAME ${i + 1}]: (no caption)`;
-      }));
-
-      toast('Directing story...', 'info');
-      const n = frames.length;
-      const systemContext = `You are a cinematic director writing motion prompts for a keyframe-to-video model.
-These ${n} keyframes play in order. Write exactly ${n - 1} transitions: transition i describes the continuous motion from FRAME i to FRAME i+1 (camera movement, subject motion, atmosphere). One single subject throughout — never introduce additional people.
-
-EXACT OUTPUT FORMAT:
-SCENE 1: [motion from frame 1 to frame 2]
-SCENE 2: [motion from frame 2 to frame 3]
-...exactly ${n - 1} scenes, nothing else.
-
-RULES: no markdown, fluid contiguous action, each scene under 40 words.
-
-Frames:
-${captions.join('\n')}`;
-
-      const promptRes = await fetch(`${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.OLLAMA_PROMPT}`, {
+      toast('Reading frames and directing the story…', 'info');
+      const r = await fetch(`${BACKEND_API.BASE_URL}/api/ollama/storyboard`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context: 'wan-story', mode: 'inspire', current_prompt: systemContext }),
+        body: JSON.stringify({ images: frames, style: storyStyle.trim() }),
       });
-      if (!promptRes.ok) throw new Error('Failed to generate story');
-
-      const reader = promptRes.body!.getReader();
-      const dec = new TextDecoder();
-      let streamText = '';
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        for (const line of dec.decode(value, { stream: true }).split('\n')) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') break;
-            try { const p = JSON.parse(data); if (p.token) streamText += p.token; } catch { /* partial */ }
-          }
-        }
-      }
-      const parts = streamText.trim().split(/SCENE \d+:/i).map((p) => p.trim()).filter(Boolean);
-      setPrompts(parts.slice(0, n - 1));
-      toast('Storyboard generated!', 'success');
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.detail || 'Storyboarding failed');
+      setPrompts(d.transitions);
+      toast('Storyboard written — tweak any transition before generating', 'success');
     } catch (err: any) {
       toast(err.message || 'Storyboarding failed', 'error');
     } finally {
@@ -296,6 +252,12 @@ ${captions.join('\n')}`;
           title={`Keyframes (${frames.length}/${MAX_FRAMES})`}
           actions={(
             <div className="flex items-center gap-2">
+              <input
+                value={storyStyle}
+                onChange={(e) => setStoryStyle(e.target.value)}
+                placeholder="Story mood (optional): moody night vibe, playful dance…"
+                className="hidden w-64 rounded-lg fedda-input px-2 py-1.5 text-[11px] sm:block"
+              />
               <button
                 type="button"
                 onClick={() => void generateStoryboard()}

@@ -2393,6 +2393,98 @@ async def describe_for_sheet(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Describe failed: {exc}")
 
 
+class StoryboardRequest(BaseModel):
+    images: List[str]           # ComfyUI input filenames, in play order
+    style: str = ""             # optional user steer ("moody night vibe", "energetic dance"...)
+
+
+@app.post("/api/ollama/storyboard")
+async def ollama_storyboard(req: StoryboardRequest):
+    """The WAN Story brain: vision model reads every keyframe in order, then a
+    director-persona text call writes ONE continuous story as N-1 transition
+    prompts (strict JSON). Replaces the old flow that piped director text
+    through the generic prompt enhancer (whose own system prompt corrupted it)."""
+    import base64 as _b64
+    import re as _re
+    n = len(req.images)
+    if n < 2:
+        raise HTTPException(status_code=400, detail="Need at least 2 frames")
+    vision = _get_ollama_vision_model()
+    if not vision:
+        raise HTTPException(status_code=503, detail="No vision model available. Install one with: ollama pull llava")
+    text_model = _get_ollama_text_model()
+
+    # 1) Vision pass: short factual caption per frame, single-subject guarded
+    captions: List[str] = []
+    for i, name in enumerate(req.images):
+        try:
+            img_b64 = _b64.b64encode(_resolve_input_file(name).read_bytes()).decode()
+            r = requests.post(f"{OLLAMA_URL}/api/generate", json={
+                "model": vision,
+                "prompt": (
+                    "Describe this keyframe factually in 2 short sentences: the single main subject "
+                    "(appearance, outfit, pose, expression), the setting, and the lighting. "
+                    "Mention only ONE person. No speculation, no style words."
+                ),
+                "images": [img_b64],
+                "stream": False,
+                "options": {"temperature": 0.2, "num_predict": 120},
+            }, timeout=120)
+            captions.append(_clean_caption_text(r.json().get("response", "")) if r.ok else "(no caption)")
+        except Exception:
+            captions.append("(no caption)")
+
+    # 2) Director pass: one continuous story, strict JSON out
+    frames_block = "\n".join(f"FRAME {i+1}: {c}" for i, c in enumerate(captions))
+    style_line = f"Overall style/mood requested by the user: {req.style.strip()}\n" if req.style.strip() else ""
+    system = (
+        "You are a film director writing motion prompts for a keyframe-to-video AI. "
+        "The keyframes are fixed - your job is to invent the CONNECTIVE TISSUE: what happens between "
+        "each pair of frames so the whole plays as one continuous scene. Maintain one single subject, "
+        "one location logic, and momentum: each transition should flow out of the previous one "
+        "(an arc: setup -> build -> payoff). Describe concrete visible motion (subject movement, camera "
+        "move like push-in/pan/orbit, atmosphere) - never emotions in the abstract, never a second person."
+    )
+    user_msg = (
+        f"{style_line}Here are {n} keyframes in play order:\n{frames_block}\n\n"
+        f"Write exactly {n-1} transition prompts. Transition k covers the motion from FRAME k to FRAME k+1, "
+        f"under 40 words each, present tense.\n"
+        f'Respond with ONLY a JSON array of {n-1} strings, no markdown, no commentary. '
+        f'Example: ["she rises from the chair as the camera pushes in", "..."]'
+    )
+    model = text_model or vision
+    try:
+        r = requests.post(f"{OLLAMA_URL}/api/generate", json={
+            "model": model,
+            "prompt": f"{system}\n\n{user_msg}",
+            "stream": False,
+            "options": {"temperature": 0.7, "num_predict": 90 * max(2, n), "repeat_penalty": 1.08},
+        }, timeout=180)
+        raw = str(r.json().get("response", "")).strip()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Story generation failed: {exc}")
+
+    # Parse: JSON array first, then SCENE-marker fallback, then line fallback
+    transitions: List[str] = []
+    m = _re.search(r"\[.*\]", raw, _re.DOTALL)
+    if m:
+        try:
+            arr = json.loads(m.group(0))
+            transitions = [str(x).strip() for x in arr if str(x).strip()]
+        except Exception:
+            pass
+    if not transitions:
+        parts = _re.split(r"SCENE\s*\d+\s*:", raw, flags=_re.IGNORECASE)[1:]
+        transitions = [p.strip().strip('"') for p in parts if p.strip()]
+    if not transitions:
+        transitions = [l.strip("-• \t\"") for l in raw.splitlines() if len(l.strip()) > 15]
+    transitions = transitions[: n - 1]
+    if len(transitions) < n - 1:
+        transitions += ["smooth cinematic transition, natural motion, consistent subject"] * (n - 1 - len(transitions))
+
+    return {"success": True, "transitions": transitions, "captions": captions, "model": model}
+
+
 @app.get("/api/ollama/vision-models")
 async def get_ollama_vision_models():
     """List available Ollama vision models."""
