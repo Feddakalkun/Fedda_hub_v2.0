@@ -94,14 +94,15 @@ try {
     # -NoNewWindow keeps services attached to THIS console, so closing the
     # window (X) takes them down with it instead of orphaning hidden children.
     Write-Host "  [1/3] Starting ComfyUI on port 8199..." -ForegroundColor White
-    # Keep the GPU budget at full 24GB: this ComfyUI falls back to a legacy VRAM
-    # manager on torch < 2.8 whose Windows estimates are unreliable, and large fp8
-    # models get cast to bf16 on Ampere (no native fp8) — so reserving VRAM here
-    # tips borderline loads into OOM. Do NOT set PYTORCH_CUDA_ALLOC_CONF either
-    # (incompatible with cudaMallocAsync on Windows -> spurious OOM).
+    # --disable-cuda-malloc: switch OFF the cudaMallocAsync backend. Its async pool
+    # reserves nearly the whole 24GB and never releases segments between model
+    # loads, so renders OOM from fragmentation even when only ~14GB is actually
+    # needed (reserved 23.8GB vs peak-allocated 14.2GB). The native PyTorch
+    # allocator releases memory between models and fixes the repeated OOMs.
+    # (Do NOT set PYTORCH_CUDA_ALLOC_CONF=expandable_segments — spurious OOM here.)
     Remove-Item Env:\PYTORCH_CUDA_ALLOC_CONF -ErrorAction SilentlyContinue
     $ComfyProc = Start-Process -FilePath $Python `
-        -ArgumentList "-s", $ComfyMain, "--windows-standalone-build", "--port", "8199" `
+        -ArgumentList "-s", $ComfyMain, "--windows-standalone-build", "--port", "8199", "--disable-cuda-malloc" `
         -PassThru -NoNewWindow `
         -RedirectStandardOutput $Services[0].Out -RedirectStandardError $Services[0].Err
 
