@@ -58,9 +58,13 @@ export const LtxAi2vPage = () => {
   const [edgeVoices, setEdgeVoices] = useState<Array<{ id: string; name: string }>>([]);
   const [cbVoices, setCbVoices] = useState<Array<{ id: string; name: string }>>([]);
 
+  // Upscale (ImageScaleBy 1.5x) runs over EVERY frame at once on the GPU — on long
+  // clips (a full song) that batch OOMs. Let the user skip it. Off => no-upscale graph.
+  const [upscale, setUpscale] = usePersistentState('ltx_ai2v_upscale', true);
+
   const { toast } = useToast();
   const run = useWorkflowRun({
-    workflowId: 'ltx-ai2v',
+    workflowId: upscale ? 'ltx-ai2v' : 'ltx-ai2v-noupscale',
     currentKey: 'ltx_ai2v_current_video',
     historyKey: 'ltx_ai2v_history',
     outputKind: 'video',
@@ -234,7 +238,7 @@ export const LtxAi2vPage = () => {
       icon={Music}
       isGenerating={run.isGenerating}
       canGenerate={canGenerate}
-      workflowId="ltx-ai2v"
+      workflowId={upscale ? 'ltx-ai2v' : 'ltx-ai2v-noupscale'}
       output={(
         <WorkflowVideoPreviewStrip
           currentVideo={run.currentMedia}
@@ -432,10 +436,14 @@ export const LtxAi2vPage = () => {
                 value={duration}
                 onChange={setDuration}
                 min={0}
-                max={30}
+                max={600}
                 step={1}
                 format={(v) => (v === 0 ? 'to end of audio' : `${v}s from the start point`)}
               />
+              <label className="mt-1 flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[11px] text-white/70">
+                <span>Upscale 1.5&times; <span className="text-white/30">(off on long clips to avoid OOM)</span></span>
+                <input type="checkbox" checked={upscale} onChange={(e) => setUpscale(e.target.checked)} className="h-4 w-4 accent-violet-500" />
+              </label>
               <SliderField
                 label="Steps"
                 value={steps}

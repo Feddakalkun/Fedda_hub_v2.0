@@ -778,7 +778,7 @@
   "wan22-vid2vid": {
     "name": "WAN 2.2 Vid2Vid",
     "filename": "wan22/vid2vid-4frames-wan22.json",
-    "description": "Extend and transform video with WAN 2.2 â€” 4-frame expansion chain",
+    "description": "Extend and transform video with WAN 2.2 \u00e2\u20ac\u201d 4-frame expansion chain",
     "inputs": {
       "video": {
         "node_id": "148",
@@ -952,7 +952,7 @@
     }
   },
   "ltx-flf": {
-    "name": "LTX 2.3 â€” First/Last Frame",
+    "name": "LTX 2.3 \u00e2\u20ac\u201d First/Last Frame",
     "filename": "ltx/LTX-23-flf.json",
     "description": "Generate video from first and last frame images using LTX Video 2.3",
     "inputs": {
@@ -1552,7 +1552,7 @@
     }
   },
   "ltx-img2vid": {
-    "name": "LTX 2.3 â€” Img2Vid",
+    "name": "LTX 2.3 \u00e2\u20ac\u201d Img2Vid",
     "filename": "ltx/LTX-23-img2vid.json",
     "description": "Animate a single reference image into cinematic video using LTX Video 2.3",
     "inputs": {
@@ -2069,7 +2069,7 @@
   "wan22xxx-img2vid": {
     "name": "WAN 2.2 XXX Img2Vid",
     "filename": "wan22/WAN22XXX-img2video.json",
-    "description": "Animate a reference image with dual high/low noise WAN 2.2 14B fp8 pass — NSFW UMT5 encoder, Power LoRA slots.",
+    "description": "Animate a reference image with dual high/low noise WAN 2.2 14B fp8 pass \u2014 NSFW UMT5 encoder, Power LoRA slots.",
     "inputs": {
       "image": {
         "node_id": "278",
@@ -2139,7 +2139,7 @@
   "hunyuan-i2v": {
     "name": "HunyuanVideo I2V fp8",
     "filename": "hunyuan/HunyuanVideo-i2v.json",
-    "description": "Animate a reference image into video using HunyuanVideo I2V 720p fp8 — native ComfyUI I2V pipeline.",
+    "description": "Animate a reference image into video using HunyuanVideo I2V 720p fp8 \u2014 native ComfyUI I2V pipeline.",
     "inputs": {
       "image": {
         "node_id": "8",
@@ -2852,6 +2852,67 @@
         "input_key": "lora_1",
         "type": "object",
         "label": "Low Noise LoRA"
+      }
+    }
+  },
+  "ltx-ai2v-noupscale": {
+    "name": "LTX 2.3 - Audio+Image2Video (no upscale)",
+    "filename": "ltx/ltx-23-ai2v-noupscale.json",
+    "description": "Animate a reference image driven by an audio clip - LTX 2.3 audio-conditioned video (lip-sync/motion-to-audio).",
+    "inputs": {
+      "image": {
+        "node_id": "5310",
+        "input_key": "image",
+        "type": "string",
+        "label": "Reference Image"
+      },
+      "audio": {
+        "node_id": "5778",
+        "input_key": "audio",
+        "type": "string",
+        "label": "Audio Clip"
+      },
+      "prompt": {
+        "node_id": "5283",
+        "input_key": "text",
+        "type": "string",
+        "label": "Positive Prompt"
+      },
+      "negative": {
+        "node_id": "5282",
+        "input_key": "text",
+        "type": "string",
+        "label": "Negative Prompt"
+      },
+      "seed": {
+        "node_id": "5293",
+        "input_key": "noise_seed",
+        "type": "number",
+        "label": "Seed"
+      },
+      "steps": {
+        "node_id": "5896",
+        "input_key": "steps",
+        "type": "number",
+        "label": "Steps"
+      },
+      "width": {
+        "node_id": "5311",
+        "input_key": "resize_type.width",
+        "type": "number",
+        "label": "Target Width"
+      },
+      "duration": {
+        "node_id": "5778",
+        "input_key": "end_time",
+        "type": "number",
+        "label": "Use First N Seconds (0 = full clip)"
+      },
+      "audio_start": {
+        "node_id": "5778",
+        "input_key": "start_time",
+        "type": "number",
+        "label": "Audio Start (s)"
       }
     }
   }
