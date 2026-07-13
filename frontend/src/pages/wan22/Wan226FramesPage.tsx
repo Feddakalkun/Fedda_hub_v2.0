@@ -177,12 +177,17 @@ export const Wan226FramesPage = () => {
     setCurrentVideo(null);
     try {
       if (frames.length === 1) {
-        // single frame -> plain single-shot img2vid
+        // single frame -> single-shot img2vid (GGUF: fits 24GB comfortably)
         setProgress('Animating single frame…');
-        const vid = await runWorkflow('wan22xxx-img2vid', {
-          ...baseParams(),
+        const vid = await runWorkflow('wan22-img2vid-gguf', {
           image: frames[0],
           prompt: (prompts[0] || DEFAULT_TRANSITION).trim(),
+          seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
+          aspect: RATIO_ASPECT[ratio],
+          direction: RATIO_DIRECTION[ratio],
+          length_seconds: segSeconds,
+          ...(loraHigh ? { lora_high: { on: true, lora: loraHigh, strength: loraHighStr } } : {}),
+          ...(loraLow ? { lora_low: { on: true, lora: loraLow, strength: loraLowStr } } : {}),
         });
         const url = videoUrl(vid);
         setCurrentVideo(url);
