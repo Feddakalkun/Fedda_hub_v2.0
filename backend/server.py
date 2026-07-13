@@ -2473,22 +2473,36 @@ async def ollama_storyboard(req: StoryboardRequest):
         raise HTTPException(status_code=503, detail="No vision model available. Install one with: ollama pull llava")
     text_model = _get_ollama_text_model()
 
-    # 1) Vision pass: short factual caption per frame, single-subject guarded
+    # 1) Vision pass: sequence-aware captions. Each frame after the first is
+    #    described RELATIVE to the previous caption so the model surfaces what
+    #    actually evolves (pose/position/gesture/framing) instead of N isolated
+    #    snapshots — this is what gives the story real frame-to-frame continuity.
     captions: List[str] = []
     for i, name in enumerate(req.images):
         try:
             img_b64 = _b64.b64encode(_resolve_input_file(name).read_bytes()).decode()
+            if i == 0:
+                vprompt = (
+                    "Describe this opening keyframe factually in 2 short sentences: the single main "
+                    "subject (appearance, outfit, pose, expression), the setting, and the lighting. "
+                    "Mention only ONE person. No speculation, no style words."
+                )
+            else:
+                vprompt = (
+                    f"This is frame {i+1} in one continuous sequence. The previous frame was:\n"
+                    f"\"{captions[-1]}\"\n\n"
+                    "Describe THIS frame in 2 short sentences, and explicitly state what has CHANGED "
+                    "from the previous frame — pose, body position, gesture, expression, or camera "
+                    "framing — while confirming it is the SAME single person in the same setting. "
+                    "Factual only, no style words, no second person."
+                )
             r = requests.post(f"{OLLAMA_URL}/api/generate", json={
                 "model": vision,
-                "prompt": (
-                    "Describe this keyframe factually in 2 short sentences: the single main subject "
-                    "(appearance, outfit, pose, expression), the setting, and the lighting. "
-                    "Mention only ONE person. No speculation, no style words."
-                ),
+                "prompt": vprompt,
                 "images": [img_b64],
                 "stream": False,
                 "keep_alive": 0,
-                "options": {"temperature": 0.2, "num_predict": 120},
+                "options": {"temperature": 0.2, "num_predict": 140},
             }, timeout=120)
             captions.append(_clean_caption_text(r.json().get("response", "")) if r.ok else "(no caption)")
         except Exception:
@@ -4027,8 +4041,9 @@ async def get_generation_status(prompt_id: str, workflow_id: str = ""):
                 audios = []
                 detected_boxes = []
                 for node_id, output in outputs.items():
-                    # Still images
-                    for img in output.get("images", []):
+                    # Still images. Some custom nodes (e.g. QwenMultiangleCameraNode)
+                    # emit under 'preview_images' instead of the standard 'images'.
+                    for img in output.get("images", []) + output.get("preview_images", []):
                         images.append({
                             "filename": img["filename"],
                             "subfolder": img.get("subfolder", ""),
