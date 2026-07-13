@@ -276,7 +276,8 @@
         "ltx-flf",
         "ltx-img2vid",
         "ltx-ai2v",
-        "ltx-img2vid-gguf"
+        "ltx-img2vid-gguf",
+        "ltx-ai2v-noupscale"
       ],
       "custom_nodes": [
         "ComfyUI-LTXVideo",
