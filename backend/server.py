@@ -3148,6 +3148,7 @@ async def beat_cut(req: BeatCutRequest):
 class VideoConcatRequest(BaseModel):
     videos: List[Dict[str, str]]  # [{filename, subfolder}] in play order
     prefix: str = "story"
+    crossfade: float = 0.4  # seconds of overlap between segments (0 = hard cut)
 
 
 @app.post("/api/video/concat")
@@ -3168,25 +3169,58 @@ async def video_concat(req: VideoConcatRequest):
 
     import tempfile
     work = Path(tempfile.mkdtemp(prefix="fedda_concat_"))
+    target_name = _safe_unique_name(req.prefix or "story", "mp4")
+    target = OUTPUT_DIR / target_name
+
+    # Crossfade path: blend each segment into the next so the shared keyframe at every
+    # boundary dissolves smoothly instead of hard-cutting (removes the duplicate-frame seam).
+    durations = [_probe_video_duration(p) for p in paths]
+    fade = max(0.0, float(req.crossfade or 0.0))
+    can_xfade = fade > 0.05 and all(d and d > (fade + 0.1) for d in durations)
+
     try:
-        lines = []
-        for p in paths:
-            safe = str(p).replace("\\", "/").replace("'", r"'\''")
-            lines.append(f"file '{safe}'")
-        concat_file = work / "list.txt"
-        concat_file.write_text("\n".join(lines), encoding="utf-8")
-        target_name = _safe_unique_name(req.prefix or "story", "mp4")
-        target = OUTPUT_DIR / target_name
-        _run_ffmpeg([
-            "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file),
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "19",
-            "-pix_fmt", "yuv420p", "-r", "30", "-an",
-            str(target),
-        ])
+        if can_xfade:
+            args: List[str] = ["-y"]
+            for p in paths:
+                args += ["-i", str(p)]
+            # normalize each input to a common fps/format for xfade
+            filt: List[str] = []
+            for i in range(len(paths)):
+                filt.append(f"[{i}:v]settb=AVTB,fps=30,format=yuv420p[c{i}]")
+            merged = "c0"
+            acc = float(durations[0] or 0.0)
+            for i in range(1, len(paths)):
+                offset = max(0.0, acc - fade)
+                out = f"x{i}"
+                filt.append(f"[{merged}][c{i}]xfade=transition=fade:duration={fade:.3f}:offset={offset:.3f}[{out}]")
+                merged = out
+                acc = acc + float(durations[i] or 0.0) - fade
+            filter_complex = ";".join(filt)
+            _run_ffmpeg([
+                *args,
+                "-filter_complex", filter_complex,
+                "-map", f"[{merged}]",
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "19",
+                "-pix_fmt", "yuv420p", "-an",
+                str(target),
+            ])
+        else:
+            lines = []
+            for p in paths:
+                safe = str(p).replace("\\", "/").replace("'", r"'\''")
+                lines.append(f"file '{safe}'")
+            concat_file = work / "list.txt"
+            concat_file.write_text("\n".join(lines), encoding="utf-8")
+            _run_ffmpeg([
+                "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file),
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "19",
+                "-pix_fmt", "yuv420p", "-r", "30", "-an",
+                str(target),
+            ])
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
-    return {"success": True, "filename": target_name, "subfolder": "", "type": "output"}
+    return {"success": True, "filename": target_name, "subfolder": "", "type": "output", "crossfaded": can_xfade}
 
 
 @app.post("/api/media/trim-video")
