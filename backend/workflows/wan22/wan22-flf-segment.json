@@ -2,7 +2,7 @@
   "217": {
     "inputs": {
       "unet_name": "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
-      "weight_dtype": "default"
+      "weight_dtype": "fp8_e4m3fn"
     },
     "class_type": "UNETLoader",
     "_meta": {
@@ -118,7 +118,7 @@
   "270": {
     "inputs": {
       "unet_name": "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
-      "weight_dtype": "default"
+      "weight_dtype": "fp8_e4m3fn"
     },
     "class_type": "UNETLoader",
     "_meta": {
