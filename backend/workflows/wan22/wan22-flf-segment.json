@@ -1,0 +1,533 @@
+{
+  "217": {
+    "inputs": {
+      "unet_name": "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "218": {
+    "inputs": {
+      "clip_name": "nsfw_wan_umt5-xxl_fp8_scaled.safetensors",
+      "type": "wan",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "219": {
+    "inputs": {
+      "vae_name": "wan_2.1_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "220": {
+    "inputs": {
+      "shift": 5,
+      "model": [
+        "466",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingSD3",
+    "_meta": {
+      "title": "ModelSamplingSD3"
+    }
+  },
+  "226": {
+    "class_type": "WanFirstLastFrameToVideo",
+    "inputs": {
+      "width": [
+        "314",
+        1
+      ],
+      "height": [
+        "314",
+        2
+      ],
+      "length": [
+        "470",
+        0
+      ],
+      "batch_size": 1,
+      "positive": [
+        "265",
+        0
+      ],
+      "negative": [
+        "273",
+        0
+      ],
+      "vae": [
+        "219",
+        0
+      ],
+      "start_image": [
+        "314",
+        0
+      ],
+      "end_image": [
+        "501",
+        0
+      ]
+    }
+  },
+  "265": {
+    "inputs": {
+      "text": "smooth cinematic transition, natural motion",
+      "clip": [
+        "218",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "266": {
+    "inputs": {
+      "value": 5
+    },
+    "class_type": "easy int",
+    "_meta": {
+      "title": "LENGTH  LENGTH IN SECONDS"
+    }
+  },
+  "269": {
+    "inputs": {
+      "shift": 5,
+      "model": [
+        "465",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingSD3",
+    "_meta": {
+      "title": "ModelSamplingSD3"
+    }
+  },
+  "270": {
+    "inputs": {
+      "unet_name": "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "271": {
+    "inputs": {
+      "add_noise": "enable",
+      "noise_seed": 1065,
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "start_at_step": 0,
+      "end_at_step": 2,
+      "return_with_leftover_noise": "enable",
+      "model": [
+        "269",
+        0
+      ],
+      "positive": [
+        "226",
+        0
+      ],
+      "negative": [
+        "226",
+        1
+      ],
+      "latent_image": [
+        "226",
+        2
+      ]
+    },
+    "class_type": "KSamplerAdvanced",
+    "_meta": {
+      "title": "KSampler (Advanced)"
+    }
+  },
+  "272": {
+    "inputs": {
+      "add_noise": "disable",
+      "noise_seed": 1065,
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "start_at_step": 2,
+      "end_at_step": 10000,
+      "return_with_leftover_noise": "disable",
+      "model": [
+        "220",
+        0
+      ],
+      "positive": [
+        "226",
+        0
+      ],
+      "negative": [
+        "226",
+        1
+      ],
+      "latent_image": [
+        "271",
+        0
+      ]
+    },
+    "class_type": "KSamplerAdvanced",
+    "_meta": {
+      "title": "KSampler (Advanced)"
+    }
+  },
+  "273": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "218",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Negative Prompt)"
+    }
+  },
+  "274": {
+    "inputs": {
+      "samples": [
+        "272",
+        0
+      ],
+      "vae": [
+        "219",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "275": {
+    "inputs": {
+      "purge_cache": true,
+      "purge_models": true,
+      "anything": [
+        "288",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: PurgeVRAM",
+    "_meta": {
+      "title": "LayerUtility: Purge VRAM"
+    }
+  },
+  "278": {
+    "inputs": {
+      "image": "VeniceAI_l4UhOC_Z4E67KA.0.jpeg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "287": {
+    "inputs": {
+      "ckpt_name": "rife47.pth",
+      "clear_cache_after_n_frames": 100,
+      "multiplier": 2,
+      "fast_mode": true,
+      "ensemble": true,
+      "scale_factor": 1,
+      "dtype": "float32",
+      "torch_compile": false,
+      "batch_size": 1,
+      "frames": [
+        "274",
+        0
+      ]
+    },
+    "class_type": "RIFE VFI",
+    "_meta": {
+      "title": "RIFE VFI (recommend rife4.25+)"
+    }
+  },
+  "288": {
+    "inputs": {
+      "frame_rate": 30,
+      "loop_count": 0,
+      "filename_prefix": "VIDEO/WANSTORY/seg",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "287",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "SLOW MOTION"
+    }
+  },
+  "314": {
+    "inputs": {
+      "width": 720,
+      "height": 0,
+      "aspect_ratio": "1:1",
+      "direction": "Horizontal",
+      "crop_method": "Stretch",
+      "image": [
+        "278",
+        0
+      ]
+    },
+    "class_type": "AspectRatioResizeImage",
+    "_meta": {
+      "title": "🖼️ Resize to Aspect Ratio"
+    }
+  },
+  "465": {
+    "inputs": {
+      "model": [
+        "480",
+        0
+      ]
+    },
+    "class_type": "wanBlockSwap",
+    "_meta": {
+      "title": "wanBlockSwap"
+    }
+  },
+  "466": {
+    "inputs": {
+      "model": [
+        "479",
+        0
+      ]
+    },
+    "class_type": "wanBlockSwap",
+    "_meta": {
+      "title": "wanBlockSwap"
+    }
+  },
+  "470": {
+    "inputs": {
+      "value": "a*15",
+      "a": [
+        "266",
+        0
+      ]
+    },
+    "class_type": "SimpleMath+",
+    "_meta": {
+      "title": "🔧 Simple Math"
+    }
+  },
+  "479": {
+    "inputs": {
+      "PowerLoraLoaderHeaderWidget": {
+        "type": "PowerLoraLoaderHeaderWidget"
+      },
+      "lora_1": {
+        "on": true,
+        "lora": "Wan2.2-I2V-LOW-4steps-lora-rank64-Seko-V1.safetensors",
+        "strength": 1
+      },
+      "lora_2": {
+        "on": false,
+        "lora": "Oral-Ins-Low.safetensors",
+        "strength": 1
+      },
+      "lora_3": {
+        "on": false,
+        "lora": "CumShot-Low.safetensors",
+        "strength": 1
+      },
+      "lora_4": {
+        "on": false,
+        "lora": "wan-nsfw-e14-fixed.safetensors",
+        "strength": 1
+      },
+      "lora_5": {
+        "on": false,
+        "lora": "Wan2.2_Double-Penetration-Low.safetensors",
+        "strength": 1
+      },
+      "lora_6": {
+        "on": false,
+        "lora": "PussyLoRA_LowNoise_Wan2.2_HearmemanAI.safetensors",
+        "strength": 1
+      },
+      "lora_7": {
+        "on": false,
+        "lora": "V3TWERKLOW.safetensors",
+        "strength": 0.3
+      },
+      "lora_8": {
+        "on": false,
+        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_low_noise.safetensors",
+        "strength": 0.7
+      },
+      "lora_9": {
+        "on": false,
+        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_low_noise.safetensors",
+        "strength": 0.5
+      },
+      "lora_10": {
+        "on": false,
+        "lora": "Fingering-I2V.safetensors",
+        "strength": 1
+      },
+      "lora_11": {
+        "on": true,
+        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
+        "strength": 1
+      },
+      "lora_12": {
+        "on": true,
+        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
+        "strength": 1
+      },
+      "lora_13": {
+        "on": false,
+        "lora": "KISSLOW.safetensors",
+        "strength": 1
+      },
+      "➕ Add Lora": "",
+      "model": [
+        "217",
+        0
+      ],
+      "clip": [
+        "218",
+        0
+      ]
+    },
+    "class_type": "Power Lora Loader (rgthree)",
+    "_meta": {
+      "title": "LOW"
+    }
+  },
+  "480": {
+    "inputs": {
+      "PowerLoraLoaderHeaderWidget": {
+        "type": "PowerLoraLoaderHeaderWidget"
+      },
+      "lora_1": {
+        "on": true,
+        "lora": "Wan2.2-I2V-HIGH-4steps-lora-rank64-Seko-V1.safetensors",
+        "strength": 1
+      },
+      "lora_2": {
+        "on": false,
+        "lora": "Oral-Ins-High.safetensors",
+        "strength": 1
+      },
+      "lora_3": {
+        "on": false,
+        "lora": "CumShot-High.safetensors",
+        "strength": 1
+      },
+      "lora_4": {
+        "on": false,
+        "lora": "wan-nsfw-e14-fixed.safetensors",
+        "strength": 1
+      },
+      "lora_5": {
+        "on": false,
+        "lora": "Wan2.2_Double-Penetration-High.safetensors",
+        "strength": 1
+      },
+      "lora_6": {
+        "on": false,
+        "lora": "PussyLoRA_HighNoise_Wan2.2_HearmemanAI.safetensors",
+        "strength": 1
+      },
+      "lora_7": {
+        "on": false,
+        "lora": "V3TWERKHIGH.safetensors",
+        "strength": 0.3
+      },
+      "lora_8": {
+        "on": false,
+        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_high_noise.safetensors",
+        "strength": 0.7
+      },
+      "lora_9": {
+        "on": false,
+        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_high_noise.safetensors",
+        "strength": 0.5
+      },
+      "lora_10": {
+        "on": false,
+        "lora": "Fingering-I2V.safetensors",
+        "strength": 1
+      },
+      "lora_11": {
+        "on": true,
+        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
+        "strength": 1
+      },
+      "lora_12": {
+        "on": true,
+        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
+        "strength": 1
+      },
+      "lora_13": {
+        "on": false,
+        "lora": "KISSHIGH.safetensors",
+        "strength": 1
+      },
+      "➕ Add Lora": "",
+      "model": [
+        "270",
+        0
+      ],
+      "clip": [
+        "218",
+        0
+      ]
+    },
+    "class_type": "Power Lora Loader (rgthree)",
+    "_meta": {
+      "title": "HIGH"
+    }
+  },
+  "500": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "end.png"
+    }
+  },
+  "501": {
+    "class_type": "AspectRatioResizeImage",
+    "inputs": {
+      "width": 720,
+      "height": 0,
+      "aspect_ratio": "1:1",
+      "direction": "Horizontal",
+      "crop_method": "Stretch",
+      "image": [
+        "500",
+        0
+      ]
+    }
+  }
+}

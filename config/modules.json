@@ -240,7 +240,8 @@
         "wan22-img2vid",
         "wan22xxx-img2vid",
         "wan22-img2vid-6frames",
-        "wan22-img2vid-gguf"
+        "wan22-img2vid-gguf",
+        "wan22-flf-segment"
       ],
       "custom_nodes": [
         "ComfyUI-WanVideoWrapper",

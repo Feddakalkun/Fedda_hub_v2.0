@@ -2978,6 +2978,50 @@ async def beat_cut(req: BeatCutRequest):
     }
 
 
+class VideoConcatRequest(BaseModel):
+    videos: List[Dict[str, str]]  # [{filename, subfolder}] in play order
+    prefix: str = "story"
+
+
+@app.post("/api/video/concat")
+async def video_concat(req: VideoConcatRequest):
+    """Concatenate ComfyUI output videos into one mp4 (re-encoded for uniform streams).
+    Used by WAN Story to stitch per-transition segments into the final video."""
+    if len(req.videos) < 2:
+        raise HTTPException(status_code=400, detail="Need at least 2 videos to concat")
+    out_root = OUTPUT_DIR.resolve()
+    paths: List[Path] = []
+    for v in req.videos:
+        sub = (v.get("subfolder") or "").strip().strip("/\\")
+        name = (v.get("filename") or "").strip()
+        p = (OUTPUT_DIR / sub / name).resolve() if sub else (OUTPUT_DIR / name).resolve()
+        if not str(p).startswith(str(out_root)) or not p.is_file():
+            raise HTTPException(status_code=404, detail=f"Video not found: {sub}/{name}")
+        paths.append(p)
+
+    import tempfile
+    work = Path(tempfile.mkdtemp(prefix="fedda_concat_"))
+    try:
+        lines = []
+        for p in paths:
+            safe = str(p).replace("\\", "/").replace("'", r"'\''")
+            lines.append(f"file '{safe}'")
+        concat_file = work / "list.txt"
+        concat_file.write_text("\n".join(lines), encoding="utf-8")
+        target_name = _safe_unique_name(req.prefix or "story", "mp4")
+        target = OUTPUT_DIR / target_name
+        _run_ffmpeg([
+            "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file),
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "19",
+            "-pix_fmt", "yuv420p", "-r", "30", "-an",
+            str(target),
+        ])
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+    return {"success": True, "filename": target_name, "subfolder": "", "type": "output"}
+
+
 @app.post("/api/media/trim-video")
 async def trim_video(req: TrimVideoRequest):
     """Trim a ComfyUI input video into a new H.264 mp4 without audio."""

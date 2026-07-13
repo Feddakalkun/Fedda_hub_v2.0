@@ -478,7 +478,7 @@ export const FEDDA_MODULES: FeddaModule[] = [
     id: 'wan22-story',
     sourceModuleId: 'wan-video',
     label: 'WAN Story',
-    description: 'Build video from a six-frame story sequence.',
+    description: 'Chain 1-24 keyframes into one continuous story video - auto-storyboard, per-transition prompts, stitched automatically.',
     area: 'video',
     pack: 'booster',
 

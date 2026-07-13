@@ -778,7 +778,7 @@
   "wan22-vid2vid": {
     "name": "WAN 2.2 Vid2Vid",
     "filename": "wan22/vid2vid-4frames-wan22.json",
-    "description": "Extend and transform video with WAN 2.2 \u00e2\u20ac\u201d 4-frame expansion chain",
+    "description": "Extend and transform video with WAN 2.2 â€” 4-frame expansion chain",
     "inputs": {
       "video": {
         "node_id": "148",
@@ -952,7 +952,7 @@
     }
   },
   "ltx-flf": {
-    "name": "LTX 2.3 \u00e2\u20ac\u201d First/Last Frame",
+    "name": "LTX 2.3 â€” First/Last Frame",
     "filename": "ltx/LTX-23-flf.json",
     "description": "Generate video from first and last frame images using LTX Video 2.3",
     "inputs": {
@@ -1552,7 +1552,7 @@
     }
   },
   "ltx-img2vid": {
-    "name": "LTX 2.3 \u00e2\u20ac\u201d Img2Vid",
+    "name": "LTX 2.3 â€” Img2Vid",
     "filename": "ltx/LTX-23-img2vid.json",
     "description": "Animate a single reference image into cinematic video using LTX Video 2.3",
     "inputs": {
@@ -2069,7 +2069,7 @@
   "wan22xxx-img2vid": {
     "name": "WAN 2.2 XXX Img2Vid",
     "filename": "wan22/WAN22XXX-img2video.json",
-    "description": "Animate a reference image with dual high/low noise WAN 2.2 14B fp8 pass \u2014 NSFW UMT5 encoder, Power LoRA slots.",
+    "description": "Animate a reference image with dual high/low noise WAN 2.2 14B fp8 pass — NSFW UMT5 encoder, Power LoRA slots.",
     "inputs": {
       "image": {
         "node_id": "278",
@@ -2139,7 +2139,7 @@
   "hunyuan-i2v": {
     "name": "HunyuanVideo I2V fp8",
     "filename": "hunyuan/HunyuanVideo-i2v.json",
-    "description": "Animate a reference image into video using HunyuanVideo I2V 720p fp8 \u2014 native ComfyUI I2V pipeline.",
+    "description": "Animate a reference image into video using HunyuanVideo I2V 720p fp8 — native ComfyUI I2V pipeline.",
     "inputs": {
       "image": {
         "node_id": "8",
@@ -2767,6 +2767,91 @@
         "input_key": "lora_name",
         "type": "loras",
         "label": "LoRAs"
+      }
+    }
+  },
+  "wan22-flf-segment": {
+    "name": "WAN 2.2 Story Segment",
+    "filename": "wan22/wan22-flf-segment.json",
+    "description": "One story transition: first frame -> last frame with a motion prompt.",
+    "inputs": {
+      "image_start": {
+        "node_id": "278",
+        "input_key": "image",
+        "type": "string",
+        "label": "Start Frame"
+      },
+      "image_end": {
+        "node_id": "500",
+        "input_key": "image",
+        "type": "string",
+        "label": "End Frame"
+      },
+      "prompt": {
+        "node_id": "265",
+        "input_key": "text",
+        "type": "string",
+        "label": "Prompt"
+      },
+      "negative": {
+        "node_id": "273",
+        "input_key": "text",
+        "type": "string",
+        "label": "Negative"
+      },
+      "seed": {
+        "node_ids": [
+          "271",
+          "272"
+        ],
+        "input_key": "noise_seed",
+        "type": "number",
+        "label": "Seed"
+      },
+      "aspect_ratio": {
+        "node_ids": [
+          "314",
+          "501"
+        ],
+        "input_key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio"
+      },
+      "direction": {
+        "node_ids": [
+          "314",
+          "501"
+        ],
+        "input_key": "direction",
+        "type": "string",
+        "label": "Direction"
+      },
+      "width": {
+        "node_ids": [
+          "314",
+          "501"
+        ],
+        "input_key": "width",
+        "type": "number",
+        "label": "Width"
+      },
+      "length": {
+        "node_id": "266",
+        "input_key": "value",
+        "type": "number",
+        "label": "Seconds"
+      },
+      "lora_high": {
+        "node_id": "480",
+        "input_key": "lora_1",
+        "type": "object",
+        "label": "High Noise LoRA"
+      },
+      "lora_low": {
+        "node_id": "479",
+        "input_key": "lora_1",
+        "type": "object",
+        "label": "Low Noise LoRA"
       }
     }
   }
