@@ -8,23 +8,10 @@ import { PromptAssistant } from '../../components/ui/PromptAssistant';
 import { LoraSelector } from '../../components/ui/LoraSelector';
 import { WorkflowShell, WorkflowSection } from '../../components/layout/WorkflowShell';
 import { WorkflowVideoPreviewStrip } from '../../components/layout/WorkflowVideoPreviewStrip';
-import { ChipGroup, GenerateButton, SeedField, SliderField } from '../../components/ui/WorkflowControls';
+import { GenerateButton, SeedField } from '../../components/ui/WorkflowControls';
 
-const MAX_FRAMES = 24;
-
-type StoryRatio = '1:1' | '3:4' | '9:16' | '4:3' | '16:9';
-const RATIOS: StoryRatio[] = ['1:1', '3:4', '9:16', '4:3', '16:9'];
-const RATIO_ASPECT: Record<StoryRatio, string> = { '1:1': '1:1', '3:4': '4:3', '9:16': '16:9', '4:3': '4:3', '16:9': '16:9' };
-const RATIO_DIRECTION: Record<StoryRatio, string> = { '1:1': 'Horizontal', '3:4': 'Vertical', '9:16': 'Vertical', '4:3': 'Horizontal', '16:9': 'Horizontal' };
-// Safe per-ratio widths for WAN 2.2 on 24GB cards (portrait ratios must stay narrow -
-// activation memory scales with total pixels, and height grows fast on 9:16)
-type Quality = 'fast' | 'balanced' | 'high';
-const QUALITIES: Quality[] = ['fast', 'balanced', 'high'];
-const TIER_WIDTH: Record<Quality, Record<StoryRatio, number>> = {
-  fast:     { '1:1': 512, '3:4': 448, '9:16': 384, '4:3': 576, '16:9': 640 },
-  balanced: { '1:1': 672, '3:4': 576, '9:16': 480, '4:3': 768, '16:9': 832 },
-  high:     { '1:1': 768, '3:4': 640, '9:16': 544, '4:3': 832, '16:9': 960 },
-};
+// Single-pass 6-frame graph (ImageBatch join = unbroken motion), fixed 720x720.
+const MAX_FRAMES = 6;
 
 const DEFAULT_TRANSITION = 'smooth cinematic transition, natural motion, consistent subject';
 
@@ -37,9 +24,6 @@ export const Wan226FramesPage = () => {
   const [frames, setFrames] = usePersistentState<string[]>('wanstory_frames', []);
   const [prompts, setPrompts] = usePersistentState<string[]>('wanstory_prompts', []);
   const [seed, setSeed] = usePersistentState('wanstory_seed', -1);
-  const [ratio, setRatio] = usePersistentState<StoryRatio>('wanstory_ratio', '9:16');
-  const [quality, setQuality] = usePersistentState<Quality>('wanstory_quality', 'balanced');
-  const [segSeconds, setSegSeconds] = usePersistentState('wanstory_seg_seconds', 5);
   const [loraHigh, setLoraHigh] = usePersistentState('wanstory_lora_high', '');
   const [loraLow, setLoraLow] = usePersistentState('wanstory_lora_low', '');
   const [loraHighStr, setLoraHighStr] = usePersistentState('wanstory_lora_high_str', 1.0);
@@ -169,70 +153,34 @@ export const Wan226FramesPage = () => {
     }
   };
 
-  const baseParams = () => ({
-    negative: '色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作,画面，静止，整体发灰，最差质量，低质量',
-    seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
-    aspect_ratio: RATIO_ASPECT[ratio],
-    direction: RATIO_DIRECTION[ratio],
-    width: TIER_WIDTH[quality][ratio],
-    length: segSeconds,
-    ...(loraHigh ? { lora_high: { on: true, lora: loraHigh, strength: loraHighStr } } : {}),
-    ...(loraLow ? { lora_low: { on: true, lora: loraLow, strength: loraLowStr } } : {}),
-  });
-
   const generate = async () => {
-    if (isGenerating || frames.length === 0) return;
+    if (isGenerating || frames.length < 2) return;
     cancelRef.current = false;
     setIsGenerating(true);
     setCurrentVideo(null);
+    setProgress('Rendering continuous story (single pass)…');
     try {
-      if (frames.length === 1) {
-        // single frame -> single-shot img2vid (GGUF: fits 24GB comfortably)
-        setProgress('Animating single frame…');
-        const vid = await runWorkflow('wan22-img2vid-gguf', {
-          image: frames[0],
-          prompt: (prompts[0] || DEFAULT_TRANSITION).trim(),
-          seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
-          aspect: RATIO_ASPECT[ratio],
-          direction: RATIO_DIRECTION[ratio],
-          length_seconds: segSeconds,
-          ...(loraHigh ? { lora_high: { on: true, lora: loraHigh, strength: loraHighStr } } : {}),
-          ...(loraLow ? { lora_low: { on: true, lora: loraLow, strength: loraLowStr } } : {}),
-        });
-        const url = videoUrl(vid);
-        setCurrentVideo(url);
-        setHistory((prev) => [url, ...prev.filter((u) => u !== url)].slice(0, 40));
-        toast('Video ready', 'success');
-        return;
+      // Single-pass 6-frame graph: all segments decode to frames and join via
+      // ImageBatch into one continuous video (unbroken motion). Pad unused slots
+      // with the last frame so the fixed 6-slot graph always gets 6 images.
+      const last = frames[frames.length - 1];
+      const img = (i: number) => frames[i] ?? last;
+      const pr = (i: number) => (prompts[i] || DEFAULT_TRANSITION).trim();
+      const params: Record<string, unknown> = {
+        seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
+        ...(loraHigh ? { lora_high: { on: true, lora: loraHigh, strength: loraHighStr } } : {}),
+        ...(loraLow ? { lora_low: { on: true, lora: loraLow, strength: loraLowStr } } : {}),
+      };
+      for (let i = 0; i < 6; i++) {
+        params[`image${i + 1}`] = img(i);
+        // prompts drive transitions; padded tail holds on the last frame
+        params[`prompt${i + 1}`] = i < frames.length - 1 ? pr(i) : 'hold still, minimal motion, steady';
       }
-
-      // N frames -> N-1 sequential segments, then stitch
-      const segVideos: SegmentVideo[] = [];
-      for (let i = 0; i < segments; i++) {
-        setProgress(`Segment ${i + 1} / ${segments}…`);
-        const vid = await runWorkflow('wan22-flf-segment', {
-          ...baseParams(),
-          image_start: frames[i],
-          image_end: frames[i + 1],
-          prompt: (prompts[i] || DEFAULT_TRANSITION).trim(),
-        });
-        segVideos.push(vid);
-        const segUrl = videoUrl(vid);
-        setCurrentVideo(segUrl); // live feedback while the story builds
-        setHistory((prev) => [segUrl, ...prev.filter((u) => u !== segUrl)].slice(0, 40));
-      }
-
-      setProgress('Stitching story…');
-      const c = await (await fetch(`${BACKEND_API.BASE_URL}/api/video/concat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videos: segVideos.map((v) => ({ filename: v.filename, subfolder: v.subfolder || '' })), prefix: 'wanstory' }),
-      })).json();
-      if (!c.success) throw new Error(c.detail || 'Stitch failed');
-      const finalUrl = videoUrl(c);
-      setCurrentVideo(finalUrl);
-      setHistory((prev) => [finalUrl, ...prev.filter((u) => u !== finalUrl)].slice(0, 40));
-      toast(`Story ready — ${segments} segments stitched`, 'success');
+      const vid = await runWorkflow('wan22-img2vid-6frames', params);
+      const url = videoUrl(vid);
+      setCurrentVideo(url);
+      setHistory((prev) => [url, ...prev.filter((u) => u !== url)].slice(0, 40));
+      toast('Story ready — continuous motion', 'success');
     } catch (err: any) {
       if (err.message !== 'Cancelled') toast(err.message || 'Generation failed', 'error');
       else toast('Stopped', 'info');
@@ -242,13 +190,13 @@ export const Wan226FramesPage = () => {
     }
   };
 
-  const canGenerate = frames.length > 0 && !isGenerating;
+  const canGenerate = frames.length >= 2 && !isGenerating;
 
   return (
     <WorkflowShell
       title="Storyboard"
       eyebrow="WAN 2.2"
-      description={`Chain 1-${MAX_FRAMES} keyframes into one continuous video — each transition gets its own motion prompt, segments render one by one and stitch automatically.`}
+      description={`Chain up to ${MAX_FRAMES} keyframes into one continuous video — single-pass render for smooth unbroken motion, each transition gets its own prompt.`}
       icon={Layers}
       isGenerating={isGenerating}
       canGenerate={canGenerate}
@@ -366,26 +314,11 @@ export const Wan226FramesPage = () => {
         </WorkflowSection>
 
         <WorkflowSection title="Settings">
-          <div className="space-y-3">
-            <div>
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Aspect Ratio</p>
-              <ChipGroup options={RATIOS} value={ratio} onChange={setRatio} />
-            </div>
-            <div>
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Quality</p>
-              <ChipGroup options={QUALITIES} value={quality} onChange={setQuality}
-                renderLabel={(q) => `${q} · ${TIER_WIDTH[q][ratio]}px`} />
-              <p className="mt-1 text-[10px] text-zinc-600">Widths are tuned per aspect ratio to stay inside 24GB VRAM.</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <SliderField label="Seconds per transition" value={segSeconds} onChange={setSegSeconds} min={2} max={10} step={1} format={(v) => `${v}s`} />
-              <SeedField value={seed} onChange={setSeed} />
-            </div>
-            {segments > 0 && (
-              <p className="text-[11px] text-zinc-600">
-                {segments} transition{segments === 1 ? '' : 's'} × {segSeconds}s ≈ {segments * segSeconds}s final video. Segments render one at a time.
-              </p>
-            )}
+          <div className="space-y-2">
+            <SeedField value={seed} onChange={setSeed} />
+            <p className="text-[11px] text-zinc-600">
+              Renders all {segments + 1} frames in one continuous pass (unbroken motion), 720×720. Up to 6 frames.
+            </p>
           </div>
         </WorkflowSection>
 
@@ -396,8 +329,8 @@ export const Wan226FramesPage = () => {
                 onClick={() => void generate()}
                 disabled={!canGenerate}
                 isGenerating={isGenerating}
-                label={frames.length <= 1 ? 'Generate Video' : `Generate Story (${segments} segments)`}
-                requirementHint="Add at least one keyframe"
+                label={`Generate Story (${segments} transition${segments === 1 ? '' : 's'})`}
+                requirementHint="Add at least 2 keyframes"
               />
             </div>
             {isGenerating && (

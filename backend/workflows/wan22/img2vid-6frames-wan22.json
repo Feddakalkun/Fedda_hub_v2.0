@@ -1399,7 +1399,7 @@
   },
   "302:290": {
     "inputs": {
-      "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "clip_name": "nsfw_wan_umt5-xxl_fp8_scaled.safetensors",
       "type": "wan",
       "device": "default"
     },
@@ -1418,28 +1418,20 @@
     }
   },
   "302:298": {
+    "class_type": "UnetLoaderGGUF",
     "inputs": {
-      "unet_name": "WAN22-NSFW-I2V-LOW.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
+      "unet_name": "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf"
     }
   },
   "302:299": {
+    "class_type": "UnetLoaderGGUF",
     "inputs": {
-      "unet_name": "WAN22-NSFW-I2V-HIGH.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
+      "unet_name": "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf"
     }
   },
   "287:275": {
     "inputs": {
-      "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "clip_name": "nsfw_wan_umt5-xxl_fp8_scaled.safetensors",
       "type": "wan",
       "device": "default"
     },
@@ -1458,28 +1450,20 @@
     }
   },
   "287:283": {
+    "class_type": "UnetLoaderGGUF",
     "inputs": {
-      "unet_name": "WAN22-NSFW-I2V-LOW.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
+      "unet_name": "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf"
     }
   },
   "287:284": {
+    "class_type": "UnetLoaderGGUF",
     "inputs": {
-      "unet_name": "WAN22-NSFW-I2V-HIGH.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
+      "unet_name": "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf"
     }
   },
   "272:260": {
     "inputs": {
-      "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "clip_name": "nsfw_wan_umt5-xxl_fp8_scaled.safetensors",
       "type": "wan",
       "device": "default"
     },
@@ -1498,28 +1482,20 @@
     }
   },
   "272:268": {
+    "class_type": "UnetLoaderGGUF",
     "inputs": {
-      "unet_name": "WAN22-NSFW-I2V-LOW.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
+      "unet_name": "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf"
     }
   },
   "272:269": {
+    "class_type": "UnetLoaderGGUF",
     "inputs": {
-      "unet_name": "WAN22-NSFW-I2V-HIGH.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
+      "unet_name": "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf"
     }
   },
   "257:245": {
     "inputs": {
-      "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "clip_name": "nsfw_wan_umt5-xxl_fp8_scaled.safetensors",
       "type": "wan",
       "device": "default"
     },
@@ -1538,28 +1514,20 @@
     }
   },
   "257:253": {
+    "class_type": "UnetLoaderGGUF",
     "inputs": {
-      "unet_name": "WAN22-NSFW-I2V-LOW.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
+      "unet_name": "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf"
     }
   },
   "257:254": {
+    "class_type": "UnetLoaderGGUF",
     "inputs": {
-      "unet_name": "WAN22-NSFW-I2V-HIGH.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
+      "unet_name": "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf"
     }
   },
   "242:230": {
     "inputs": {
-      "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "clip_name": "nsfw_wan_umt5-xxl_fp8_scaled.safetensors",
       "type": "wan",
       "device": "default"
     },
@@ -1578,23 +1546,15 @@
     }
   },
   "242:238": {
+    "class_type": "UnetLoaderGGUF",
     "inputs": {
-      "unet_name": "WAN22-NSFW-I2V-LOW.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
+      "unet_name": "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf"
     }
   },
   "242:239": {
+    "class_type": "UnetLoaderGGUF",
     "inputs": {
-      "unet_name": "WAN22-NSFW-I2V-HIGH.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
+      "unet_name": "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf"
     }
   },
   "227:218": {
@@ -1607,28 +1567,20 @@
     }
   },
   "227:221": {
+    "class_type": "UnetLoaderGGUF",
     "inputs": {
-      "unet_name": "WAN22-NSFW-I2V-LOW.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
+      "unet_name": "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf"
     }
   },
   "227:222": {
+    "class_type": "UnetLoaderGGUF",
     "inputs": {
-      "unet_name": "WAN22-NSFW-I2V-HIGH.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
+      "unet_name": "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf"
     }
   },
   "227:226": {
     "inputs": {
-      "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "clip_name": "nsfw_wan_umt5-xxl_fp8_scaled.safetensors",
       "type": "wan",
       "device": "default"
     },
