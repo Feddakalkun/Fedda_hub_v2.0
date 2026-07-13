@@ -37,7 +37,8 @@ export const LtxAi2vPage = () => {
   const [negative, setNegative] = usePersistentState('ltx_ai2v_negative', DEFAULT_NEGATIVE);
   const [seed, setSeed] = usePersistentState('ltx_ai2v_seed', -1);
   const [steps, setSteps] = usePersistentState('ltx_ai2v_steps', 4);
-  const [duration, setDuration] = usePersistentState('ltx_ai2v_duration', 5);
+  // default 0 = match the full audio length (new key resets the old stuck default of 5)
+  const [duration, setDuration] = usePersistentState('ltx_ai2v_duration_v2', 0);
   const [audioStart, setAudioStart] = usePersistentState('ltx_ai2v_audio_start', 0);
   const [width, setWidth] = usePersistentState('ltx_ai2v_width', '1024');
   const [showAdvanced, setShowAdvanced] = useState(false);
