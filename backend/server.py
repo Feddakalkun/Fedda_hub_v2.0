@@ -334,6 +334,42 @@ async def get_civitai_key_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class OllamaDefaultsRequest(BaseModel):
+    text_model: Optional[str] = None    # '' clears the preference
+    vision_model: Optional[str] = None
+
+
+@app.get("/api/settings/ollama-defaults")
+async def get_ollama_defaults():
+    """User-preferred prompt/vision models + what is effectively in use right now."""
+    data = load_settings()
+    return {
+        "success": True,
+        "text_model": (data.get("ollama_text_model") or "").strip(),
+        "vision_model": (data.get("ollama_vision_model") or "").strip(),
+        "effective_text": _get_ollama_text_model(),
+        "effective_vision": _get_ollama_vision_model(),
+    }
+
+
+@app.post("/api/settings/ollama-defaults")
+async def set_ollama_defaults(req: OllamaDefaultsRequest):
+    """Set which Ollama models every prompt tool (enhance/inspire/storyboard/caption) uses."""
+    data = load_settings()
+    if req.text_model is not None:
+        data["ollama_text_model"] = req.text_model.strip()
+    if req.vision_model is not None:
+        data["ollama_vision_model"] = req.vision_model.strip()
+    save_settings(data)
+    return {
+        "success": True,
+        "text_model": (data.get("ollama_text_model") or "").strip(),
+        "vision_model": (data.get("ollama_vision_model") or "").strip(),
+        "effective_text": _get_ollama_text_model(),
+        "effective_vision": _get_ollama_vision_model(),
+    }
+
+
 @app.post("/api/settings/hf-token")
 async def set_hf_token(req: HuggingFaceTokenRequest):
     try:
@@ -1914,13 +1950,31 @@ def _caption_prompt_for_context(context: str) -> str:
     )
 
 
+def _preferred_ollama_model(kind: str, installed: List[str]) -> Optional[str]:
+    """User-chosen default from Settings ('ollama_text_model' / 'ollama_vision_model').
+    Wins over the priority heuristics whenever it is actually installed."""
+    try:
+        preferred = (load_settings().get(f"ollama_{kind}_model") or "").strip()
+    except Exception:
+        return None
+    if not preferred:
+        return None
+    for m in installed:
+        if m == preferred or m.split(":")[0] == preferred:
+            return m
+    return None
+
+
 def _get_ollama_text_model() -> Optional[str]:
-    """Pick the best available Ollama text model."""
+    """Pick the user's preferred text model, else the best available."""
     try:
         resp = requests.get(f"{OLLAMA_URL}/api/tags", timeout=3)
         if not resp.ok:
             return None
         models = [m["name"] for m in resp.json().get("models", [])]
+        preferred = _preferred_ollama_model("text", models)
+        if preferred:
+            return preferred
         priority = [
                     "zarigata/unfiltered-llama3",
                     "dolphin-llama3",
@@ -1958,12 +2012,15 @@ def _ollama_model_matches_priority(model_name: str, priority: str) -> bool:
 
 
 def _get_ollama_vision_model() -> Optional[str]:
-    """Pick the best available Ollama vision model."""
+    """Pick the user's preferred vision model, else the best available."""
     try:
         resp = requests.get(f"{OLLAMA_URL}/api/tags", timeout=3)
         if not resp.ok:
             return None
         models = [m["name"] for m in resp.json().get("models", [])]
+        preferred = _preferred_ollama_model("vision", models)
+        if preferred:
+            return preferred
         for p in ["qwen2.5-vl", "qwen2-vl", "minicpm-v", "minicpm", "llava:34b", "llava", "moondream", "vision"]:
             for m in models:
                 if p in m.lower():
