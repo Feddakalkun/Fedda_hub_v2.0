@@ -159,7 +159,7 @@ const selectBestImage = (images: StageStatus['images'], needle: string) => {
 
 export const ZImageDualLoraPage = () => {
   const { toast } = useToast();
-  const { clearOutputs, registerNodeMap } = useComfyExecution();
+  const { clearOutputs, registerNodeMap, previewUrl } = useComfyExecution();
 
   const [loraMainName, setLoraMainName] = usePersistentState('zimage_dual_lora_main_name', '');
   const [loraMainStrength, setLoraMainStrength] = usePersistentState('zimage_dual_lora_main_strength', 1.2);
@@ -801,12 +801,21 @@ export const ZImageDualLoraPage = () => {
                         )}
                       </div>
                     </div>
+                  ) : isRunning && previewUrl ? (
+                    <div className="flex h-full items-center justify-center">
+                      <div className="relative">
+                        <img src={previewUrl} alt="Generating…" className="max-h-[620px] rounded-lg border border-white/10 object-contain" />
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white/70">
+                          <Loader2 className="mr-1.5 inline h-3 w-3 animate-spin" />Generating
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <div className="flex min-h-[360px] items-center justify-center rounded-lg border border-dashed border-white/10 bg-black/20">
                       <div className="text-center text-white/35">
-                        <ImageIcon className="mx-auto mb-3 h-8 w-8 opacity-40" />
-                        <div className="text-sm font-semibold">No image yet</div>
-                        <div className="mt-1 text-xs text-white/25">Choose two LoRAs, choose side/person, then run once.</div>
+                        {isRunning ? <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin opacity-60" /> : <ImageIcon className="mx-auto mb-3 h-8 w-8 opacity-40" />}
+                        <div className="text-sm font-semibold">{isRunning ? 'Generating…' : 'No image yet'}</div>
+                        <div className="mt-1 text-xs text-white/25">{isRunning ? 'Rendering the scene, then refining the chosen person.' : 'Choose two LoRAs, choose side/person, then run once.'}</div>
                       </div>
                     </div>
                   )}
