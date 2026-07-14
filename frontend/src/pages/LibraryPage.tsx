@@ -1,10 +1,11 @@
 ﻿import { useState } from 'react';
 import { LoRADownloader } from '../components/LoRADownloader';
 
-type Family = 'z-image' | 'flux2klein' | 'sd15' | 'sdxl' | 'wan';
+type Family = 'z-image' | 'qwen' | 'flux2klein' | 'sd15' | 'sdxl' | 'wan';
 
 const FAMILIES: { key: Family; label: string; desc: string }[] = [
   { key: 'z-image', label: 'Z-Image', desc: 'Turbo character LoRAs for Z-Image workflows' },
+  { key: 'qwen', label: 'Qwen', desc: 'Qwen-Image / edit LoRAs' },
   { key: 'flux2klein', label: 'FLUX2-KLEIN', desc: 'FLUX.2-klein specific LoRAs only' },
   { key: 'wan', label: 'WAN', desc: 'WAN video LoRA packs' },
   { key: 'sd15', label: 'SD 1.5', desc: 'Classic portrait and style LoRAs' },
