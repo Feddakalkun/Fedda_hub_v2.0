@@ -169,6 +169,15 @@ export const ZImageDualLoraPage = () => {
   // How strongly the selected person is repainted into Person 2 (DetailerForEach denoise).
   const [changeStrength, setChangeStrength] = usePersistentState('zimage_dual_change_strength', 0.75);
 
+  // Advanced quality knobs (defaults match the workflow).
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [sceneCfg, setSceneCfg] = usePersistentState('zimage_dual_scene_cfg', 1.1);
+  const [swapCfg, setSwapCfg] = usePersistentState('zimage_dual_swap_cfg', 1.0);
+  const [dualSteps, setDualSteps] = usePersistentState('zimage_dual_steps', 9);
+  const [maskFeather, setMaskFeather] = usePersistentState('zimage_dual_mask_feather', 20);
+  const [edgeFeather, setEdgeFeather] = usePersistentState('zimage_dual_edge_feather', 5);
+  const [detailSize, setDetailSize] = usePersistentState('zimage_dual_detail_size', 768);
+
   const [scene, setScene] = usePersistentState('zimage_dual_scene', SCENES[0]);
   const [style, setStyle] = usePersistentState('zimage_dual_style', STYLES[0]);
 
@@ -413,6 +422,12 @@ export const ZImageDualLoraPage = () => {
           lora_detail_name: loraDetailName,
           lora_detail_strength: Number(loraDetailStrength),
           detail_denoise: Number(changeStrength),
+          scene_cfg: Number(sceneCfg),
+          swap_cfg: Number(swapCfg),
+          dual_steps: Number(dualSteps),
+          mask_feather: Number(maskFeather),
+          edge_feather: Number(edgeFeather),
+          detail_size: Number(detailSize),
           client_id: comfyService.clientId,
         },
       };
@@ -546,6 +561,31 @@ export const ZImageDualLoraPage = () => {
               <span>1.00 · full swap</span>
             </div>
           </div>
+
+          <button
+            onClick={() => setShowAdvanced((v) => !v)}
+            className="mt-2 text-[10px] font-black uppercase tracking-widest text-white/35 hover:text-white/70"
+          >
+            {showAdvanced ? '− Advanced quality' : '+ Advanced quality'}
+          </button>
+          {showAdvanced && (
+            <div className="mt-2 grid gap-3 rounded-lg border border-white/10 bg-black/25 p-3 sm:grid-cols-2">
+              {([
+                { label: 'Scene CFG', v: sceneCfg, set: setSceneCfg, min: 1, max: 6, step: 0.1, hint: 'base image prompt adherence' },
+                { label: 'Swap CFG', v: swapCfg, set: setSwapCfg, min: 1, max: 6, step: 0.1, hint: 'repaint prompt adherence' },
+                { label: 'Steps', v: dualSteps, set: setDualSteps, min: 4, max: 20, step: 1, hint: 'more = cleaner, slower' },
+                { label: 'Mask feather', v: maskFeather, set: setMaskFeather, min: 0, max: 64, step: 1, hint: 'soft blend into the scene' },
+                { label: 'Edge feather', v: edgeFeather, set: setEdgeFeather, min: 0, max: 32, step: 1, hint: 'inpaint edge softness' },
+                { label: 'Detail size', v: detailSize, set: setDetailSize, min: 512, max: 1024, step: 64, hint: 'face refine resolution' },
+              ] as const).map((f) => (
+                <label key={f.label} className="space-y-1 text-[10px] font-semibold uppercase tracking-wide text-white/45">
+                  <span className="flex justify-between"><span>{f.label}</span><span className="font-mono text-white/60">{f.v}</span></span>
+                  <input type="range" min={f.min} max={f.max} step={f.step} value={f.v} onChange={(e) => f.set(Number(e.target.value))} className="w-full accent-zinc-300" />
+                  <span className="block font-normal normal-case tracking-normal text-[9px] text-white/25">{f.hint}</span>
+                </label>
+              ))}
+            </div>
+          )}
         </section>
 
           <main className="space-y-3">

@@ -431,6 +431,45 @@
         "input_key": "denoise",
         "type": "number",
         "label": "Change Strength"
+      },
+      "scene_cfg": {
+        "node_id": "15",
+        "input_key": "cfg",
+        "type": "number",
+        "label": "Scene CFG"
+      },
+      "swap_cfg": {
+        "node_id": "25",
+        "input_key": "cfg",
+        "type": "number",
+        "label": "Swap CFG"
+      },
+      "dual_steps": {
+        "node_ids": [
+          "15",
+          "25"
+        ],
+        "input_key": "steps",
+        "type": "number",
+        "label": "Steps"
+      },
+      "mask_feather": {
+        "node_id": "25",
+        "input_key": "noise_mask_feather",
+        "type": "number",
+        "label": "Mask feather"
+      },
+      "edge_feather": {
+        "node_id": "25",
+        "input_key": "feather",
+        "type": "number",
+        "label": "Edge feather"
+      },
+      "detail_size": {
+        "node_id": "25",
+        "input_key": "guide_size",
+        "type": "number",
+        "label": "Detail size"
       }
     }
   },
