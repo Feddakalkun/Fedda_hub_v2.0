@@ -26,6 +26,9 @@ export const QwenImageReferencePage = () => {
       requireImageUpload
       imageParamKey="image"
       imageLabel="Reference Image"
+      showStrengthControl
+      strengthLabel="Similarity"
+      defaultStrength={1}
     />
   );
 };

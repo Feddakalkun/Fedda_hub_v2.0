@@ -74,6 +74,10 @@ interface SimpleImageCockpitProps {
   setCfg: Dispatch<SetStateAction<number>>;
   minCfg: number;
   maxCfg: number;
+  showStrengthControl?: boolean;
+  strength?: number;
+  setStrength?: Dispatch<SetStateAction<number>>;
+  strengthLabel?: string;
 
   seed: number;
   setSeed: Dispatch<SetStateAction<number>>;
@@ -152,6 +156,10 @@ export function SimpleImageCockpit({
   setSteps,
   maxSteps,
   showCfgControl = false,
+  showStrengthControl = false,
+  strength = 1,
+  setStrength,
+  strengthLabel = 'Strength',
   cfg,
   setCfg,
   minCfg,
@@ -583,6 +591,25 @@ export function SimpleImageCockpit({
                   onChange={(event) => setCfg(Number(event.target.value))}
                   className="cockpit-range"
                 />
+              </div>
+            )}
+
+            {showStrengthControl && setStrength && (
+              <div className="cockpit-panel cockpit-slider-panel">
+                <div className="cockpit-panel-head">
+                  <span>{strengthLabel}</span>
+                  <span>{strength.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min={0.3}
+                  max={1}
+                  step="0.05"
+                  value={strength}
+                  onChange={(event) => setStrength(Number(event.target.value))}
+                  className="cockpit-range"
+                />
+                <p style={{ fontSize: 10, opacity: 0.4, margin: '4px 2px 0' }}>Lower = keep the reference · higher = follow the prompt more</p>
               </div>
             )}
 

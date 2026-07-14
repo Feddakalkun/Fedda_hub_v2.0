@@ -64,6 +64,9 @@ interface Txt2ImgPageConfig {
   showCfgControl?: boolean;
   minCfg?: number;
   maxCfg?: number;
+  showStrengthControl?: boolean;
+  strengthLabel?: string;
+  defaultStrength?: number;
   characterPromptLabel?: string;
   characterPromptPlaceholder?: string;
   promptPresets?: SimpleImagePromptPreset[];
@@ -156,6 +159,9 @@ export const Txt2ImgPage = ({
   showCfgControl = false,
   minCfg = 0.5,
   maxCfg = 5,
+  showStrengthControl = false,
+  strengthLabel = 'Strength',
+  defaultStrength = 1,
   characterPromptLabel,
   characterPromptPlaceholder,
   promptPresets = [],
@@ -196,6 +202,7 @@ export const Txt2ImgPage = ({
   const [height, setHeight] = usePersistentState(key('height_v2'), 1088);
   const [steps, setSteps] = usePersistentState(key('steps'), defaultSteps);
   const [cfg, setCfg] = usePersistentState(key('cfg'), defaultCfg);
+  const [strength, setStrength] = usePersistentState(key('strength'), defaultStrength);
   const [seed, setSeed] = usePersistentState(key('seed'), -1);
   const [loraEntries, setLoraEntries] = usePersistentState<SimpleImageLoraEntry[]>(key('loras'), []);
   const [loraPreviewMap, setLoraPreviewMap] = useState<Record<string, string>>({});
@@ -536,6 +543,8 @@ export const Txt2ImgPage = ({
         cfg,
         client_id: comfyService.clientId,
       };
+
+      if (showStrengthControl) params.denoise = strength;
 
       if (requireImageUpload && uploadedImageName) {
         params[imageParamKey] = uploadedImageName;
@@ -969,6 +978,10 @@ export const Txt2ImgPage = ({
         setCfg={setCfg}
         minCfg={minCfg}
         maxCfg={maxCfg}
+        showStrengthControl={showStrengthControl}
+        strength={strength}
+        setStrength={setStrength}
+        strengthLabel={strengthLabel}
         seed={seed}
         setSeed={setSeed}
         negativePrompt={negativePrompt}

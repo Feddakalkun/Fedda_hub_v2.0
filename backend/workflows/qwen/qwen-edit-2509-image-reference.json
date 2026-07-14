@@ -172,7 +172,7 @@
     },
     "class_type": "AspectRatioImageSize",
     "_meta": {
-      "title": "🧩 Aspect Ratio Image Size"
+      "title": "\ud83e\udde9 Aspect Ratio Image Size"
     }
   },
   "20": {
@@ -205,7 +205,7 @@
         "lora": "qwen\\Qwen-Image-Lightning-4steps-V1.0.safetensors",
         "strength": 1
       },
-      "➕ Add Lora": "",
+      "\u2795 Add Lora": "",
       "model": [
         "21",
         0
@@ -241,7 +241,7 @@
         0
       ],
       "latent_image": [
-        "13",
+        "101",
         0
       ]
     },
@@ -264,7 +264,45 @@
     },
     "class_type": "HuggingFaceDownloader",
     "_meta": {
-      "title": "🤗 HuggingFace Model Downloader Pro"
+      "title": "\ud83e\udd17 HuggingFace Model Downloader Pro"
+    }
+  },
+  "100": {
+    "inputs": {
+      "image": [
+        "16",
+        0
+      ],
+      "width": [
+        "17",
+        0
+      ],
+      "height": [
+        "17",
+        1
+      ],
+      "upscale_method": "lanczos",
+      "crop": "disabled"
+    },
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "Resize ref (img2img)"
+    }
+  },
+  "101": {
+    "inputs": {
+      "pixels": [
+        "100",
+        0
+      ],
+      "vae": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "Encode ref (img2img)"
     }
   }
 }
