@@ -1,0 +1,19 @@
+{
+  "personas": [
+    {
+      "id": "persona-01",
+      "name": "TBD",
+      "note": "First FEDDA original AI persona — cute-but-adult e-girl. Blend of two character LoRAs so the face is nobody real. Validated consistent across cafe / gym / rooftop scenes.",
+      "base_workflow": "z-image-txt2img",
+      "model": "z_image_turbo_bf16",
+      "loras": [
+        { "name": "app/Astrid-S/astrid_s_zimage.safetensors", "strength": 0.5 },
+        { "name": "app/Lila/Lila_zimage.safetensors", "strength": 0.5 }
+      ],
+      "face_prompt": "astrid, lila, 1girl, solo, 25 year old adult woman, warm friendly natural smile, bright happy eyes, light freckles, mature defined feminine cheekbones and jawline, grown woman face, dark brown hair with soft curtain bangs, natural glam makeup, glossy lips, pretty and approachable",
+      "prompt_suffix": "photorealistic, natural skin texture, candid iphone photo, a portrait photo",
+      "usage": "Full prompt = face_prompt + ', ' + <outfit/scene words> + ', ' + prompt_suffix. Keep both LoRAs at 0.5 and the face_prompt fixed; change only the outfit/scene to keep her face consistent.",
+      "voice": null
+    }
+  ]
+}
