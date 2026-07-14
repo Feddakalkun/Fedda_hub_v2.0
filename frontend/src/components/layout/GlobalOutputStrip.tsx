@@ -6,6 +6,7 @@
  * into an upload slot (UploadSlot accepts dragged URLs). Collapsible.
  */
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronUp, Images, Play, Trash2, X } from 'lucide-react';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
 import { usePersistentState } from '../../hooks/usePersistentState';
@@ -125,18 +126,20 @@ export const GlobalOutputStrip = () => {
         </div>
       )}
 
-      {/* Lightbox */}
-      {lightbox && (
+      {/* Lightbox — portalled to <body> so the strip's backdrop-blur/transform
+          ancestor doesn't trap the fixed overlay inside the thin strip. */}
+      {lightbox && createPortal(
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 p-8 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-8"
           onClick={() => setLightbox(null)}
         >
           {lightbox.v ? (
-            <video src={lightbox.u} controls autoPlay loop className="max-h-full max-w-full rounded-xl" />
+            <video src={lightbox.u} controls autoPlay loop className="max-h-full max-w-full rounded-xl" onClick={(e) => e.stopPropagation()} />
           ) : (
-            <img src={lightbox.u} alt="" className="max-h-full max-w-full rounded-xl object-contain" />
+            <img src={lightbox.u} alt="" className="max-h-full max-w-full rounded-xl object-contain" onClick={(e) => e.stopPropagation()} />
           )}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
