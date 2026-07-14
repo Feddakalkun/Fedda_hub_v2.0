@@ -13,10 +13,13 @@ import { consumeHandoff } from '../../utils/workflowHandoff';
 import { cn } from '../../lib/styles';
 
 const PRESETS = [
-  { label: '1:1', w: 1024, h: 1024 },
-  { label: '2:3', w: 1024, h: 1536 },
-  { label: '3:2', w: 1536, h: 1024 },
-  { label: '9:16', w: 896, h: 1152 },
+  { label: '16:9 ▭', w: 1920, h: 1088 },
+  { label: '9:16 ▯', w: 1088, h: 1920 },
+  { label: '3:2 ▭', w: 1536, h: 1024 },
+  { label: '2:3 ▯', w: 1024, h: 1536 },
+  { label: '4:3 ▭', w: 1408, h: 1056 },
+  { label: '3:4 ▯', w: 1056, h: 1408 },
+  { label: '1:1 ▢', w: 1024, h: 1024 },
 ];
 
 const DEFAULT_LORA_PREFIXES = ['zimage', 'z-image'];
@@ -189,8 +192,8 @@ export const Txt2ImgPage = ({
   const [prompt, setPrompt] = usePersistentState(key('prompt'), '');
   const [negativePrompt, setNegativePrompt] = usePersistentState(key('negative'), defaultNegative);
   const [characterPrompt, setCharacterPrompt] = usePersistentState(key('character_prompt'), '');
-  const [width, setWidth] = usePersistentState(key('width'), 1024);
-  const [height, setHeight] = usePersistentState(key('height'), 1024);
+  const [width, setWidth] = usePersistentState(key('width_v2'), 1920);
+  const [height, setHeight] = usePersistentState(key('height_v2'), 1088);
   const [steps, setSteps] = usePersistentState(key('steps'), defaultSteps);
   const [cfg, setCfg] = usePersistentState(key('cfg'), defaultCfg);
   const [seed, setSeed] = usePersistentState(key('seed'), -1);

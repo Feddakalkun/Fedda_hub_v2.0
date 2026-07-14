@@ -517,8 +517,16 @@ export function SimpleImageCockpit({
 
           <div className="cockpit-control-grid">
             <div className="cockpit-panel cockpit-size-panel">
-              <div className="cockpit-panel-head">
-                <span><Maximize2 className="h-3 w-3" /> Size</span>
+              <div className="cockpit-panel-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span><Maximize2 className="h-3 w-3" /> Size · {width}×{height}</span>
+                <button
+                  type="button"
+                  title="Swap orientation (rotate width ↔ height)"
+                  onClick={() => { const w = width; setWidth(height); setHeight(w); }}
+                  style={{ fontSize: 13, lineHeight: 1, padding: '2px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', cursor: 'pointer', color: 'inherit' }}
+                >
+                  ⇄
+                </button>
               </div>
               <div className="cockpit-aspect-grid">
                 {aspectPresets.map((preset) => (
