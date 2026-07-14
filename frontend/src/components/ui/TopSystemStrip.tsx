@@ -19,6 +19,8 @@ export const TopSystemStrip = () => {
   const [civitaiConfigured, setCivitaiConfigured] = useState(false);
   const [civitaiLoading, setCivitaiLoading] = useState(true);
   const [civitaiSaving, setCivitaiSaving] = useState(false);
+  // Venice key lives in localStorage — the Venice pages call api.venice.ai directly from the browser
+  const [veniceConfigured, setVeniceConfigured] = useState(() => !!localStorage.getItem('venice_api_key'));
 
   // Poll hardware + comfy system stats
   useEffect(() => {
@@ -193,6 +195,26 @@ export const TopSystemStrip = () => {
     }
   };
 
+  const handleVeniceKey = () => {
+    const current = localStorage.getItem('venice_api_key') || '';
+    const next = window.prompt(
+      current
+        ? 'Paste a new Venice.ai API key to replace the current one. Leave blank to remove it.'
+        : 'Paste your Venice.ai API key (from venice.ai account settings).',
+      '',
+    );
+    if (next === null) return;
+    const trimmed = next.trim();
+    if (!trimmed) {
+      if (current && !window.confirm('Remove the saved Venice.ai API key?')) return;
+      localStorage.removeItem('venice_api_key');
+      setVeniceConfigured(false);
+      return;
+    }
+    localStorage.setItem('venice_api_key', trimmed);
+    setVeniceConfigured(true);
+  };
+
   const handleCivitaiKey = async () => {
     if (civitaiSaving) return;
     const nextKey = window.prompt(
@@ -322,6 +344,19 @@ export const TopSystemStrip = () => {
       >
         <RotateCcw className="w-3.5 h-3.5" />
         Reset UI
+      </button>
+
+      <button
+        onClick={handleVeniceKey}
+        title="Save your Venice.ai API key (for Venice image + chat)"
+        className={`h-8 px-3 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 ${
+          veniceConfigured
+            ? 'border-sky-500/30 bg-sky-500/10 text-sky-300 hover:bg-sky-500/18'
+            : 'border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/18'
+        }`}
+      >
+        <KeyRound className="w-3.5 h-3.5" />
+        {veniceConfigured ? 'Venice Key Set' : 'Venice Key Missing'}
       </button>
 
       <button
