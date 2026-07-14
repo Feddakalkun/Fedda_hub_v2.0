@@ -1,18 +1,254 @@
 {
+  "note": "FEDDA original AI personas \u2014 each is a fixed LoRA blend + locked face prompt (nobody real). Consistent by construction: change only outfit/scene. All validated clearly-adult.",
   "personas": [
     {
       "id": "persona-01",
-      "name": "TBD",
-      "note": "First FEDDA original AI persona — cute-but-adult e-girl. Blend of two character LoRAs so the face is nobody real. Validated consistent across cafe / gym / rooftop scenes.",
+      "name": "Emma",
       "base_workflow": "z-image-txt2img",
       "model": "z_image_turbo_bf16",
       "loras": [
-        { "name": "app/Astrid-S/astrid_s_zimage.safetensors", "strength": 0.5 },
-        { "name": "app/Lila/Lila_zimage.safetensors", "strength": 0.5 }
+        {
+          "name": "app/Emma/Emma_Gunnarsen_zimage.safetensors",
+          "strength": 0.55
+        },
+        {
+          "name": "app/Astrid-S/astrid_s_zimage.safetensors",
+          "strength": 0.4
+        },
+        {
+          "name": "Beautify-Supermodel-ZImageTurbo.safetensors",
+          "strength": 0.22
+        }
       ],
-      "face_prompt": "astrid, lila, 1girl, solo, 25 year old adult woman, warm friendly natural smile, bright happy eyes, light freckles, mature defined feminine cheekbones and jawline, grown woman face, dark brown hair with soft curtain bangs, natural glam makeup, glossy lips, pretty and approachable",
-      "prompt_suffix": "photorealistic, natural skin texture, candid iphone photo, a portrait photo",
-      "usage": "Full prompt = face_prompt + ', ' + <outfit/scene words> + ', ' + prompt_suffix. Keep both LoRAs at 0.5 and the face_prompt fixed; change only the outfit/scene to keep her face consistent.",
+      "face_prompt": "1girl, solo, 26yo adult woman, warm friendly smile, long golden blonde hair, bright blue eyes, sun-kissed skin, freckles, defined cheekbones",
+      "prompt_suffix": "natural glam makeup, casual chic top, warm soft daylight, photorealistic, natural skin texture, candid iphone selfie, a portrait photo",
+      "ref_seed": 1101,
+      "usage": "Full prompt = face_prompt + ', ' + <outfit/scene words> + ', ' + prompt_suffix. Keep loras+strengths+face_prompt fixed; change only outfit/scene for a consistent face.",
+      "voice": null
+    },
+    {
+      "id": "persona-02",
+      "name": "Nora",
+      "base_workflow": "z-image-txt2img",
+      "model": "z_image_turbo_bf16",
+      "loras": [
+        {
+          "name": "app/Ane/ane_ommunden-zimage.safetensors",
+          "strength": 0.5
+        },
+        {
+          "name": "app/Lila/Lila_zimage.safetensors",
+          "strength": 0.5
+        },
+        {
+          "name": "Beautify-Supermodel-ZImageTurbo.safetensors",
+          "strength": 0.22
+        }
+      ],
+      "face_prompt": "1girl, solo, 27yo adult woman, confident subtle smile, long dark brown hair, striking hazel eyes, olive skin, bold defined brows",
+      "prompt_suffix": "natural glam makeup, casual chic top, warm soft daylight, photorealistic, natural skin texture, candid iphone selfie, a portrait photo",
+      "ref_seed": 1102,
+      "usage": "Full prompt = face_prompt + ', ' + <outfit/scene words> + ', ' + prompt_suffix. Keep loras+strengths+face_prompt fixed; change only outfit/scene for a consistent face.",
+      "voice": null
+    },
+    {
+      "id": "persona-03",
+      "name": "Sara",
+      "base_workflow": "z-image-txt2img",
+      "model": "z_image_turbo_bf16",
+      "loras": [
+        {
+          "name": "app/Sara/Sara_zimage1.safetensors",
+          "strength": 0.5
+        },
+        {
+          "name": "app/Julie/julie-zimage.safetensors",
+          "strength": 0.45
+        },
+        {
+          "name": "Beautify-Supermodel-ZImageTurbo.safetensors",
+          "strength": 0.22
+        }
+      ],
+      "face_prompt": "1girl, solo, 27yo adult woman, soft warm smile, auburn wavy hair, green eyes, freckles, mature jawline",
+      "prompt_suffix": "natural glam makeup, casual chic top, warm soft daylight, photorealistic, natural skin texture, candid iphone selfie, a portrait photo",
+      "ref_seed": 1103,
+      "usage": "Full prompt = face_prompt + ', ' + <outfit/scene words> + ', ' + prompt_suffix. Keep loras+strengths+face_prompt fixed; change only outfit/scene for a consistent face.",
+      "voice": null
+    },
+    {
+      "id": "persona-04",
+      "name": "Sofie",
+      "base_workflow": "z-image-txt2img",
+      "model": "z_image_turbo_bf16",
+      "loras": [
+        {
+          "name": "app/Froy/froy_zimage.safetensors",
+          "strength": 0.5
+        },
+        {
+          "name": "app/Helene/helene-zimage-schibsted-turbo.safetensors",
+          "strength": 0.45
+        },
+        {
+          "name": "Beautify-Supermodel-ZImageTurbo.safetensors",
+          "strength": 0.22
+        }
+      ],
+      "face_prompt": "1girl, solo, 28yo adult woman, elegant calm smile, ash-brown hair, grey-blue eyes, fair skin, refined features",
+      "prompt_suffix": "natural glam makeup, casual chic top, warm soft daylight, photorealistic, natural skin texture, candid iphone selfie, a portrait photo",
+      "ref_seed": 1104,
+      "usage": "Full prompt = face_prompt + ', ' + <outfit/scene words> + ', ' + prompt_suffix. Keep loras+strengths+face_prompt fixed; change only outfit/scene for a consistent face.",
+      "voice": null
+    },
+    {
+      "id": "persona-05",
+      "name": "Emilie",
+      "base_workflow": "z-image-txt2img",
+      "model": "z_image_turbo_bf16",
+      "loras": [
+        {
+          "name": "app/Emily/Emily_z-image-ggafd.safetensors",
+          "strength": 0.5
+        },
+        {
+          "name": "app/Lila/Lila_zimage.safetensors",
+          "strength": 0.5
+        },
+        {
+          "name": "Beautify-Supermodel-ZImageTurbo.safetensors",
+          "strength": 0.22
+        }
+      ],
+      "face_prompt": "1girl, solo, 27yo adult woman, sultry confident smile, glossy black hair, deep brown eyes, olive skin, full lips",
+      "prompt_suffix": "natural glam makeup, casual chic top, warm soft daylight, photorealistic, natural skin texture, candid iphone selfie, a portrait photo",
+      "ref_seed": 1105,
+      "usage": "Full prompt = face_prompt + ', ' + <outfit/scene words> + ', ' + prompt_suffix. Keep loras+strengths+face_prompt fixed; change only outfit/scene for a consistent face.",
+      "voice": null
+    },
+    {
+      "id": "persona-06",
+      "name": "Thea",
+      "base_workflow": "z-image-txt2img",
+      "model": "z_image_turbo_bf16",
+      "loras": [
+        {
+          "name": "app/Aurora/auroraskonberg-zimage.safetensors",
+          "strength": 0.45
+        },
+        {
+          "name": "app/Meg/meg_zimage.safetensors",
+          "strength": 0.5
+        },
+        {
+          "name": "Beautify-Supermodel-ZImageTurbo.safetensors",
+          "strength": 0.22
+        }
+      ],
+      "face_prompt": "1girl, solo, 26yo adult woman, sweet genuine smile, warm brown hair curtain bangs, hazel-green eyes, freckles",
+      "prompt_suffix": "natural glam makeup, casual chic top, warm soft daylight, photorealistic, natural skin texture, candid iphone selfie, a portrait photo",
+      "ref_seed": 1106,
+      "usage": "Full prompt = face_prompt + ', ' + <outfit/scene words> + ', ' + prompt_suffix. Keep loras+strengths+face_prompt fixed; change only outfit/scene for a consistent face.",
+      "voice": null
+    },
+    {
+      "id": "persona-07",
+      "name": "Ingrid",
+      "base_workflow": "z-image-txt2img",
+      "model": "z_image_turbo_bf16",
+      "loras": [
+        {
+          "name": "app/Astrid-S/astrid_s_zimage.safetensors",
+          "strength": 0.45
+        },
+        {
+          "name": "app/Tiril/tiril-zimagenew.safetensors",
+          "strength": 0.5
+        },
+        {
+          "name": "Beautify-Supermodel-ZImageTurbo.safetensors",
+          "strength": 0.22
+        }
+      ],
+      "face_prompt": "1girl, solo, 28yo adult woman, cool poised smile, platinum ash-blonde hair, ice-blue eyes, fair Nordic skin, sharp model cheekbones",
+      "prompt_suffix": "natural glam makeup, casual chic top, warm soft daylight, photorealistic, natural skin texture, candid iphone selfie, a portrait photo",
+      "ref_seed": 1107,
+      "usage": "Full prompt = face_prompt + ', ' + <outfit/scene words> + ', ' + prompt_suffix. Keep loras+strengths+face_prompt fixed; change only outfit/scene for a consistent face.",
+      "voice": null
+    },
+    {
+      "id": "persona-08",
+      "name": "Maja",
+      "base_workflow": "z-image-txt2img",
+      "model": "z_image_turbo_bf16",
+      "loras": [
+        {
+          "name": "app/Synne/synne-zimage.safetensors",
+          "strength": 0.5
+        },
+        {
+          "name": "app/Aurora/auroraskonberg-zimage.safetensors",
+          "strength": 0.45
+        },
+        {
+          "name": "Beautify-Supermodel-ZImageTurbo.safetensors",
+          "strength": 0.22
+        }
+      ],
+      "face_prompt": "1girl, solo, 26yo adult woman, playful bright smile with dimples, chestnut brown hair, warm brown eyes, freckles",
+      "prompt_suffix": "natural glam makeup, casual chic top, warm soft daylight, photorealistic, natural skin texture, candid iphone selfie, a portrait photo",
+      "ref_seed": 1108,
+      "usage": "Full prompt = face_prompt + ', ' + <outfit/scene words> + ', ' + prompt_suffix. Keep loras+strengths+face_prompt fixed; change only outfit/scene for a consistent face.",
+      "voice": null
+    },
+    {
+      "id": "persona-09",
+      "name": "Ida",
+      "base_workflow": "z-image-txt2img",
+      "model": "z_image_turbo_bf16",
+      "loras": [
+        {
+          "name": "app/Iris/iris-zimage-170226-massive.safetensors",
+          "strength": 0.5
+        },
+        {
+          "name": "app/Luna/Luna-zimage-z-image.safetensors",
+          "strength": 0.5
+        },
+        {
+          "name": "Beautify-Supermodel-ZImageTurbo.safetensors",
+          "strength": 0.22
+        }
+      ],
+      "face_prompt": "1girl, solo, 27yo adult woman, warm laughing smile, coppery red-auburn hair, green eyes, freckles across cheeks",
+      "prompt_suffix": "natural glam makeup, casual chic top, warm soft daylight, photorealistic, natural skin texture, candid iphone selfie, a portrait photo",
+      "ref_seed": 1109,
+      "usage": "Full prompt = face_prompt + ', ' + <outfit/scene words> + ', ' + prompt_suffix. Keep loras+strengths+face_prompt fixed; change only outfit/scene for a consistent face.",
+      "voice": null
+    },
+    {
+      "id": "persona-10",
+      "name": "Ella",
+      "base_workflow": "z-image-txt2img",
+      "model": "z_image_turbo_bf16",
+      "loras": [
+        {
+          "name": "app/Lila/Lila_zimage.safetensors",
+          "strength": 0.5
+        },
+        {
+          "name": "app/Zana/sana_zimage.safetensors",
+          "strength": 0.45
+        },
+        {
+          "name": "Beautify-Supermodel-ZImageTurbo.safetensors",
+          "strength": 0.22
+        }
+      ],
+      "face_prompt": "1girl, solo, 27yo adult woman, glamorous confident smile, dark wavy hair, honey-brown eyes, warm skin, full lips, elegant features",
+      "prompt_suffix": "natural glam makeup, casual chic top, warm soft daylight, photorealistic, natural skin texture, candid iphone selfie, a portrait photo",
+      "ref_seed": 1110,
+      "usage": "Full prompt = face_prompt + ', ' + <outfit/scene words> + ', ' + prompt_suffix. Keep loras+strengths+face_prompt fixed; change only outfit/scene for a consistent face.",
       "voice": null
     }
   ]
