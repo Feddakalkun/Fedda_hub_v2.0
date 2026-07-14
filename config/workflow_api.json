@@ -2255,6 +2255,12 @@
         "input_key": "noise_seed",
         "type": "number",
         "label": "Seed"
+      },
+      "start_frames": {
+        "node_id": "33",
+        "input_key": "skip_first_frames",
+        "type": "number",
+        "label": "Start (frames)"
       }
     }
   },

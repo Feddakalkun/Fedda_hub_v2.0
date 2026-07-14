@@ -177,7 +177,9 @@ export function Wan21Scail2Page() {
   const [prompt, setPrompt] = usePersistentState('scail2_prompt', 'a person dancing, cinematic lighting, natural movement');
   const [negative, setNegative] = usePersistentState('scail2_negative', '');
   const [showNegative, setShowNegative] = useState(false);
-  const [durationSec, setDurationSec] = usePersistentState('scail2_duration_sec', 2.0);
+  const [motionStartSec, setMotionStartSec] = usePersistentState('scail2_start_sec', 0);
+  const [motionEndSec, setMotionEndSec] = usePersistentState('scail2_end_sec', 2.0);
+  const [clipDuration, setClipDuration] = useState(0);
   const [qualityStep, setQualityStep] = usePersistentState('scail2_quality', 0);
   const [uploadedImageDimensions, setUploadedImageDimensions] = useState<{ w: number; h: number } | null>(null);
   const [seed, setSeed] = usePersistentState('scail2_seed', -1);
@@ -191,7 +193,10 @@ export function Wan21Scail2Page() {
     };
   }, [uploadedImageDimensions, qualityStep]);
 
-  const frameLength = Math.max(8, Math.round(durationSec * 24));
+  const trimStart = Math.min(motionStartSec, Math.max(0, motionEndSec - 0.2));
+  const trimEnd = Math.max(motionEndSec, trimStart + 0.2);
+  const frameLength = Math.max(8, Math.round((trimEnd - trimStart) * 24));
+  const startFrames = Math.max(0, Math.round(trimStart * 24));
 
   const [currentVideo, setCurrentVideo] = useState<string | null>(null);
   const [history, setHistory] = usePersistentState<string[]>('scail2_history', []);
@@ -391,6 +396,7 @@ export function Wan21Scail2Page() {
             prompt: prompt.trim(),
             negative: negative.trim(),
             frame_length: frameLength,
+            start_frames: startFrames,
             width: computedDimensions.w,
             height: computedDimensions.h,
             seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
@@ -480,13 +486,44 @@ export function Wan21Scail2Page() {
                   onFile={handleVideoUpload}
                   preview={
                     motionPreviewUrl ? (
-                      <video
-                        src={motionPreviewUrl}
-                        className="max-h-40 w-full rounded-lg object-contain"
-                        muted
-                        playsInline
-                        controls
-                      />
+                      <div className="space-y-2">
+                        <video
+                          src={motionPreviewUrl}
+                          className="max-h-40 w-full rounded-lg object-contain"
+                          muted
+                          playsInline
+                          controls
+                          onLoadedMetadata={(e) => {
+                            const d = e.currentTarget.duration;
+                            if (Number.isFinite(d) && d > 0) {
+                              setClipDuration(d);
+                              if (motionEndSec > d || motionEndSec <= motionStartSec) {
+                                setMotionEndSec(Math.min(d, motionStartSec + 2));
+                              }
+                            }
+                          }}
+                        />
+                        {clipDuration > 0 && (
+                          <div className="rounded-lg border border-white/10 bg-black/30 p-2.5">
+                            <div className="mb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                              <span>Trim motion clip</span>
+                              <span className="font-mono text-zinc-400">{trimStart.toFixed(1)}s → {trimEnd.toFixed(1)}s · {(trimEnd - trimStart).toFixed(1)}s ({frameLength}f)</span>
+                            </div>
+                            <label className="block text-[9px] uppercase tracking-wide text-zinc-600">Start</label>
+                            <input
+                              type="range" min={0} max={clipDuration} step={0.1} value={trimStart}
+                              onChange={(e) => setMotionStartSec(Math.min(Number(e.target.value), motionEndSec - 0.2))}
+                              className="w-full accent-emerald-500"
+                            />
+                            <label className="block text-[9px] uppercase tracking-wide text-zinc-600">End</label>
+                            <input
+                              type="range" min={0} max={clipDuration} step={0.1} value={trimEnd}
+                              onChange={(e) => setMotionEndSec(Math.max(Number(e.target.value), motionStartSec + 0.2))}
+                              className="w-full accent-emerald-500"
+                            />
+                          </div>
+                        )}
+                      </div>
                     ) : undefined
                   }
                 />
@@ -527,17 +564,11 @@ export function Wan21Scail2Page() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Duration (seconds)">
-                  <input
-                    type="number"
-                    min={0.5}
-                    max={20}
-                    step={0.1}
-                    value={durationSec}
-                    onChange={(e) => setDurationSec(Math.max(0.5, Number(e.target.value)))}
-                    className={inputBase}
-                  />
-                  <p className="mt-1 text-[11px] text-zinc-600">= {frameLength} frames @ 24 fps</p>
+                <Field label="Clip length (from trim)">
+                  <div className={cn(inputBase, 'flex items-center text-zinc-400')}>
+                    {(trimEnd - trimStart).toFixed(1)}s
+                  </div>
+                  <p className="mt-1 text-[11px] text-zinc-600">{frameLength} frames @ 24 fps · set start/end on the clip →</p>
                 </Field>
                 <Field label="Seed (−1 = random)">
                   <input
@@ -578,7 +609,7 @@ export function Wan21Scail2Page() {
                 &nbsp;·&nbsp;
                 <span className="font-semibold text-zinc-400">Size:</span> {computedDimensions.w}×{computedDimensions.h}
                 &nbsp;·&nbsp;
-                <span className="font-semibold text-zinc-400">Duration:</span> {durationSec.toFixed(1)}s ({frameLength} fr @ 24 fps)
+                <span className="font-semibold text-zinc-400">Clip:</span> {trimStart.toFixed(1)}s–{trimEnd.toFixed(1)}s ({frameLength} fr @ 24 fps)
               </div>
 
               <NeutralButton
