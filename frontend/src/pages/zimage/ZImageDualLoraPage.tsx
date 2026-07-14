@@ -554,8 +554,8 @@ export const ZImageDualLoraPage = () => {
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <div className="text-sm font-semibold text-white/85">Characters + Prompt</div>
-                      <p className="mt-1 text-[11px] text-white/35">Descriptions load from each LoRA's character sheet. Edit if you want, then build the prompts.</p>
+                      <div className="text-sm font-semibold text-white/85">Characters</div>
+                      <p className="mt-1 text-[11px] text-white/35">Pick each person's LoRA (above) + gender. <b className="text-white/55">Build Prompts</b> auto-fills the two prompt boxes → from each LoRA's sheet. Or skip it and write the boxes yourself.</p>
                     </div>
                     <button onClick={composePrompts} className={`${buttonBase} border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08]`}>
                       <Wand2 className="h-3.5 w-3.5" />
@@ -565,18 +565,23 @@ export const ZImageDualLoraPage = () => {
 
                   <div className="grid gap-2 md:grid-cols-2">
                     {[
-                      { title: 'Person 1 · full scene', slot: 'a' as const, lora: loraMainName, gender: genderA, setGender: setGenderA, trigger: triggerA, appearance: appearanceA, setAppearance: setAppearanceA, setTrigger: setTriggerA, accent: 'sky' },
-                      { title: 'Person 2 · the change', slot: 'b' as const, lora: loraDetailName, gender: genderB, setGender: setGenderB, trigger: triggerB, appearance: appearanceB, setAppearance: setAppearanceB, setTrigger: setTriggerB, accent: 'emerald' },
+                      { role: 'Person 1 — base scene', slot: 'a' as const, lora: loraMainName, gender: genderA, setGender: setGenderA, trigger: triggerA, appearance: appearanceA, setAppearance: setAppearanceA, setTrigger: setTriggerA, accent: 'sky' },
+                      { role: 'Person 2 — the swap-in', slot: 'b' as const, lora: loraDetailName, gender: genderB, setGender: setGenderB, trigger: triggerB, appearance: appearanceB, setAppearance: setAppearanceB, setTrigger: setTriggerB, accent: 'emerald' },
                     ].map((p) => (
                       <div key={p.slot} className={`rounded-lg border p-2.5 ${p.accent === 'sky' ? 'border-sky-400/20 bg-sky-400/[0.03]' : 'border-emerald-400/20 bg-emerald-400/[0.03]'}`}>
-                        <div className="mb-2 flex items-center justify-between gap-2">
-                          <div className="text-xs font-semibold text-white/75">{p.title}</div>
-                          <div className="flex items-center gap-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="text-xs font-semibold text-white/75">{p.role}</div>
+                            {p.lora
+                              ? <div className="mt-0.5 truncate text-[10px] text-white/40">{shortLoraLabel(p.lora)}{p.trigger ? <> · <span className="font-mono text-white/60">{p.trigger}</span></> : ' · no sheet'}</div>
+                              : <div className="mt-0.5 text-[10px] text-white/25">Pick this LoRA above ↑</div>}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1.5">
                             <select value={p.gender} onChange={(e) => p.setGender(e.target.value)} className={`${inputBase} h-7 w-24 py-0`}>
                               {GENDERS.map((g) => <option key={g} value={g}>{g}</option>)}
                             </select>
                             <button
-                              title="Reload description from the LoRA's sheet"
+                              title="Reload this LoRA's description from its sheet"
                               onClick={() => void loadSheet(p.lora, p.slot, p.setTrigger, p.setAppearance, { force: true })}
                               disabled={!p.lora || sheetLoading[p.slot]}
                               className={`${buttonBase} h-7 border-white/10 bg-white/[0.04] px-2 py-0 text-white/60 hover:bg-white/[0.08]`}
@@ -585,16 +590,6 @@ export const ZImageDualLoraPage = () => {
                             </button>
                           </div>
                         </div>
-                        {p.lora
-                          ? <div className="mb-1.5 text-[10px] text-white/40">{shortLoraLabel(p.lora)}{p.trigger ? <> · trigger <span className="font-mono text-white/60">{p.trigger}</span></> : ' · no sheet found'}</div>
-                          : <div className="mb-1.5 text-[10px] text-white/25">Pick this person's LoRA above ↑</div>}
-                        <textarea
-                          value={p.appearance}
-                          onChange={(e) => p.setAppearance(e.target.value)}
-                          rows={5}
-                          placeholder="Appearance description (auto-loads from the LoRA sheet)…"
-                          className={`${inputBase} resize-none text-[11px] leading-relaxed`}
-                        />
                       </div>
                     ))}
                   </div>
@@ -624,25 +619,31 @@ export const ZImageDualLoraPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <PromptAssistant
-                    context="zimage"
-                    value={mainPrompt}
-                    onChange={setMainPrompt}
-                    label="Full Scene Prompt"
-                    minRows={5}
-                    accent="sky"
-                    placeholder="Prompt for the first image with both people..."
-                  />
-                  <PromptAssistant
-                    context="zimage"
-                    value={detailPrompt}
-                    onChange={setDetailPrompt}
-                    label="Selected Person Prompt"
-                    minRows={3}
-                    accent="emerald"
-                    placeholder="Prompt used when refining the chosen person..."
-                    enableCaption={false}
-                  />
+                  <div>
+                    <PromptAssistant
+                      context="zimage"
+                      value={mainPrompt}
+                      onChange={setMainPrompt}
+                      label="1 · Full Scene Prompt (the main image)"
+                      minRows={5}
+                      accent="sky"
+                      placeholder="The whole image with both people — setting, who's where, what they wear. e.g. 'two people on a crowded bus, a woman on the left in a red coat, a man on the right in a suit...'"
+                    />
+                    <p className="mt-1 text-[10px] text-white/30">This generates the base image with <span className="text-sky-300/70">Person 1</span>'s LoRA. Describe the full scene here.</p>
+                  </div>
+                  <div>
+                    <PromptAssistant
+                      context="zimage"
+                      value={detailPrompt}
+                      onChange={setDetailPrompt}
+                      label="2 · Swap Prompt (repaint the chosen person)"
+                      minRows={3}
+                      accent="emerald"
+                      placeholder="What the selected person should become — describe Person 2. e.g. 'a blonde woman in a blue dress, smiling'"
+                      enableCaption={false}
+                    />
+                    <p className="mt-1 text-[10px] text-white/30">After the scene renders, the person you pick (left/right below) is repainted with <span className="text-emerald-300/70">Person 2</span>'s LoRA using this prompt.</p>
+                  </div>
                   <label className="block space-y-1 text-[11px] font-semibold uppercase tracking-wide text-white/45">
                     Negative
                     <textarea value={negativePrompt} onChange={(e) => setNegativePrompt(e.target.value)} rows={2} className={`${inputBase} resize-none`} />
