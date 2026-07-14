@@ -504,7 +504,12 @@ export function Wan21Scail2Page() {
                           }}
                         />
                         {clipDuration > 0 && (
-                          <div className="rounded-lg border border-white/10 bg-black/30 p-2.5">
+                          <div
+                            className="rounded-lg border border-white/10 bg-black/30 p-2.5"
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                          >
                             <div className="mb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
                               <span>Trim motion clip</span>
                               <span className="font-mono text-zinc-400">{trimStart.toFixed(1)}s → {trimEnd.toFixed(1)}s · {(trimEnd - trimStart).toFixed(1)}s ({frameLength}f)</span>
