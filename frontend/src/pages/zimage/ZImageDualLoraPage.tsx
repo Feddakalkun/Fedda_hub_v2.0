@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   CircleDot,
   Download,
-  Eraser,
   Image as ImageIcon,
   Loader2,
   Lock,
@@ -20,17 +19,6 @@ import { useToast } from '../../components/ui/Toast';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { inputBase } from '../../lib/styles';
 
-type BoxSource = 'none' | 'detected' | 'fallback' | 'manual';
-
-type DualBox = {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-};
-
-type DragPoint = { x: number; y: number };
-
 type StageStatus = {
   success: boolean;
   status?: 'pending' | 'running' | 'completed' | 'not_found';
@@ -39,11 +27,6 @@ type StageStatus = {
   detected_boxes?: number[][];
   raw_outputs?: Record<string, unknown>;
 };
-
-const TARGET_CHOICES = [
-  { label: 'Person 1', hint: 'left side', side: 'left' },
-  { label: 'Person 2', hint: 'right side', side: 'right' },
-];
 
 const GENDERS = ['woman', 'man'];
 const SCENES = [
@@ -81,64 +64,6 @@ const shortLoraLabel = (name: string) => (name.replace(/\\/g, '/').split('/').po
 
 const buttonBase = 'inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-45';
 const panelBase = 'rounded-lg border border-white/10 bg-[#0d0e12]';
-
-function choosePreferredBoxIndex(boxes: DualBox[], phrase: string) {
-  if (boxes.length === 0) return -1;
-  if (boxes.length === 1) return 0;
-  const lower = phrase.toLowerCase();
-  const wantsLeft = lower.includes('left');
-  const wantsRight = lower.includes('right');
-  if (!wantsLeft && !wantsRight) return 0;
-
-  let bestIndex = 0;
-  let bestCenter = (boxes[0].x1 + boxes[0].x2) / 2;
-  boxes.forEach((box, index) => {
-    const center = (box.x1 + box.x2) / 2;
-    if ((wantsLeft && center < bestCenter) || (wantsRight && center > bestCenter)) {
-      bestIndex = index;
-      bestCenter = center;
-    }
-  });
-  return bestIndex;
-}
-
-function extractBoxesFromUnknown(value: unknown): DualBox[] {
-  const boxes: DualBox[] = [];
-  const seen = new Set<string>();
-
-  const add = (x1: number, y1: number, x2: number, y2: number) => {
-    if (!Number.isFinite(x1) || !Number.isFinite(y1) || !Number.isFinite(x2) || !Number.isFinite(y2)) return;
-    if (x2 <= x1 || y2 <= y1) return;
-    const key = `${x1.toFixed(1)}:${y1.toFixed(1)}:${x2.toFixed(1)}:${y2.toFixed(1)}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    boxes.push({ x1, y1, x2, y2 });
-  };
-
-  const walk = (v: unknown) => {
-    if (Array.isArray(v)) {
-      if (v.length >= 4) {
-        const [a, b, c, d] = v.map(Number);
-        if ([a, b, c, d].every(Number.isFinite)) add(a, b, c, d);
-      }
-      v.forEach(walk);
-      return;
-    }
-    if (v && typeof v === 'object') {
-      const obj = v as Record<string, unknown>;
-      if (['x1', 'y1', 'x2', 'y2'].every((k) => typeof obj[k] !== 'undefined')) {
-        add(Number(obj.x1), Number(obj.y1), Number(obj.x2), Number(obj.y2));
-      }
-      if (['left', 'top', 'right', 'bottom'].every((k) => typeof obj[k] !== 'undefined')) {
-        add(Number(obj.left), Number(obj.top), Number(obj.right), Number(obj.bottom));
-      }
-      Object.values(obj).forEach(walk);
-    }
-  };
-
-  walk(value);
-  return boxes;
-}
 
 async function pollPrompt(promptId: string, workflowId: string, timeoutMs = 300000): Promise<StageStatus> {
   const start = Date.now();
@@ -194,9 +119,7 @@ export const ZImageDualLoraPage = () => {
   const [sheetLoading, setSheetLoading] = useState<{ a: boolean; b: boolean }>({ a: false, b: false });
 
   const [mainPrompt, setMainPrompt] = usePersistentState('zimage_dual_main_prompt', '');
-  const [detailPrompt, setDetailPrompt] = usePersistentState('zimage_dual_detail_prompt', '');
   const [negativePrompt, setNegativePrompt] = usePersistentState('zimage_dual_negative_prompt', 'blurry, low quality, bad anatomy, deformed, extra limbs, distorted face, plastic skin, split image, split screen, collage, diptych, two separate photos, different backgrounds, panel border, seam down the middle');
-  const [detectionPhrase, setDetectionPhrase] = usePersistentState('zimage_dual_detection_phrase', 'person on right');
 
   const [lockedSeed, setLockedSeed] = usePersistentState<number>('zimage_dual_locked_seed', randomSeed());
   const [seedLocked, setSeedLocked] = usePersistentState<boolean>('zimage_dual_seed_locked', false);
@@ -205,33 +128,11 @@ export const ZImageDualLoraPage = () => {
   const [beforeImageUrl, setBeforeImageUrl] = usePersistentState<string | null>('zimage_dual_before_image', null);
   const [finalImageUrl, setFinalImageUrl] = usePersistentState<string | null>('zimage_dual_final_image', null);
 
-  const [detectedBoxes, setDetectedBoxes] = usePersistentState<DualBox[]>('zimage_dual_boxes', []);
-  const [selectedBoxIndex, setSelectedBoxIndex] = usePersistentState<number>('zimage_dual_selected_box', -1);
-  const [boxSource, setBoxSource] = usePersistentState<BoxSource>('zimage_dual_box_source', 'none');
-
   const [runningWorkflow, setRunningWorkflow] = useState(false);
   const [availableLoras, setAvailableLoras] = useState<string[]>([]);
-  const [manualMarkMode, setManualMarkMode] = useState(false);
-  const [dragStart, setDragStart] = useState<DragPoint | null>(null);
-  const [dragCurrent, setDragCurrent] = useState<DragPoint | null>(null);
-  const [notice, setNotice] = useState('');
 
-  const imageRef = useRef<HTMLImageElement | null>(null);
-  const [naturalSize, setNaturalSize] = useState({ w: 1, h: 1 });
-
-  const selectedBox = selectedBoxIndex >= 0 ? detectedBoxes[selectedBoxIndex] : undefined;
   const isRunning = runningWorkflow;
   const canRun = !!loraMainName && !!loraDetailName && loraMainStrength > 0 && loraDetailStrength > 0;
-
-  const draftBox = useMemo(() => {
-    if (!dragStart || !dragCurrent) return null;
-    return {
-      x1: Math.min(dragStart.x, dragCurrent.x),
-      y1: Math.min(dragStart.y, dragCurrent.y),
-      x2: Math.max(dragStart.x, dragCurrent.x),
-      y2: Math.max(dragStart.y, dragCurrent.y),
-    };
-  }, [dragCurrent, dragStart]);
 
   useEffect(() => {
     comfyService.getLoras().then((all) => {
@@ -288,29 +189,6 @@ export const ZImageDualLoraPage = () => {
     }
   }, [loraDetailName]);
 
-  const buildFallbackBoxes = (w: number, h: number, phrase: string) => {
-    const left: DualBox = { x1: w * 0.06, y1: h * 0.08, x2: w * 0.49, y2: h * 0.96 };
-    const right: DualBox = { x1: w * 0.51, y1: h * 0.08, x2: w * 0.94, y2: h * 0.96 };
-    const center: DualBox = { x1: w * 0.18, y1: h * 0.08, x2: w * 0.82, y2: h * 0.96 };
-    const lower = phrase.toLowerCase();
-    if (lower.includes('left')) return [left, right];
-    if (lower.includes('right')) return [right, left];
-    return [left, right, center];
-  };
-
-  const eventToNaturalPoint = (e: ReactMouseEvent): DragPoint | null => {
-    const img = imageRef.current;
-    if (!img) return null;
-    const rect = img.getBoundingClientRect();
-    if (!rect.width || !rect.height || naturalSize.w <= 1 || naturalSize.h <= 1) return null;
-    const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
-    const y = Math.min(Math.max(e.clientY - rect.top, 0), rect.height);
-    return {
-      x: (x / rect.width) * naturalSize.w,
-      y: (y / rect.height) * naturalSize.h,
-    };
-  };
-
   // Build the scene + refine prompts straight from the two character sheets.
   const describe = (trigger: string, gender: string, appearance: string) =>
     [trigger.trim(), gender.trim(), appearance.trim()].filter(Boolean).join(', ');
@@ -321,43 +199,8 @@ export const ZImageDualLoraPage = () => {
     const plural = genderA === genderB ? `two ${genderA}s` : 'two people';
     // Lead with ONE shared scene so Z-Image renders a single photo (not a diptych).
     const base = `a single candid photograph of ${plural} standing close together in the same place, ${scene}, one shared continuous background, same lighting and same camera angle, left person: ${left}; right person: ${right}, both fully in frame, natural realistic proportions, ${style}, one seamless image`;
-    const onLeft = detectionPhrase.toLowerCase().includes('left');
-    const side = onLeft ? 'left' : 'right';
-    const target = onLeft ? left : right;
-    const detail = `refine only the ${side} person inside the mask, preserve the other person unchanged, preserve pose and composition, ${target}, natural skin texture, coherent face, realistic lighting`;
     setMainPrompt(base);
-    setDetailPrompt(detail);
-    return { base, detail };
-  };
-
-  const setDetectionTarget = (phrase: string) => {
-    setDetectionPhrase(phrase);
-    if (detectedBoxes.length > 0) {
-      setSelectedBoxIndex(choosePreferredBoxIndex(detectedBoxes, phrase));
-    }
-  };
-
-  const clearSelection = () => {
-    setDetectedBoxes([]);
-    setSelectedBoxIndex(-1);
-    setBoxSource('none');
-    setManualMarkMode(false);
-    setDragStart(null);
-    setDragCurrent(null);
-    setNotice('');
-  };
-
-  const applyFallbackBoxes = () => {
-    if (!baseImageUrl || naturalSize.w <= 1 || naturalSize.h <= 1) {
-      toast('Preview must load before auto-mark.', 'info');
-      return;
-    }
-    const boxes = buildFallbackBoxes(naturalSize.w, naturalSize.h, detectionPhrase);
-    setDetectedBoxes(boxes);
-    setSelectedBoxIndex(choosePreferredBoxIndex(boxes, detectionPhrase));
-    setBoxSource('fallback');
-    setManualMarkMode(false);
-    setNotice('Auto-mark fallback boxes are active.');
+    return { base };
   };
 
   // Per-person face-refine prompts (left = Person 1 / LoRA A, right = Person 2 / LoRA B).
@@ -370,13 +213,6 @@ export const ZImageDualLoraPage = () => {
     base: mainPrompt.trim() || composePrompts().base,
     ...personPrompts(),
   });
-
-  const targetPhraseForSide = (side: string) => {
-    const gender = side === 'left' ? genderA : genderB;
-    return `${side} ${gender || 'person'}`;
-  };
-
-  const selectedTargetSide = detectionPhrase.toLowerCase().includes('left') ? 'left' : 'right';
 
   const registerWorkflowNodeMap = async (workflowId: string) => {
     try {
@@ -452,40 +288,13 @@ export const ZImageDualLoraPage = () => {
       if (!finalImage) throw new Error('No refined image returned');
       setFinalImageUrl(comfyService.getImageUrl(finalImage));
 
-      const directBoxes = (done.detected_boxes || []).map((b) => ({ x1: Number(b[0]), y1: Number(b[1]), x2: Number(b[2]), y2: Number(b[3]) }));
-      const rawBoxes = extractBoxesFromUnknown(done.raw_outputs || {});
-      const seen = new Set<string>();
-      const boxes = [...directBoxes, ...rawBoxes]
-        .filter((box) => [box.x1, box.y1, box.x2, box.y2].every(Number.isFinite))
-        .filter((box) => {
-          const key = `${Math.round(box.x1)}:${Math.round(box.y1)}:${Math.round(box.x2)}:${Math.round(box.y2)}`;
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
-
-      if (boxes.length) {
-        setDetectedBoxes(boxes);
-        setSelectedBoxIndex(choosePreferredBoxIndex(boxes, detectionPhrase));
-        setBoxSource('detected');
-        setNotice('');
-        toast(`Dual LoRA image finished. Found ${boxes.length} candidate box(es).`, 'success');
-      } else {
-        setNotice('Dual LoRA image finished. Detection returned no preview boxes.');
-        toast('Dual LoRA image finished.', 'success');
-      }
+      toast('Dual LoRA image finished.', 'success');
     } catch (err: any) {
       toast(err.message || 'Dual LoRA workflow failed', 'error');
     } finally {
       setRunningWorkflow(false);
     }
   };
-
-  const selectedLabel = useMemo(() => {
-    if (!selectedBox) return 'No person selected';
-    const source = boxSource === 'detected' ? 'Detected' : boxSource === 'manual' ? 'Manual' : 'Auto-marked';
-    return `${source} person #${selectedBoxIndex + 1}`;
-  }, [boxSource, selectedBox, selectedBoxIndex]);
 
   const loraOptions = availableLoras.length ? availableLoras : [loraMainName, loraDetailName].filter(Boolean);
 
@@ -686,19 +495,6 @@ export const ZImageDualLoraPage = () => {
                     />
                     <p className="mt-1 text-[10px] text-white/30">This generates the base image with <span className="text-sky-300/70">Person 1</span>'s LoRA. Describe the full scene here.</p>
                   </div>
-                  <div>
-                    <PromptAssistant
-                      context="zimage"
-                      value={detailPrompt}
-                      onChange={setDetailPrompt}
-                      label="2 · Swap Prompt (repaint the chosen person)"
-                      minRows={3}
-                      accent="emerald"
-                      placeholder="What the selected person should become — describe Person 2. e.g. 'a blonde woman in a blue dress, smiling'"
-                      enableCaption={false}
-                    />
-                    <p className="mt-1 text-[10px] text-white/30">After the scene renders, the person you pick (left/right below) is repainted with <span className="text-emerald-300/70">Person 2</span>'s LoRA using this prompt.</p>
-                  </div>
                   <label className="block space-y-1 text-[11px] font-semibold uppercase tracking-wide text-white/45">
                     Negative
                     <textarea value={negativePrompt} onChange={(e) => setNegativePrompt(e.target.value)} rows={2} className={`${inputBase} resize-none`} />
@@ -722,12 +518,7 @@ export const ZImageDualLoraPage = () => {
                     {runningWorkflow ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
                     Create Dual LoRA Image
                   </button>
-                  <button onClick={clearSelection} className={`${buttonBase} border-white/10 bg-white/[0.03] text-white/60 hover:bg-white/[0.07]`}>
-                    <Eraser className="h-3.5 w-3.5" />
-                    Clear Boxes
-                  </button>
                 </div>
-                <div className="text-xs text-white/45">{selectedLabel}</div>
               </div>
 
               <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -736,84 +527,10 @@ export const ZImageDualLoraPage = () => {
                     <div className="flex h-full items-start justify-center">
                       <div className="relative inline-block max-w-full">
                         <img
-                          ref={imageRef}
                           src={baseImageUrl}
                           alt="Base"
                           className="max-h-[620px] rounded-lg border border-white/10 object-contain"
-                          onLoad={(e) => {
-                            const img = e.currentTarget;
-                            setNaturalSize({ w: img.naturalWidth || 1, h: img.naturalHeight || 1 });
-                          }}
                         />
-                        {manualMarkMode && (
-                          <div
-                            className="absolute inset-0 cursor-crosshair"
-                            onMouseDown={(e) => {
-                              const point = eventToNaturalPoint(e);
-                              if (!point) return;
-                              setDragStart(point);
-                              setDragCurrent(point);
-                            }}
-                            onMouseMove={(e) => {
-                              if (!dragStart) return;
-                              const point = eventToNaturalPoint(e);
-                              if (point) setDragCurrent(point);
-                            }}
-                            onMouseUp={(e) => {
-                              if (!dragStart) return;
-                              const point = eventToNaturalPoint(e);
-                              setDragStart(null);
-                              setDragCurrent(null);
-                              if (!point) return;
-                              const box = {
-                                x1: Math.min(dragStart.x, point.x),
-                                y1: Math.min(dragStart.y, point.y),
-                                x2: Math.max(dragStart.x, point.x),
-                                y2: Math.max(dragStart.y, point.y),
-                              };
-                              const minSize = Math.max(naturalSize.w, naturalSize.h) * 0.03;
-                              if (box.x2 - box.x1 < minSize || box.y2 - box.y1 < minSize) {
-                                toast('Manual box too small.', 'error');
-                                return;
-                              }
-                              setDetectedBoxes([box]);
-                              setSelectedBoxIndex(0);
-                              setBoxSource('manual');
-                              setManualMarkMode(false);
-                              setNotice('Manual person box selected.');
-                            }}
-                          />
-                        )}
-
-                        {detectedBoxes.map((box, index) => {
-                          const active = index === selectedBoxIndex;
-                          return (
-                            <button
-                              key={`${index}-${Math.round(box.x1)}-${Math.round(box.y1)}`}
-                              onClick={() => setSelectedBoxIndex(index)}
-                              className={`absolute rounded-sm border-2 transition ${active ? 'border-white bg-white/15 shadow-[0_0_0_1px_rgba(0,0,0,0.8)]' : 'border-white/45 bg-white/5 hover:bg-white/10'}`}
-                              style={{
-                                left: `${(box.x1 / naturalSize.w) * 100}%`,
-                                top: `${(box.y1 / naturalSize.h) * 100}%`,
-                                width: `${((box.x2 - box.x1) / naturalSize.w) * 100}%`,
-                                height: `${((box.y2 - box.y1) / naturalSize.h) * 100}%`,
-                              }}
-                              title={`Person box ${index + 1}`}
-                            />
-                          );
-                        })}
-
-                        {draftBox && (
-                          <div
-                            className="pointer-events-none absolute rounded-sm border-2 border-white bg-white/10"
-                            style={{
-                              left: `${(draftBox.x1 / naturalSize.w) * 100}%`,
-                              top: `${(draftBox.y1 / naturalSize.h) * 100}%`,
-                              width: `${((draftBox.x2 - draftBox.x1) / naturalSize.w) * 100}%`,
-                              height: `${((draftBox.y2 - draftBox.y1) / naturalSize.h) * 100}%`,
-                            }}
-                          />
-                        )}
                       </div>
                     </div>
                   ) : isRunning && previewUrl ? (
@@ -838,62 +555,7 @@ export const ZImageDualLoraPage = () => {
 
                 <aside className="border-t border-white/10 bg-[#0b0c10] p-3 xl:border-l xl:border-t-0">
                   <div className="space-y-3">
-                    <div>
-                      <div className="mb-2">
-                        <div className="text-xs font-semibold uppercase tracking-wide text-white/45">Person To Refine</div>
-                        <p className="mt-1 text-[11px] text-white/30">Pick which side should receive Person 2's LoRA during the built-in mask/refine step.</p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {TARGET_CHOICES.map((choice) => (
-                          <button
-                            key={choice.side}
-                            onClick={() => setDetectionTarget(targetPhraseForSide(choice.side))}
-                            className={`${buttonBase} flex-col gap-0.5 py-2.5 ${selectedTargetSide === choice.side ? 'border-white/25 bg-white/12 text-white' : 'border-white/10 bg-white/[0.03] text-white/55 hover:bg-white/[0.07]'}`}
-                          >
-                            <span>{choice.label}</span>
-                            <span className="text-[9px] font-normal uppercase tracking-wide text-white/35">{choice.hint} / {choice.side === 'left' ? genderA || 'person' : genderB || 'person'}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <button onClick={applyFallbackBoxes} disabled={!baseImageUrl} className={`${buttonBase} border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08]`}>
-                        Auto-Mark Person
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (!baseImageUrl) return;
-                          setManualMarkMode((value) => !value);
-                          setDragStart(null);
-                          setDragCurrent(null);
-                          setNotice(manualMarkMode ? '' : 'Manual mark mode active.');
-                        }}
-                        disabled={!baseImageUrl}
-                        className={`${buttonBase} ${manualMarkMode ? 'border-white/25 bg-white/12 text-white' : 'border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08]'}`}
-                      >
-                        Manual Box
-                      </button>
-                    </div>
-
-                    <div className="rounded-lg border border-white/10 bg-black/25 p-2.5 text-xs text-white/55">
-                      <div className="flex justify-between">
-                        <span>Person boxes</span>
-                        <span>{detectedBoxes.length}</span>
-                      </div>
-                      <div className="mt-1 flex justify-between">
-                        <span>Selection</span>
-                        <span>{boxSource}</span>
-                      </div>
-                      <div className="mt-1 flex justify-between">
-                        <span>Chosen</span>
-                        <span>{selectedBoxIndex >= 0 ? `#${selectedBoxIndex + 1}` : '-'}</span>
-                      </div>
-                    </div>
-
-                    {notice && <div className="rounded-lg border border-white/10 bg-white/[0.03] p-2.5 text-xs text-white/55">{notice}</div>}
-
-                    {finalImageUrl && (
+                      {finalImageUrl && (
                       <div className="space-y-2">
                         <div className="text-xs font-semibold uppercase tracking-wide text-white/45">Finished Image</div>
                         <img src={finalImageUrl} alt="Final refined" className="rounded-lg border border-white/10" />

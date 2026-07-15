@@ -245,12 +245,12 @@ export function Wan21SteadyDancerPage() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [isGeneratingPose, setIsGeneratingPose] = useState(false);
   const [isImportingPose, setIsImportingPose] = useState(false);
-  const [isRecoveringPose, setIsRecoveringPose] = useState(false);
 
   const [videoDuration, setVideoDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
+  const [motionVideoDimensions, setMotionVideoDimensions] = useState<{ width: number; height: number } | null>(null);
 
   const [prompt, setPrompt] = usePersistentState('wan21sd_prompt', 'a cinematic dance video, natural movement, realistic lighting');
   const [width, setWidth] = usePersistentState('wan21sd_width', 480);
@@ -272,8 +272,8 @@ export function Wan21SteadyDancerPage() {
   const [controlMode, setControlMode] = usePersistentState('wan21sd_control_mode', 2);
   const [controlStyle, setControlStyle] = usePersistentState('wan21sd_control_style', 'No Style');
   const [controlStrength, setControlStrength] = usePersistentState('wan21sd_control_strength', 0.7);
-  const [poseWidth, setPoseWidth] = usePersistentState('wan21sd_pose_width', 1500);
-  const [poseHeight, setPoseHeight] = usePersistentState('wan21sd_pose_height', 1500);
+  const [poseWidth, setPoseWidth] = usePersistentState('wan21sd_pose_width', 0);
+  const [poseHeight, setPoseHeight] = usePersistentState('wan21sd_pose_height', 0);
   const [poseSteps, setPoseSteps] = usePersistentState('wan21sd_pose_steps', 9);
   const [poseCfg, setPoseCfg] = usePersistentState('wan21sd_pose_cfg', 1);
   const [poseDenoise, setPoseDenoise] = usePersistentState('wan21sd_pose_denoise', 1);
@@ -298,6 +298,23 @@ export function Wan21SteadyDancerPage() {
   const finalMotionFile = trimmedMotionFile || motionVideoFile;
   const clipLength = Math.max(0, endTime - startTime);
   const requestedFrames = Math.round(Number(fps || 0) * Number(videoLength || 0));
+  const poseResolutionHint = useMemo(() => {
+    if (motionVideoDimensions?.width && motionVideoDimensions?.height) {
+      return `${motionVideoDimensions.width} × ${motionVideoDimensions.height}`;
+    }
+    if (Number(width || 0) > 0 && Number(height || 0) > 0) return `${width} × ${height}`;
+    return 'input video dimensions';
+  }, [height, motionVideoDimensions, width]);
+  const effectivePoseWidth = useMemo(() => {
+    if (Number(poseWidth) > 0) return Number(poseWidth);
+    if (motionVideoDimensions?.width) return motionVideoDimensions.width;
+    return Number(width || 0) || 1024;
+  }, [motionVideoDimensions, poseWidth, width]);
+  const effectivePoseHeight = useMemo(() => {
+    if (Number(poseHeight) > 0) return Number(poseHeight);
+    if (motionVideoDimensions?.height) return motionVideoDimensions.height;
+    return Number(height || 0) || 1024;
+  }, [height, motionVideoDimensions, poseHeight]);
   const subjectModeLabel = finalSubjectFile
     ? (posePipelineStarted ? 'Using approved pose image' : 'Using direct subject image')
     : (posePipelineStarted ? 'Approve a generated pose image before final run' : 'Add a subject image');
@@ -504,11 +521,21 @@ export function Wan21SteadyDancerPage() {
   };
 
   const onVideoLoaded = () => {
-    const duration = videoRef.current?.duration || 0;
+    const video = videoRef.current;
+    const duration = video?.duration || 0;
+    const videoWidth = video?.videoWidth || 0;
+    const videoHeight = video?.videoHeight || 0;
     setVideoDuration(duration);
     setCurrentTime(0);
     setStartTime(0);
     setEndTime(Math.min(duration, 8));
+    if (videoWidth > 0 && videoHeight > 0) {
+      setMotionVideoDimensions({ width: videoWidth, height: videoHeight });
+      if (!poseWidth || !poseHeight) {
+        setPoseWidth(videoWidth);
+        setPoseHeight(videoHeight);
+      }
+    }
   };
 
   const getSeconds = useCallback((event: MouseEvent | React.MouseEvent) => {
@@ -642,28 +669,6 @@ export function Wan21SteadyDancerPage() {
     return imported;
   };
 
-  const recoverLatestPoseOutput = async (silent = false) => {
-    if (isRecoveringPose) return false;
-    setIsRecoveringPose(true);
-    try {
-      const res = await fetch(`${BACKEND_API.BASE_URL}/api/media/import-latest-output`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subfolder: 'IMAGE/Z-IMAGE' }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.detail || 'No Z-Image output found');
-      setPoseImages([{ filename: data.filename, subfolder: '', type: 'input' }]);
-      if (!silent) toast(`Recovered ${data.source_filename || 'latest Z-Image output'}`, 'success');
-      return true;
-    } catch (err: any) {
-      if (!silent) toast(err.message || 'Could not recover latest Z-Image output', 'error');
-      return false;
-    } finally {
-      setIsRecoveringPose(false);
-    }
-  };
-
   const generatePoseImage = async () => {
     if (!capturedFrameFile || isGeneratingPose) return;
     setIsGeneratingPose(true);
@@ -685,8 +690,8 @@ export function Wan21SteadyDancerPage() {
             style: controlStyle,
             control_mode: controlMode,
             control_strength: controlStrength,
-            width: poseWidth,
-            height: poseHeight,
+            width: effectivePoseWidth,
+            height: effectivePoseHeight,
             seed: poseSeed === -1 ? Math.floor(Math.random() * 10_000_000_000) : poseSeed,
             steps: poseSteps,
             cfg: poseCfg,
@@ -811,7 +816,7 @@ export function Wan21SteadyDancerPage() {
       hideOutputPane
       output={null}
     >
-      <div className="mx-auto max-w-7xl space-y-4 px-4 pb-8">
+      <div className="w-full space-y-4 px-2 pb-8 sm:px-4 lg:px-6">
         <SteadyVideoPreviewStrip
           currentVideo={currentVideo || history[0] || null}
           history={history}
@@ -820,15 +825,15 @@ export function Wan21SteadyDancerPage() {
         />
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-          <section className={panel}>
+          <section className={cn(panel, 'h-full')}>
             <StageHeader
               step="Stage 1"
               title="Motion Source"
               detail="Download or upload a motion clip, then select the usable section."
             />
-            <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
               <div className="space-y-3">
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <input
                     value={sourceUrl}
                     onChange={(event) => setSourceUrl(event.target.value)}
@@ -847,65 +852,75 @@ export function Wan21SteadyDancerPage() {
                   busy={uploadingMotion}
                   onFile={uploadMotion}
                 />
-                <div className="grid grid-cols-2 gap-2">
-                  <NeutralButton onClick={trimMotion} disabled={!motionVideoFile || isTrimming || endTime <= startTime}>
-                    {isTrimming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Scissors className="h-3.5 w-3.5" />}
-                    Trim Clip
-                  </NeutralButton>
-                  <NeutralButton onClick={captureFrame} disabled={!motionVideoFile || isCapturing}>
-                    {isCapturing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
-                    Capture Start
-                  </NeutralButton>
+                <div className="rounded-xl border border-white/10 bg-black/25 p-3 text-xs leading-relaxed text-zinc-500">
+                  Use the motion clip here as the source of movement. Trim it to the action you want, then capture a start frame so the pose stage can build your character from the same moment.
                 </div>
               </div>
 
               <div className="space-y-3">
-                <div className="overflow-hidden rounded-xl border border-white/10 bg-black">
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-black">
                   {sourceVideoUrl ? (
-                    <video
-                      ref={videoRef}
-                      src={sourceVideoUrl}
-                      className="aspect-video w-full object-contain"
-                      controls
-                      playsInline
-                      onLoadedMetadata={onVideoLoaded}
-                      onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
-                    />
+                    <div className="relative">
+                      <video
+                        ref={videoRef}
+                        src={sourceVideoUrl}
+                        className="aspect-video w-full object-contain"
+                        controls={false}
+                        playsInline
+                        onLoadedMetadata={onVideoLoaded}
+                        onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+                      />
+                      <button
+                        type="button"
+                        onClick={captureFrame}
+                        disabled={!motionVideoFile || isCapturing}
+                        className="absolute right-3 top-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-3 py-2 text-[11px] font-semibold text-zinc-200 transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isCapturing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
+                        Capture start frame
+                      </button>
+                      <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/10 bg-black/70 p-3 backdrop-blur">
+                        <div
+                          ref={trackRef}
+                          className="relative h-8 cursor-pointer rounded-full bg-white/[0.06]"
+                          onMouseDown={(event) => {
+                            const seconds = getSeconds(event);
+                            if (Math.abs(seconds - startTime) < Math.abs(seconds - endTime)) dragging.current = 'start';
+                            else dragging.current = 'end';
+                          }}
+                        >
+                          <div className="absolute inset-y-1 rounded-full bg-white/15" style={{ left: `${startPct}%`, width: `${Math.max(0, endPct - startPct)}%` }} />
+                          <div className="absolute inset-y-0 w-px bg-white/60" style={{ left: `${currentPct}%` }} />
+                          <button type="button" onMouseDown={() => { dragging.current = 'start'; }} className="absolute top-1/2 h-6 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-100" style={{ left: `${startPct}%` }} />
+                          <button type="button" onMouseDown={() => { dragging.current = 'end'; }} className="absolute top-1/2 h-6 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-100" style={{ left: `${endPct}%` }} />
+                        </div>
+                        <div className="mt-2 flex items-center justify-between text-[11px] text-zinc-400">
+                          <span>Start {fmtTime(startTime)}</span>
+                          <span>Clip {clipLength.toFixed(1)}s</span>
+                          <span>End {fmtTime(endTime)}</span>
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <div className="flex aspect-video items-center justify-center text-sm text-zinc-700">No motion source loaded</div>
                   )}
                 </div>
-                <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                  <div
-                    ref={trackRef}
-                    className="relative h-8 cursor-pointer rounded-full bg-white/[0.06]"
-                    onMouseDown={(event) => {
-                      const seconds = getSeconds(event);
-                      if (Math.abs(seconds - startTime) < Math.abs(seconds - endTime)) dragging.current = 'start';
-                      else dragging.current = 'end';
-                    }}
-                  >
-                    <div className="absolute top-1/2 h-2 -translate-y-1/2 rounded-full bg-white/15" style={{ left: `${startPct}%`, width: `${Math.max(0, endPct - startPct)}%` }} />
-                    <div className="absolute top-0 h-8 w-px bg-white/60" style={{ left: `${currentPct}%` }} />
-                    <button type="button" onMouseDown={() => { dragging.current = 'start'; }} className="absolute top-1/2 h-6 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-200" style={{ left: `${startPct}%` }} />
-                    <button type="button" onMouseDown={() => { dragging.current = 'end'; }} className="absolute top-1/2 h-6 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-200" style={{ left: `${endPct}%` }} />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-[11px] text-zinc-500">
-                    <span>Start {fmtTime(startTime)}</span>
-                    <span>Clip {clipLength.toFixed(1)}s</span>
-                    <span>End {fmtTime(endTime)}</span>
-                  </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <NeutralButton onClick={trimMotion} disabled={!motionVideoFile || isTrimming || endTime <= startTime}>
+                    {isTrimming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Scissors className="h-3.5 w-3.5" />}
+                    Trim clip
+                  </NeutralButton>
+                  {trimmedMotionFile ? <p className="text-[11px] text-zinc-500">Trimmed reference ready</p> : null}
                 </div>
-                {trimmedMotionFile ? <p className="text-[11px] text-zinc-500">Trimmed reference ready: {trimmedMotionFile}</p> : null}
               </div>
             </div>
           </section>
 
-          <section className={panel}>
+          <section className={cn(panel, 'h-full')}>
             <StageHeader
               step="Stage 2"
               title="Pose Frame"
-              detail="Direct upload is available before staging; captured pose runs require approval."
+              detail="This is your hand-off point. Capture a starting pose, then bring the character back into Z-Image as the subject."
             />
             <div className="grid gap-3 sm:grid-cols-[160px_1fr] xl:grid-cols-1">
               <div className="overflow-hidden rounded-xl border border-white/10 bg-black">
@@ -927,6 +942,8 @@ export function Wan21SteadyDancerPage() {
                   />
                 </Field>
                 <div className="rounded-xl border border-white/10 bg-black/25 p-3 text-xs leading-relaxed text-zinc-500">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">How this works</p>
+                  <p className="mb-2">The subject image is the character you want to animate. If you capture a pose first, use that as the starting point, then generate a new character image in Z-Image and bring it back here as the approved subject.</p>
                   {posePipelineStarted
                     ? 'Pose pipeline is active. Final run will only use an approved generated pose image.'
                     : 'Direct upload can run immediately, or capture a pose to start the staged pipeline.'}
@@ -981,10 +998,10 @@ export function Wan21SteadyDancerPage() {
                   <input type="number" value={poseSeed} onChange={(event) => setPoseSeed(Number(event.target.value))} className={inputBase} />
                 </Field>
                 <Field label="Width">
-                  <input type="number" min={512} step={64} value={poseWidth} onChange={(event) => setPoseWidth(Number(event.target.value))} className={inputBase} />
+                  <input type="number" min={512} step={64} value={poseWidth || 0} onChange={(event) => setPoseWidth(Number(event.target.value))} className={inputBase} />
                 </Field>
                 <Field label="Height">
-                  <input type="number" min={512} step={64} value={poseHeight} onChange={(event) => setPoseHeight(Number(event.target.value))} className={inputBase} />
+                  <input type="number" min={512} step={64} value={poseHeight || 0} onChange={(event) => setPoseHeight(Number(event.target.value))} className={inputBase} />
                 </Field>
                 <Field label="Steps">
                   <input type="number" min={1} max={40} value={poseSteps} onChange={(event) => setPoseSteps(Number(event.target.value))} className={inputBase} />
@@ -1005,6 +1022,16 @@ export function Wan21SteadyDancerPage() {
                   <input type="number" min={0} max={2} step={0.05} value={characterLoraStrength} onChange={(event) => setCharacterLoraStrength(Number(event.target.value))} className={inputBase} />
                 </Field>
               </div>
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3 text-[11px] leading-relaxed text-zinc-500">
+                <p className="font-semibold uppercase tracking-[0.18em] text-zinc-400">Pose hints</p>
+                <ul className="mt-2 space-y-1 text-zinc-500">
+                  <li>• Style: change this if the pose feels too stiff, too flat, or too stylized.</li>
+                  <li>• Strength: raise it if the pose is not matching the reference closely enough.</li>
+                  <li>• Seed: rerun with a different seed if the result is noisy or off.</li>
+                  <li>• Steps / CFG / Denoise: increase steps or lower denoise if the image looks blurry; lower CFG if the pose drifts.</li>
+                </ul>
+                <p className="mt-2 text-zinc-400">Default pose size uses the motion clip dimensions when available: {poseResolutionHint}.</p>
+              </div>
               <NeutralButton onClick={generatePoseImage} disabled={!capturedFrameFile || !posePrompt.trim() || isGeneratingPose} className="w-full py-2.5">
                 {isGeneratingPose ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
                 Generate Character Pose Image
@@ -1019,10 +1046,6 @@ export function Wan21SteadyDancerPage() {
               {poseImages.length === 0 ? (
                 <div className="flex min-h-[280px] flex-col items-center justify-center gap-3 rounded-xl border border-white/10 bg-black/30 px-6 text-center text-sm text-zinc-700">
                   <span>Generated pose candidates will appear here.</span>
-                  <NeutralButton onClick={() => recoverLatestPoseOutput(false)} disabled={isRecoveringPose}>
-                    {isRecoveringPose ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
-                    Recover latest Z-Image output
-                  </NeutralButton>
                 </div>
               ) : (
                 poseImages.map((image, index) => (
@@ -1039,7 +1062,7 @@ export function Wan21SteadyDancerPage() {
           </div>
         </section>
 
-        <section className={panel}>
+        <section className={cn(panel, 'h-full')}>
           <StageHeader
             step="Stage 4"
             title="Motion Transfer"
@@ -1050,15 +1073,28 @@ export function Wan21SteadyDancerPage() {
               <Field label="Steady Dancer prompt">
                 <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={4} className={cn(inputBase, 'resize-y leading-relaxed')} />
               </Field>
-              <div className="grid gap-3 sm:grid-cols-4">
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: 'Cinematic', value: 'a cinematic dance video, natural movement, realistic lighting' },
+                  { label: 'Street', value: 'energetic street dance, sharp motion, urban lighting, dynamic framing' },
+                  { label: 'Elegant', value: 'an elegant dance performance, graceful motion, soft cinematic lighting' },
+                ].map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => setPrompt(preset.value)}
+                    className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px] font-medium text-zinc-300 transition hover:border-white/25 hover:text-zinc-100"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
                 <Field label="Width">
                   <input type="number" min={256} step={16} value={width} onChange={(event) => setWidth(Number(event.target.value))} className={inputBase} />
                 </Field>
                 <Field label="Height">
                   <input type="number" min={256} step={16} value={height} onChange={(event) => setHeight(Number(event.target.value))} className={inputBase} />
-                </Field>
-                <Field label="Length">
-                  <input type="number" min={1} step={0.5} value={videoLength} onChange={(event) => setVideoLength(Number(event.target.value))} className={inputBase} />
                 </Field>
                 <Field label="FPS">
                   <input type="number" min={8} max={30} value={fps} onChange={(event) => setFps(Number(event.target.value))} className={inputBase} />
