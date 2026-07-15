@@ -1023,3 +1023,58 @@ commit -> push -> git checkout -- . && pull in install/app; user launches server
   (the old JSON is corrupted).
 - NEEDS BACKEND RESTART: workflow_api.json + modules.json are cached at startup.
 - Commit c9420bc, pushed + pulled into install tree.
+
+## 2026-07-13 → 07-15 - Big session: RunPod, Krea2, personas, Dual LoRA v2, UX
+
+Long multi-day session. Highlights (all pushed; HEAD = skin-gloss commit):
+
+**RunPod / infra**
+- Fixed pod running OLD UI: template pointed at abandoned image `fedda-runpod:runpod-dev`;
+  correct image is `ghcr.io/feddakalkun/fedda_hub_v2.0:latest`. Added `/version.txt`
+  build stamp + SHA build-arg so a pod's build is checkable.
+- Blackwell RTX PRO 6000 pod crash-looped: torch cu124 has no sm_120 kernels → switched
+  runpod Dockerfile to **cu128**. Then torch 2.11 TorchScript segfault via kornia →
+  `PYTORCH_JIT=0` in supervisord.conf; added supervisorctl RPC socket.
+- LTX Audio2Video: optional **upscale toggle** (ImageScaleBy OOMs on long clips) +
+  length cap 30s→600s (new `ltx-ai2v-noupscale` workflow).
+
+**THE big local fix — recurring 3090 OOM**
+- Root cause = ComfyUI's **cudaMallocAsync** allocator hoarding reserved VRAM (reserved
+  23.8GB vs peak-allocated 14.2GB = fragmentation). Fix: launch ComfyUI with
+  **`--disable-cuda-malloc`** (scripts/run.ps1). DO NOT REMOVE. Wrong turns tried +
+  reverted: `--reserve-vram`, `expandable_segments` (incompatible on Windows).
+  See memory `comfyui-oom-cudamallocasync.md`.
+
+**New models / cards**
+- Krea2 Turbo txt2img card (subgraph→API export). fp8 OOM'd on 3090 (fp8→bf16 on Ampere
+  during LoRA patch) → shipped **GGUF Q6_K** variant. venice card 38.
+- WAN 2.2 Img2Vid switched to the real single-shot graph (`img2vid-single-wan22` +gguf).
+
+**Prompt/LLM + UX**
+- Quick Build (zero-typing prompt composer) in PromptAssistant. Global recent-generations
+  strip (draggable, collapsible, portal lightbox). Ollama Models: user-chosen default
+  text/vision model + curated SFW/NSFW catalog. Library: Qwen tab. Z-Image txt2img:
+  1920x1088 default + orientation swap + presets. Qwen Reference Edit: img2img
+  Similarity (denoise) slider. `docs/v20/PROMPT_BRAIN.md` written.
+
+**Personas** — `config/personas.json`: 10 original AI personas (Emma/Nora/Sara/Sofie/
+  Emilie/Thea/Ingrid/Maja/Ida/Ella). Each = 2 face LoRAs + `Beautify-Supermodel @0.12`
+  + locked face prompt on Z-Image Turbo (nobody real, consistent by construction).
+  Copied ~12 more character LoRAs from H:/LoRAs/LoRA_Done into app/loras/app/. Style
+  LoRAs (Beautify, nicegirls) got .md sheets. Skin-gloss fix: anti-gloss default
+  negative + Beautify 0.22→0.12.
+
+**Dual LoRA v2 (major rebuild)** — replaced fragile single Florence-grounded detailer
+  (edited both / wrong / always-left) with: base 2-person gen → YOLO face/person detect →
+  Impact SEGSOrderedFilter sorts by x → **two separate DetailerForEach passes** (left=LoRA
+  A, right=LoRA B, isolated masks, per-person conditioning). Faces/Bodies toggle
+  (downloaded yolov8m.pt). workflow_api remapped; page sends person_a/person_b prompts.
+  VALIDATED faces path; bodies untested. Advanced quality controls + live sampling preview
+  added. VESTIGIAL (pending cleanup): side-picker / box-drawing / Swap-Prompt box.
+
+**Also**: WAN 2.1 Scail motion-clip start/end trim; lipsync workflows sdpa/fp16
+  (sageattn/fp16_fast unavailable); Reset UI button; global gallery mount.
+
+**PENDING backlog**: Steady Dancer full redesign; Scail inline Z-Image subject panel;
+  standardize big live preview everywhere; Dual LoRA dead-UI cleanup; per-person
+  face-restore LoRA + bodies-mode test.
