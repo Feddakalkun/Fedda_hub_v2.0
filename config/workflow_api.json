@@ -345,12 +345,6 @@
         "type": "string",
         "label": "Full Scene Prompt"
       },
-      "detail_prompt": {
-        "node_id": "9",
-        "input_key": "text",
-        "type": "string",
-        "label": "Selected Person Prompt"
-      },
       "negative": {
         "node_id": "10",
         "input_key": "text",
@@ -360,23 +354,12 @@
       "seed": {
         "node_ids": [
           "15",
-          "25"
+          "40",
+          "41"
         ],
         "input_key": "seed",
         "type": "number",
         "label": "Seed"
-      },
-      "detection_phrase": {
-        "node_id": "18",
-        "input_key": "text_input",
-        "type": "string",
-        "label": "Person To Refine"
-      },
-      "selected_box_index": {
-        "node_id": "19",
-        "input_key": "index",
-        "type": "number",
-        "label": "Selected Box Index"
       },
       "unet_name": {
         "node_id": "1",
@@ -427,7 +410,10 @@
         "label": "Person 2 LoRA Strength"
       },
       "detail_denoise": {
-        "node_id": "25",
+        "node_ids": [
+          "40",
+          "41"
+        ],
         "input_key": "denoise",
         "type": "number",
         "label": "Change Strength"
@@ -439,37 +425,62 @@
         "label": "Scene CFG"
       },
       "swap_cfg": {
-        "node_id": "25",
+        "node_ids": [
+          "40",
+          "41"
+        ],
         "input_key": "cfg",
         "type": "number",
-        "label": "Swap CFG"
+        "label": "Refine CFG"
       },
       "dual_steps": {
         "node_ids": [
           "15",
-          "25"
+          "40",
+          "41"
         ],
         "input_key": "steps",
         "type": "number",
         "label": "Steps"
       },
       "mask_feather": {
-        "node_id": "25",
+        "node_ids": [
+          "40",
+          "41"
+        ],
         "input_key": "noise_mask_feather",
         "type": "number",
         "label": "Mask feather"
       },
       "edge_feather": {
-        "node_id": "25",
+        "node_ids": [
+          "40",
+          "41"
+        ],
         "input_key": "feather",
         "type": "number",
         "label": "Edge feather"
       },
       "detail_size": {
-        "node_id": "25",
+        "node_ids": [
+          "40",
+          "41"
+        ],
         "input_key": "guide_size",
         "type": "number",
         "label": "Detail size"
+      },
+      "person_a_prompt": {
+        "node_id": "42",
+        "input_key": "text",
+        "type": "string",
+        "label": "Left person"
+      },
+      "person_b_prompt": {
+        "node_id": "43",
+        "input_key": "text",
+        "type": "string",
+        "label": "Right person"
       }
     }
   },

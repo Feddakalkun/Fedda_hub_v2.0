@@ -67,30 +67,6 @@
       "title": "5. LoRA Slot 2 - Detailer / Inpaint (e.g. character for the woman)"
     }
   },
-  "6": {
-    "inputs": {
-      "model": "gokaygokay/Florence-2-SD3-Captioner",
-      "precision": "bf16",
-      "attention": "sdpa",
-      "convert_to_safetensors": false
-    },
-    "class_type": "DownloadAndLoadFlorence2Model",
-    "_meta": {
-      "title": "6. Load Florence-2 Model (for object detection)"
-    }
-  },
-  "7": {
-    "inputs": {
-      "model": "sam2_hiera_base_plus.safetensors",
-      "segmentor": "single_image",
-      "device": "cuda",
-      "precision": "fp16"
-    },
-    "class_type": "DownloadAndLoadSAM2Model",
-    "_meta": {
-      "title": "7. Load SAM2 Model (for precise segmentation)"
-    }
-  },
   "8": {
     "inputs": {
       "text": "[YOUR MAIN PROMPT HERE - describe the full scene with two people]",
@@ -104,21 +80,6 @@
     "class_type": "Text Multiline",
     "_meta": {
       "title": "8. Main Positive Prompt (Full Scene Description)"
-    }
-  },
-  "9": {
-    "inputs": {
-      "text": "[YOUR DETAILER PROMPT HERE - describe the woman in detail]",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      }
-    },
-    "class_type": "Text Multiline",
-    "_meta": {
-      "title": "9. Detailer Positive Prompt (Woman-specific description)"
     }
   },
   "10": {
@@ -166,22 +127,6 @@
     "class_type": "CLIPTextEncode",
     "_meta": {
       "title": "12. CLIP Encode - Negative"
-    }
-  },
-  "13": {
-    "inputs": {
-      "text": [
-        "9",
-        0
-      ],
-      "clip": [
-        "5",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "13. CLIP Encode - Detailer Positive (uses LoRA 2)"
     }
   },
   "14": {
@@ -241,147 +186,113 @@
       "title": "16. VAE Decode - Main Image"
     }
   },
-  "17": {
+  "28": {
     "inputs": {
+      "filename_prefix": "main_before_detail",
       "images": [
         "16",
         0
       ]
     },
-    "class_type": "PreviewImage",
+    "class_type": "SaveImage",
     "_meta": {
-      "title": "17. Preview - Main Generated Image (before detail)"
+      "title": "28. Save Main Image (Before Detailer - for comparison)"
     }
   },
-  "18": {
+  "30": {
     "inputs": {
-      "text_input": "right woman",
-      "task": "caption_to_phrase_grounding",
-      "fill_mask": false,
-      "keep_model_loaded": false,
-      "max_new_tokens": 1024,
-      "num_beams": 3,
-      "do_sample": false,
-      "output_mask_select": "0",
-      "seed": 987654321098765,
+      "model_name": "bbox/face_yolov8m.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider",
+    "_meta": {
+      "title": "Face detector"
+    }
+  },
+  "31": {
+    "inputs": {
+      "bbox_detector": [
+        "30",
+        0
+      ],
       "image": [
         "16",
         0
       ],
-      "florence2_model": [
-        "6",
-        0
-      ]
+      "threshold": 0.45,
+      "dilation": 8,
+      "crop_factor": 3.0,
+      "drop_size": 10,
+      "labels": "all"
     },
-    "class_type": "Florence2Run",
+    "class_type": "BboxDetectorSEGS",
     "_meta": {
-      "title": "18. Florence-2 - Detect & Ground 'right woman'"
+      "title": "Detect faces"
     }
   },
-  "19": {
+  "32": {
     "inputs": {
-      "index": 0,
-      "batch": false,
-      "data": [
-        "18",
-        3
-      ]
+      "segs": [
+        "31",
+        0
+      ],
+      "target": "x1",
+      "order": false,
+      "take_start": 0,
+      "take_count": 1
     },
-    "class_type": "Florence2toCoordinates",
+    "class_type": "ImpactSEGSOrderedFilter",
     "_meta": {
-      "title": "19. Florence2 \u2192 BBox Coordinates"
+      "title": "LEFT face"
     }
   },
-  "20": {
+  "33": {
     "inputs": {
-      "keep_model_loaded": true,
-      "individual_objects": false,
-      "sam2_model": [
-        "7",
+      "segs": [
+        "31",
         0
       ],
-      "image": [
-        "18",
-        0
-      ],
-      "bboxes": [
-        "19",
+      "target": "x1",
+      "order": false,
+      "take_start": 1,
+      "take_count": 1
+    },
+    "class_type": "ImpactSEGSOrderedFilter",
+    "_meta": {
+      "title": "RIGHT face"
+    }
+  },
+  "42": {
+    "inputs": {
+      "text": "a woman, face",
+      "clip": [
+        "4",
         1
       ]
     },
-    "class_type": "Sam2Segmentation",
+    "class_type": "CLIPTextEncode",
     "_meta": {
-      "title": "20. SAM2 - Segment the Detected Woman"
+      "title": "Left person cond"
     }
   },
-  "21": {
+  "43": {
     "inputs": {
-      "erode_dilate": 25,
-      "fill_holes": 25,
-      "remove_isolated_pixels": 8,
-      "smooth": 0,
-      "blur": 0,
-      "mask": [
-        "20",
-        0
+      "text": "a woman, face",
+      "clip": [
+        "5",
+        1
       ]
     },
-    "class_type": "MaskFix+",
+    "class_type": "CLIPTextEncode",
     "_meta": {
-      "title": "21. MaskFix+ - Clean & Repair Mask"
+      "title": "Right person cond"
     }
   },
-  "22": {
+  "40": {
     "inputs": {
-      "expand": 2,
-      "tapered_corners": false,
-      "mask": [
-        "21",
-        0
-      ]
-    },
-    "class_type": "GrowMask",
-    "_meta": {
-      "title": "22. GrowMask - Expand Mask Slightly"
-    }
-  },
-  "23": {
-    "inputs": {
-      "kernel_size": 10,
-      "sigma": 10,
-      "mask": [
-        "22",
-        0
-      ]
-    },
-    "class_type": "ImpactGaussianBlurMask",
-    "_meta": {
-      "title": "23. Gaussian Blur Mask - Soft Edges"
-    }
-  },
-  "24": {
-    "inputs": {
-      "combined": true,
-      "crop_factor": 1.5,
-      "bbox_fill": false,
-      "drop_size": 10,
-      "contour_fill": false,
-      "mask": [
-        "23",
-        0
-      ]
-    },
-    "class_type": "MaskToSEGS",
-    "_meta": {
-      "title": "24. MaskToSEGS - Convert Mask to SEGS for Detailer"
-    }
-  },
-  "25": {
-    "inputs": {
-      "guide_size": 768,
+      "guide_size": 512,
       "guide_size_for": true,
       "max_size": 1024,
-      "seed": 600198461340710,
+      "seed": 0,
       "steps": 9,
       "cfg": 1.0,
       "sampler_name": "euler",
@@ -401,7 +312,61 @@
         0
       ],
       "segs": [
-        "24",
+        "32",
+        0
+      ],
+      "model": [
+        "4",
+        0
+      ],
+      "clip": [
+        "4",
+        1
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "positive": [
+        "42",
+        0
+      ],
+      "negative": [
+        "12",
+        0
+      ]
+    },
+    "class_type": "DetailerForEach",
+    "_meta": {
+      "title": "Refine LEFT (LoRA A)"
+    }
+  },
+  "41": {
+    "inputs": {
+      "guide_size": 512,
+      "guide_size_for": true,
+      "max_size": 1024,
+      "seed": 0,
+      "steps": 9,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "sgm_uniform",
+      "denoise": 0.75,
+      "feather": 5,
+      "noise_mask": true,
+      "force_inpaint": true,
+      "wildcard": "",
+      "cycle": 1,
+      "inpaint_model": false,
+      "noise_mask_feather": 20,
+      "tiled_encode": false,
+      "tiled_decode": false,
+      "image": [
+        "40",
+        0
+      ],
+      "segs": [
+        "33",
         0
       ],
       "model": [
@@ -417,7 +382,7 @@
         0
       ],
       "positive": [
-        "13",
+        "43",
         0
       ],
       "negative": [
@@ -427,45 +392,20 @@
     },
     "class_type": "DetailerForEach",
     "_meta": {
-      "title": "25. DetailerForEach - Refine Woman Area (uses LoRA 2)"
-    }
-  },
-  "26": {
-    "inputs": {
-      "images": [
-        "25",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "26. Preview - Final Refined Image (after detailer)"
+      "title": "Refine RIGHT (LoRA B)"
     }
   },
   "27": {
     "inputs": {
-      "filename_prefix": "final_refined",
       "images": [
-        "25",
+        "41",
         0
-      ]
+      ],
+      "filename_prefix": "final_refined"
     },
     "class_type": "SaveImage",
     "_meta": {
-      "title": "27. Save Final Refined Image"
-    }
-  },
-  "28": {
-    "inputs": {
-      "filename_prefix": "main_before_detail",
-      "images": [
-        "16",
-        0
-      ]
-    },
-    "class_type": "SaveImage",
-    "_meta": {
-      "title": "28. Save Main Image (Before Detailer - for comparison)"
+      "title": "Save"
     }
   }
 }

@@ -357,12 +357,16 @@ export const ZImageDualLoraPage = () => {
     setNotice('Auto-mark fallback boxes are active.');
   };
 
-  const ensurePromptText = () => {
-    if (mainPrompt.trim() && detailPrompt.trim()) {
-      return { base: mainPrompt.trim(), detail: detailPrompt.trim() };
-    }
-    return composePrompts();
-  };
+  // Per-person face-refine prompts (left = Person 1 / LoRA A, right = Person 2 / LoRA B).
+  const personPrompts = () => ({
+    personA: [describe(triggerA, genderA, appearanceA) || (genderA || 'woman'), 'natural detailed face, coherent'].join(', '),
+    personB: [describe(triggerB, genderB, appearanceB) || (genderB || 'woman'), 'natural detailed face, coherent'].join(', '),
+  });
+
+  const ensurePromptText = () => ({
+    base: mainPrompt.trim() || composePrompts().base,
+    ...personPrompts(),
+  });
 
   const targetPhraseForSide = (side: string) => {
     const gender = side === 'left' ? genderA : genderB;
@@ -395,27 +399,20 @@ export const ZImageDualLoraPage = () => {
     setRunningWorkflow(true);
 
     try {
-      // Ground BOTH people (Florence returns them left-to-right), then pick the
-      // box by the chosen side. The phrase must not contain 'left'/'right' —
-      // Florence ignores spatial words, so grounding "woman"/"person" returns
-      // every instance and the index below is what actually selects the side.
-      const groundingPhrase = genderA === genderB ? genderA : 'person';
-      const boxIndexForSide = selectedTargetSide === 'left' ? '0' : '1';
-      // Guarantee anti-diptych terms even if the saved negative predates them.
+      // v2: left face → LoRA A, right face → LoRA B (deterministic, two separate
+      // detailer passes). No detection phrase / side pick needed.
       const antiSplit = 'split image, collage, diptych, two separate photos, different backgrounds';
       const negativeForRun = /split image|collage|diptych/i.test(negativePrompt)
         ? negativePrompt
         : `${negativePrompt}, ${antiSplit}`;
-      setDetectionPhrase(targetPhraseForSide(selectedTargetSide));
       await registerWorkflowNodeMap('z-image-dual-lora');
       const payload = {
         workflow_id: 'z-image-dual-lora',
         params: {
           main_prompt: prompts.base,
-          detail_prompt: prompts.detail,
+          person_a_prompt: prompts.personA,
+          person_b_prompt: prompts.personB,
           negative: negativeForRun,
-          detection_phrase: groundingPhrase,
-          selected_box_index: boxIndexForSide,
           seed,
           lora_main_name: loraMainName,
           lora_main_strength: Number(loraMainStrength),
