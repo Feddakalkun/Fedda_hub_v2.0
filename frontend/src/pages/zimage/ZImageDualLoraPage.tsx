@@ -169,6 +169,9 @@ export const ZImageDualLoraPage = () => {
   // How strongly the selected person is repainted into Person 2 (DetailerForEach denoise).
   const [changeStrength, setChangeStrength] = usePersistentState('zimage_dual_change_strength', 0.75);
 
+  // Refine faces (identity) or whole bodies (outfit/pose).
+  const [refineMode, setRefineMode] = usePersistentState<'faces' | 'bodies'>('zimage_dual_refine_mode', 'faces');
+
   // Advanced quality knobs (defaults match the workflow).
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [sceneCfg, setSceneCfg] = usePersistentState('zimage_dual_scene_cfg', 1.1);
@@ -413,6 +416,8 @@ export const ZImageDualLoraPage = () => {
           person_a_prompt: prompts.personA,
           person_b_prompt: prompts.personB,
           negative: negativeForRun,
+          detect_model: refineMode === 'bodies' ? 'bbox/yolov8m.pt' : 'bbox/face_yolov8m.pt',
+          detect_labels: refineMode === 'bodies' ? 'person' : 'all',
           seed,
           lora_main_name: loraMainName,
           lora_main_strength: Number(loraMainStrength),
@@ -557,6 +562,19 @@ export const ZImageDualLoraPage = () => {
               <span className="text-white/20">0.75 · balanced</span>
               <span>1.00 · full swap</span>
             </div>
+          </div>
+
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Refine</span>
+            {(['faces', 'bodies'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setRefineMode(m)}
+                className={`flex-1 rounded-md px-3 py-1.5 text-[11px] font-semibold capitalize transition ${refineMode === m ? 'bg-white text-black' : 'bg-white/[0.04] text-white/55 hover:bg-white/[0.08]'}`}
+              >
+                {m === 'faces' ? 'Faces (identity)' : 'Bodies (outfit/pose)'}
+              </button>
+            ))}
           </div>
 
           <button

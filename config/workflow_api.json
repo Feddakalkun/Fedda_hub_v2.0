@@ -481,6 +481,18 @@
         "input_key": "text",
         "type": "string",
         "label": "Right person"
+      },
+      "detect_model": {
+        "node_id": "30",
+        "input_key": "model_name",
+        "type": "string",
+        "label": "Detector"
+      },
+      "detect_labels": {
+        "node_id": "31",
+        "input_key": "labels",
+        "type": "string",
+        "label": "Detect labels"
       }
     }
   },
