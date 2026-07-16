@@ -11,7 +11,9 @@ import { comfyService } from '../../services/comfyService';
 import { Field, NeutralButton } from '../../components/ui/FeddaPrimitives';
 import { WorkflowShell, WorkflowSection } from '../../components/layout/WorkflowShell';
 import { WorkflowVideoPreviewStrip } from '../../components/layout/WorkflowVideoPreviewStrip';
+import { LiveSamplingPreview } from '../../components/workflows/LiveSamplingPreview';
 import { BatchQueuePanel, ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
+import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
 import { cn, inputBase } from '../../lib/styles';
 import { LTX_RATIOS, LTX_RESOLUTIONS, getLtxDimensions, type LtxRatio, type LtxResolution } from '../../config/ltx';
 
@@ -36,6 +38,7 @@ export const LtxImg2VidPage = () => {
   const workflowId = precision === 'gguf' ? 'ltx-img2vid-gguf' : 'ltx-img2vid';
 
   const { toast } = useToast();
+  const { previewUrl } = useComfyExecution();
   const run = useWorkflowRun({
     workflowId,
     currentKey: 'ltx_img2vid_current_video',
@@ -168,15 +171,38 @@ export const LtxImg2VidPage = () => {
       canGenerate={canGenerate}
       workflowId={workflowId}
       output={(
-        <WorkflowVideoPreviewStrip
-          currentVideo={run.currentMedia}
-          history={run.history}
-          onSelectVideo={run.setCurrentMedia}
-          onRemoveVideo={(url) => run.setHistory((prev) => prev.filter((v) => v !== url))}
-          isGenerating={run.isGenerating}
-          title="LTX Img2Vid Output"
-          emptyHint="Upload an image and generate to see motion results here."
-        />
+        <LiveSamplingPreview
+          previewUrl={previewUrl}
+          isRunning={run.isGenerating}
+          hasOutput={!!run.currentMedia || run.history.length > 0}
+          emptyState={
+            <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-dashed border-white/10 bg-black/20 p-3">
+              <div className="text-center text-zinc-500">
+                {run.isGenerating ? (
+                  <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin opacity-60" />
+                ) : (
+                  <Play className="mx-auto mb-3 h-8 w-8 opacity-60" />
+                )}
+                <div className="text-sm font-semibold text-zinc-400">
+                  {run.isGenerating ? 'Waiting for motion output' : 'No motion output yet'}
+                </div>
+                <div className="mt-1 text-xs text-zinc-600">
+                  {run.isGenerating ? 'Motion frames will appear here while sampling progresses.' : 'Upload an image and generate to see motion results here.'}
+                </div>
+              </div>
+            </div>
+          }
+        >
+          <WorkflowVideoPreviewStrip
+            currentVideo={run.currentMedia}
+            history={run.history}
+            onSelectVideo={run.setCurrentMedia}
+            onRemoveVideo={(url) => run.setHistory((prev) => prev.filter((v) => v !== url))}
+            isGenerating={run.isGenerating}
+            title="LTX Img2Vid Output"
+            emptyHint="Upload an image and generate to see motion results here."
+          />
+        </LiveSamplingPreview>
       )}
     >
       <div className="space-y-4">

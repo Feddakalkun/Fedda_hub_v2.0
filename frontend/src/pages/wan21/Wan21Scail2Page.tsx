@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Download, ExternalLink, Film, Loader2, Play, Upload, Video } from 'lucide-react';
+import { Download, ExternalLink, Film, Loader2, Play, Sparkles, Upload, Video } from 'lucide-react';
 import { BACKEND_API } from '../../config/api';
 import { useToast } from '../../components/ui/Toast';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { comfyService } from '../../services/comfyService';
 import { WorkflowShell } from '../../components/layout/WorkflowShell';
+import { LiveSamplingPreview } from '../../components/workflows/LiveSamplingPreview';
 import { consumeHandoff } from '../../utils/workflowHandoff';
 import { triggerMediaDownload } from '../../utils/mediaStore';
 import { inputBase, panel, cn } from '../../lib/styles';
@@ -162,6 +163,7 @@ export function Wan21Scail2Page() {
     outputReadyCount,
     registerNodeMap,
     startExecution,
+    previewUrl,
   } = useComfyExecution();
 
   const prevVideoCountRef = useRef(0);
@@ -183,6 +185,10 @@ export function Wan21Scail2Page() {
   const [qualityStep, setQualityStep] = usePersistentState('scail2_quality', 0);
   const [uploadedImageDimensions, setUploadedImageDimensions] = useState<{ w: number; h: number } | null>(null);
   const [seed, setSeed] = usePersistentState('scail2_seed', -1);
+  const [subjectPrompt, setSubjectPrompt] = usePersistentState('scail2_subject_prompt', '');
+  const [subjectGenerateOpen, setSubjectGenerateOpen] = useState(false);
+  const [isGeneratingSubject, setIsGeneratingSubject] = useState(false);
+  const [subjectPendingPromptId, setSubjectPendingPromptId] = useState<string | null>(null);
 
   const computedDimensions = useMemo(() => {
     const base = uploadedImageDimensions ?? { w: 720, h: 1200 };
@@ -301,7 +307,7 @@ export function Wan21Scail2Page() {
     return String(data.filename);
   };
 
-  const handleImageUpload = async (file: File) => {
+  const finalizeReferenceImageUpload = async (file: File, successMessage: string) => {
     const objUrl = URL.createObjectURL(file);
     const img = new window.Image();
     img.onload = () => { setUploadedImageDimensions({ w: img.naturalWidth, h: img.naturalHeight }); URL.revokeObjectURL(objUrl); };
@@ -312,11 +318,54 @@ export function Wan21Scail2Page() {
     try {
       const filename = await uploadToComfy(file);
       setReferenceImageFile(filename);
-      toast('Reference image uploaded', 'success');
+      toast(successMessage, 'success');
     } catch (err: any) {
       toast(err.message || 'Image upload failed', 'error');
     } finally {
       setUploadingImage(false);
+    }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    await finalizeReferenceImageUpload(file, 'Reference image uploaded');
+  };
+
+  const generateSubjectReference = async () => {
+    if (!subjectPrompt.trim() || isGeneratingSubject) return;
+
+    setIsGeneratingSubject(true);
+    setSubjectGenerateOpen(true);
+    try {
+      try {
+        const nodeMapResponse = await fetch(`${BACKEND_API.BASE_URL}/api/workflow/node-map/z-image-turbo`);
+        const nodeMapData = await nodeMapResponse.json();
+        if (nodeMapData.success) registerNodeMap(nodeMapData.node_map);
+      } catch {
+        // continue even if node-map lookup fails
+      }
+
+      const response = await fetch(`${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.GENERATE}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workflow_id: 'z-image-turbo',
+          params: {
+            prompt: subjectPrompt.trim(),
+            negative: '',
+            width: computedDimensions.w || 1024,
+            height: computedDimensions.h || 1024,
+            seed: Math.floor(Math.random() * 10_000_000_000),
+            client_id: comfyService.clientId,
+          },
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.detail || 'Subject generation failed');
+      setSubjectPendingPromptId(String(data.prompt_id));
+      startExecution();
+    } catch (err: any) {
+      setIsGeneratingSubject(false);
+      toast(err.message || 'Subject generation failed', 'error');
     }
   };
 
@@ -373,6 +422,50 @@ export function Wan21Scail2Page() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!subjectPendingPromptId) return;
+
+    let cancelled = false;
+    const timer = window.setInterval(async () => {
+      if (cancelled) return;
+      try {
+        const res = await fetch(`${BACKEND_API.BASE_URL}/api/generate/status/${encodeURIComponent(subjectPendingPromptId)}?workflow_id=${encodeURIComponent('z-image-turbo')}`);
+        const data = await res.json();
+        if (!res.ok || !data.success) return;
+        if (data.status !== 'completed') return;
+
+        const images = Array.isArray(data.images) ? data.images : [];
+        const latest = images[images.length - 1];
+        if (!latest) throw new Error('No generated image was returned');
+
+        const viewUrl = `/comfy/view?filename=${encodeURIComponent(latest.filename)}&subfolder=${encodeURIComponent(latest.subfolder)}&type=${encodeURIComponent(latest.type)}`;
+        const imageRes = await fetch(viewUrl);
+        if (!imageRes.ok) throw new Error('Generated image could not be loaded');
+        const blob = await imageRes.blob();
+        const file = new File([blob], 'generated-subject.png', { type: blob.type || 'image/png' });
+
+        await finalizeReferenceImageUpload(file, 'Reference image ready');
+        setIsGeneratingSubject(false);
+        setSubjectPendingPromptId(null);
+      } catch (err: any) {
+        if (!cancelled) {
+          setIsGeneratingSubject(false);
+          setSubjectPendingPromptId(null);
+          toast(err.message || 'Subject generation failed', 'error');
+        }
+      } finally {
+        if (!cancelled) {
+          window.clearInterval(timer);
+        }
+      }
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [subjectPendingPromptId, toast]);
+
   const runScail2 = async () => {
     if (!canRun) return;
     sessionRef.current = [];
@@ -428,13 +521,26 @@ export function Wan21Scail2Page() {
       output={null}
     >
       <div className="mx-auto max-w-5xl space-y-4 px-4 pb-8">
-        <VideoPreviewStrip
-          currentVideo={currentVideo || history[0] || null}
-          history={history}
-          isGenerating={isGenerating}
-          onSelectVideo={setCurrentVideo}
-          downloadName="fedda-scail2.mp4"
-        />
+        <LiveSamplingPreview
+          previewUrl={previewUrl}
+          isRunning={isGenerating}
+          hasOutput={!!(currentVideo || history[0]) || history.length > 0}
+          emptyState={
+            <div className="rounded-xl border border-white/10 bg-[#09090b] p-3">
+              <div className="flex min-h-[140px] items-center justify-center rounded-lg border border-dashed border-white/10 bg-black/30 text-center text-[11px] text-zinc-700">
+                {isGenerating ? 'Rendering output' : 'No output yet'}
+              </div>
+            </div>
+          }
+        >
+          <VideoPreviewStrip
+            currentVideo={currentVideo || history[0] || null}
+            history={history}
+            isGenerating={isGenerating}
+            onSelectVideo={setCurrentVideo}
+            downloadName="fedda-scail2.mp4"
+          />
+        </LiveSamplingPreview>
 
         <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
           {/* Left: uploads */}
@@ -459,6 +565,39 @@ export function Wan21Scail2Page() {
                   ) : undefined
                 }
               />
+
+              <div className="mt-3 rounded-xl border border-white/10 bg-black/25 p-2.5">
+                <button
+                  type="button"
+                  onClick={() => setSubjectGenerateOpen((open) => !open)}
+                  className="flex w-full items-center justify-between text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 transition hover:text-zinc-100"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Generate subject
+                  </span>
+                  <span className="text-[10px] text-zinc-500">{subjectGenerateOpen ? '−' : '+'}</span>
+                </button>
+
+                {subjectGenerateOpen ? (
+                  <div className="mt-3 space-y-2">
+                    <textarea
+                      value={subjectPrompt}
+                      onChange={(e) => setSubjectPrompt(e.target.value)}
+                      rows={3}
+                      placeholder="Describe the person or subject to generate as a fresh reference image"
+                      className={`${inputBase} min-h-[84px] resize-none`}
+                    />
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[10px] text-zinc-500">Creates a reference image and drops it into the slot.</p>
+                      <NeutralButton onClick={generateSubjectReference} disabled={!subjectPrompt.trim() || isGeneratingSubject}>
+                        {isGeneratingSubject ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                        Generate
+                      </NeutralButton>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </section>
 
             <section className={panel}>

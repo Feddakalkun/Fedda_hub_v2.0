@@ -6,6 +6,7 @@ import { BACKEND_API } from '../../config/api';
 import { useToast } from '../../components/ui/Toast';
 import { Lightbox } from '../../components/ui/Lightbox';
 import { WorkflowShell } from '../../components/layout/WorkflowShell';
+import { LiveSamplingPreview } from '../../components/workflows/LiveSamplingPreview';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
 import { comfyService } from '../../services/comfyService';
@@ -276,7 +277,7 @@ function CameraOrbitPreview({
 
 export const QwenMultiAnglesPage = () => {
   const { toast } = useToast();
-  const { registerNodeMap, clearOutputs } = useComfyExecution();
+  const { registerNodeMap, clearOutputs, previewUrl } = useComfyExecution();
   const [shots, setShots] = usePersistentState<CameraShot[]>('qwen_multiangle_shots_v2', DEFAULT_SHOTS.slice(0, 1));
   const [history, setHistory] = usePersistentState<string[]>('qwen_multiangle_history', []);
   const [seed, setSeed] = usePersistentState('qwen_multiangle_seed', -1);
@@ -459,16 +460,27 @@ export const QwenMultiAnglesPage = () => {
         hideOutputPane
         output={null}
         preview={
-          <section className="rounded-lg border border-white/10 bg-black/25 p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Recent angles</div>
-              <span className="text-[10px] uppercase tracking-[0.14em] text-zinc-600">{previewItems.length} previews</span>
-            </div>
-            {previewItems.length === 0 ? (
-              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-[11px] text-zinc-500">
-                Generate angles to fill this preview bar.
+          <LiveSamplingPreview
+            previewUrl={previewUrl}
+            isRunning={isGenerating}
+            hasOutput={previewItems.length > 0 || !!uploadedPreview}
+            emptyState={
+              <section className="rounded-lg border border-white/10 bg-black/25 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Recent angles</div>
+                  <span className="text-[10px] uppercase tracking-[0.14em] text-zinc-600">{previewItems.length} previews</span>
+                </div>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-[11px] text-zinc-500">
+                  Generate angles to fill this preview bar.
+                </div>
+              </section>
+            }
+          >
+            <section className="rounded-lg border border-white/10 bg-black/25 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Recent angles</div>
+                <span className="text-[10px] uppercase tracking-[0.14em] text-zinc-600">{previewItems.length} previews</span>
               </div>
-            ) : (
               <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
                 {previewItems.map((url, idx) => (
                   <button
@@ -485,8 +497,8 @@ export const QwenMultiAnglesPage = () => {
                   </button>
                 ))}
               </div>
-            )}
-          </section>
+            </section>
+          </LiveSamplingPreview>
         }
       >
         <section className="space-y-3 rounded-lg border border-white/10 bg-zinc-950 p-3">

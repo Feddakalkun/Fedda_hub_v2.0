@@ -14,6 +14,7 @@ import { LoraSelector } from '../../components/ui/LoraSelector';
 import { FeddaButton, FeddaPanel, FeddaSectionTitle } from '../../components/ui/FeddaPrimitives';
 import { VideoOutputPanel } from '../../components/layout/VideoOutputPanel';
 import { WorkflowShell } from '../../components/layout/WorkflowShell';
+import { LiveSamplingPreview } from '../../components/workflows/LiveSamplingPreview';
 
 const FPS = 24;
 const SCENE_COUNT = 4;
@@ -112,6 +113,7 @@ export const Wan22Vid2Vid = () => {
     lastOutputVideos,
     outputReadyCount,
     registerNodeMap,
+    previewUrl,
   } = useComfyExecution();
 
   useEffect(() => {
@@ -319,12 +321,35 @@ export const Wan22Vid2Vid = () => {
       isGenerating={isGenerating}
       canGenerate={canGenerate}
       output={(
-        <VideoOutputPanel
-          title="WAN Vid2Vid Output"
-          currentVideo={currentVideo}
-          history={history}
-          isGenerating={isGenerating}
-        />
+        <LiveSamplingPreview
+          previewUrl={previewUrl}
+          isRunning={isGenerating}
+          hasOutput={!!currentVideo || history.length > 0}
+          emptyState={
+            <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-dashed border-white/10 bg-black/20 p-3">
+              <div className="text-center text-zinc-500">
+                {isGenerating ? (
+                  <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin opacity-60" />
+                ) : (
+                  <Video className="mx-auto mb-3 h-8 w-8 opacity-60" />
+                )}
+                <div className="text-sm font-semibold text-zinc-400">
+                  {isGenerating ? 'Waiting for video output' : 'No video output yet'}
+                </div>
+                <div className="mt-1 text-xs text-zinc-600">
+                  {isGenerating ? 'Preview frames will appear here while sampling progresses.' : 'Upload a video and generate to see transformed results here.'}
+                </div>
+              </div>
+            </div>
+          }
+        >
+          <VideoOutputPanel
+            title="WAN Vid2Vid Output"
+            currentVideo={currentVideo}
+            history={history}
+            isGenerating={isGenerating}
+          />
+        </LiveSamplingPreview>
       )}
     >
 

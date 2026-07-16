@@ -944,6 +944,7 @@ export const Txt2ImgPage = ({
         promptLabel={promptLabel}
         promptContext={promptContext}
         workflowId={workflowId}
+        previewUrl={previewUrl}
         prompt={prompt}
         setPrompt={setPrompt}
         promptPresets={promptPresets}

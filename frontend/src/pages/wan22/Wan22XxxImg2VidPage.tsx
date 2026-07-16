@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Play } from 'lucide-react';
+import { Loader2, Play } from 'lucide-react';
 import { PromptAssistant } from '../../components/ui/PromptAssistant';
 import { LoraSelector } from '../../components/ui/LoraSelector';
 import { useToast } from '../../components/ui/Toast';
@@ -11,7 +11,9 @@ import { consumeHandoff } from '../../utils/workflowHandoff';
 import { Field } from '../../components/ui/FeddaPrimitives';
 import { WorkflowShell, WorkflowSection } from '../../components/layout/WorkflowShell';
 import { WorkflowVideoPreviewStrip } from '../../components/layout/WorkflowVideoPreviewStrip';
+import { LiveSamplingPreview } from '../../components/workflows/LiveSamplingPreview';
 import { BatchQueuePanel, ChipGroup, GenerateButton, SeedField, SliderField, UploadSlot } from '../../components/ui/WorkflowControls';
+import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
 import { cn, inputBase } from '../../lib/styles';
 
 type WanRatio = '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
@@ -55,6 +57,7 @@ export const Wan22XxxImg2VidPage = () => {
   const [availableLoras, setAvailableLoras] = useState<string[]>([]);
 
   const { toast } = useToast();
+  const { previewUrl } = useComfyExecution();
   const run = useWorkflowRun({
     workflowId: 'wan22xxx-img2vid',
     currentKey: 'wan22xxx_current_video',
@@ -152,15 +155,38 @@ export const Wan22XxxImg2VidPage = () => {
       canGenerate={canGenerate}
       workflowId="wan22xxx-img2vid"
       output={(
-        <WorkflowVideoPreviewStrip
-          currentVideo={run.currentMedia}
-          history={run.history}
-          onSelectVideo={run.setCurrentMedia}
-          onRemoveVideo={(url) => run.setHistory((prev) => prev.filter((v) => v !== url))}
-          isGenerating={run.isGenerating}
-          title="WAN Img2Vid Output"
-          emptyHint="Upload an image and generate to see results here."
-        />
+        <LiveSamplingPreview
+          previewUrl={previewUrl}
+          isRunning={run.isGenerating}
+          hasOutput={!!run.currentMedia || run.history.length > 0}
+          emptyState={
+            <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-dashed border-white/10 bg-black/20 p-3">
+              <div className="text-center text-zinc-500">
+                {run.isGenerating ? (
+                  <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin opacity-60" />
+                ) : (
+                  <Play className="mx-auto mb-3 h-8 w-8 opacity-60" />
+                )}
+                <div className="text-sm font-semibold text-zinc-400">
+                  {run.isGenerating ? 'Waiting for video output' : 'No video output yet'}
+                </div>
+                <div className="mt-1 text-xs text-zinc-600">
+                  {run.isGenerating ? 'Video frames will appear here while sampling progresses.' : 'Upload an image and generate to see results here.'}
+                </div>
+              </div>
+            </div>
+          }
+        >
+          <WorkflowVideoPreviewStrip
+            currentVideo={run.currentMedia}
+            history={run.history}
+            onSelectVideo={run.setCurrentMedia}
+            onRemoveVideo={(url) => run.setHistory((prev) => prev.filter((v) => v !== url))}
+            isGenerating={run.isGenerating}
+            title="WAN Img2Vid Output"
+            emptyHint="Upload an image and generate to see results here."
+          />
+        </LiveSamplingPreview>
       )}
     >
       <div className="space-y-4">

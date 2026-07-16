@@ -3,6 +3,7 @@ import { Brain, CheckCircle2, ChevronDown, Loader2, Maximize2, Plus, RefreshCw, 
 import { PromptAssistant, type PromptContext } from '../ui/PromptAssistant';
 import { LoraCharacterCard } from '../ui/LoraCharacterCard';
 import { BACKEND_API } from '../../config/api';
+import { LiveSamplingPreview } from './LiveSamplingPreview';
 
 export type SimpleImageLoraEntry = {
   name: string;
@@ -91,6 +92,8 @@ interface SimpleImageCockpitProps {
   canGenerate: boolean;
   isGenerating: boolean;
   onGenerate: () => void;
+  previewUrl?: string | null;
+  hasOutput?: boolean;
 
   showMaskSettings?: boolean;
   maskFace?: boolean;
@@ -174,6 +177,8 @@ export function SimpleImageCockpit({
   canGenerate,
   isGenerating,
   onGenerate,
+  previewUrl = null,
+  hasOutput = false,
 
   showMaskSettings = false,
   maskFace = true,
@@ -524,6 +529,34 @@ export function SimpleImageCockpit({
           )}
 
           <div className="cockpit-control-grid">
+            <div className="cockpit-panel">
+              <div className="cockpit-panel-head">
+                <span>Live Preview</span>
+                <span>{isGenerating ? 'Sampling' : 'Ready'}</span>
+              </div>
+              <LiveSamplingPreview
+                previewUrl={previewUrl}
+                isRunning={isGenerating}
+                hasOutput={hasOutput}
+                emptyState={
+                  <div className="flex min-h-[220px] items-center justify-center rounded-xl border border-dashed border-white/10 bg-black/20 p-3">
+                    <div className="text-center text-white/35">
+                      <Sparkles className="mx-auto mb-3 h-8 w-8 opacity-40" />
+                      <div className="text-sm font-semibold">Generate an image to preview it here</div>
+                      <div className="mt-1 text-xs text-white/25">The live sampling pass will appear in this panel while it renders.</div>
+                    </div>
+                  </div>
+                }
+              >
+                <div className="flex min-h-[220px] items-center justify-center rounded-xl border border-white/10 bg-black/20 p-3">
+                  <div className="text-center text-white/35">
+                    <Sparkles className="mx-auto mb-3 h-8 w-8 opacity-40" />
+                    <div className="text-sm font-semibold">Generation complete</div>
+                    <div className="mt-1 text-xs text-white/25">The final output will be shown here once the run finishes.</div>
+                  </div>
+                </div>
+              </LiveSamplingPreview>
+            </div>
             <div className="cockpit-panel cockpit-size-panel">
               <div className="cockpit-panel-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span><Maximize2 className="h-3 w-3" /> Size · {width}×{height}</span>

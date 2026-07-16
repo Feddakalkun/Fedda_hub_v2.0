@@ -19,6 +19,7 @@ import { usePersistentState } from '../../hooks/usePersistentState';
 import { comfyService } from '../../services/comfyService';
 import { consumeHandoff } from '../../utils/workflowHandoff';
 import { WorkflowShell } from '../../components/layout/WorkflowShell';
+import { LiveSamplingPreview } from '../../components/workflows/LiveSamplingPreview';
 import { triggerMediaDownload } from '../../utils/mediaStore';
 import { inputBase, smallLabel, panel, cn } from '../../lib/styles';
 import { Field, NeutralButton } from '../../components/ui/FeddaPrimitives';
@@ -223,6 +224,7 @@ export function Wan21SteadyDancerPage() {
     lastOutputVideos,
     outputReadyCount,
     registerNodeMap,
+    previewUrl,
   } = useComfyExecution();
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -817,12 +819,25 @@ export function Wan21SteadyDancerPage() {
       output={null}
     >
       <div className="w-full space-y-4 px-2 pb-8 sm:px-4 lg:px-6">
-        <SteadyVideoPreviewStrip
-          currentVideo={currentVideo || history[0] || null}
-          history={history}
-          isGenerating={isGenerating}
-          onSelectVideo={setCurrentVideo}
-        />
+        <LiveSamplingPreview
+          previewUrl={previewUrl}
+          isRunning={isGenerating}
+          hasOutput={!!(currentVideo || history[0]) || history.length > 0}
+          emptyState={
+            <div className="rounded-xl border border-white/10 bg-[#09090b] p-3">
+              <div className="flex min-h-[140px] items-center justify-center rounded-lg border border-dashed border-white/10 bg-black/30 text-center text-[11px] text-zinc-700">
+                {isGenerating ? 'Rendering output' : 'No output yet'}
+              </div>
+            </div>
+          }
+        >
+          <SteadyVideoPreviewStrip
+            currentVideo={currentVideo || history[0] || null}
+            history={history}
+            isGenerating={isGenerating}
+            onSelectVideo={setCurrentVideo}
+          />
+        </LiveSamplingPreview>
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
           <section className={cn(panel, 'h-full')}>
