@@ -1,13 +1,12 @@
+/**
+ * CatalogCard — the download/action card used by the Library's Packs view.
+ *
+ * The former `CatalogShell` export was removed: it rendered its own 5xl <h1> and
+ * `p-8` inside a page that already had a header and padding, producing two
+ * stacked titles in two different visual dialects. LibraryPage owns page chrome
+ * now; this file keeps only the card.
+ */
 import type { ElementType, ReactNode } from 'react';
-
-interface CatalogShellProps {
-    title: string;
-    subtitle?: ReactNode;
-    icon?: ElementType;
-    actions?: ReactNode;
-    children: ReactNode;
-    maxWidthClassName?: string;
-}
 
 interface CatalogCardProps {
     title: string;
@@ -23,35 +22,8 @@ interface CatalogCardProps {
     className?: string;
 }
 
-export const CatalogShell = ({
+export const CatalogCard = ({
     title,
-    subtitle,
-    icon: Icon,
-    actions,
-    children,
-    maxWidthClassName = 'max-w-[1920px]',
-}: CatalogShellProps) => {
-    return (
-        <div className={`p-8 mx-auto space-y-12 ${maxWidthClassName} animate-in fade-in duration-1000`}>
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between px-2">
-                <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        {Icon && <div className="w-16 h-16 rounded-[2rem] bg-white/5 border border-white/10 flex items-center justify-center shadow-2xl"><Icon className="w-8 h-8 text-white/40" /></div>}
-                        <h1 className="text-5xl font-black text-white uppercase tracking-[0.2em] leading-tight">{title}</h1>
-                    </div>
-                    {subtitle ? <p className="text-slate-500 text-xs font-bold uppercase tracking-[0.3em] max-w-2xl">{subtitle}</p> : null}
-                </div>
-                {actions ? <div className="flex flex-wrap items-center gap-3 pb-2">{actions}</div> : null}
-            </div>
-            <div className="pt-4">
-              {children}
-            </div>
-        </div>
-    );
-};
-
-export const CatalogCard = ({ 
-    title, 
     subtitle, 
     icon: Icon, 
     iconClassName = "",

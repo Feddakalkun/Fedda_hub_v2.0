@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Check, Loader2, Users, Sparkles, X, DownloadCloud, ImageOff, Upload } from 'lucide-react';
 import { FREE_LORAS } from '../config/loras';
 import { BACKEND_API } from '../config/api';
-import { CatalogShell, CatalogCard } from './layout/CatalogShell';
+import { CatalogCard } from './layout/CatalogShell';
 import { useToast } from './ui/Toast';
 
 interface LoRAStatus {
@@ -13,7 +13,7 @@ interface LoRAStatus {
     error?: string;
 }
 
-type LoRAFamily =
+export type LoRAFamily =
     | 'z-image'
     | 'qwen'
     | 'flux2klein'
@@ -66,17 +66,6 @@ const FAMILY_PACKS: Record<LoRAFamily, PackConfig[]> = {
         { key: 'wan22_nsfw', title: 'WAN 2.2 NSFW Pack', subtitle: 'lkzd7/WAN2.2_LoraSet_NSFW' },
     ],
     'ace-step':   [],
-};
-
-const FAMILY_LABELS: Record<string, string> = {
-    'z-image':    'Z-Image',
-    qwen:         'QWEN',
-    flux2klein:   'FLUX2KLEIN',
-    flux1dev:     'FLUX.1-dev',
-    sd15:         'SD1.5',
-    sd15_lycoris: 'SD1.5 LyCORIS',
-    sdxl:         'SDXL',
-    wan:          'WAN 2.2',
 };
 
 // ─── Character preview card ───────────────────────────────────────────────────
@@ -164,7 +153,6 @@ export const LoRADownloader = ({ family = 'z-image' }: LoRADownloaderProps) => {
 
     const isZImage = family === 'z-image';
     const packs    = FAMILY_PACKS[family] || [];
-    const title    = FAMILY_LABELS[family] || 'Library';
 
     // ─── Status polling ───────────────────────────────────────────────────
     const checkStatus = useCallback(async () => {
@@ -387,12 +375,11 @@ export const LoRADownloader = ({ family = 'z-image' }: LoRADownloaderProps) => {
         ? previewItems.filter(i => i.name.toLowerCase().includes(previewSearch.toLowerCase()))
         : previewItems;
 
+    // No shell/header of its own: LibraryPage owns the page chrome. This used to
+    // wrap everything in CatalogShell, which rendered a second <h1> and a second
+    // p-8 directly under the page's own header, in a different visual dialect.
     return (
-        <CatalogShell
-            title={title}
-            subtitle="Download character & style LoRAs for use in generation."
-            icon={Users}
-        >
+        <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
                 {/* ── Local Upload Card (Drag & Drop) ── */}
@@ -562,6 +549,6 @@ export const LoRADownloader = ({ family = 'z-image' }: LoRADownloaderProps) => {
                 </div>
             )}
 
-        </CatalogShell>
+        </div>
     );
 };

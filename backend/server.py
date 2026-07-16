@@ -39,7 +39,7 @@ from requests import exceptions as requests_exceptions
 import uvicorn
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from agent_runtime import AgentRuntime
 from logging_setup import setup_logging
@@ -2417,11 +2417,20 @@ def _resolve_lora_file(rel: str) -> Optional[Path]:
 
 
 def _sheet_path_for_lora(lora_path: Path) -> Path:
-    """Sheet = <stem>.md next to the LoRA; falls back to a single .md in the folder (user convention)."""
+    """Sheet = <stem>.md next to the LoRA; falls back to a single .md in the folder (user convention).
+
+    The shared-sheet fallback is what makes app/Aurora/Aurora.md serve both of
+    Aurora's LoRAs. It is deliberately NOT applied at the loras root: the root
+    holds 57 LoRAs and per-LoRA sheets (Beautify-Supermodel-ZImageTurbo.md,
+    nicegirls_Zimage.md), so deleting one of those would leave a single .md and
+    silently adopt it as the sheet for all 57.
+    """
     exact = lora_path.with_suffix(".md")
     if exact.is_file():
         return exact
     try:
+        if lora_path.parent.resolve() == LORA_ROOT.resolve():
+            return exact  # never share a sheet across the whole root
         mds = [p for p in lora_path.parent.glob("*.md") if p.is_file()]
         if len(mds) == 1:
             return mds[0]
@@ -4260,6 +4269,54 @@ async def ensure_zimage_core_models(payload: Optional[Dict[str, Any]] = None):
 # LoRA Library
 # ─────────────────────────────────────────────
 
+# Single source of truth for what the LoRA library accepts. The client-side
+# check, the file picker's accept attr, and this route previously each carried
+# their own list and disagreed. The frontend fetches this via /api/lora/config.
+LORA_UPLOAD_EXTENSIONS: tuple = (".safetensors", ".ckpt", ".pt")
+
+
+@app.get("/api/lora/config")
+async def lora_config():
+    """Client config for the Library — currently the upload allowlist."""
+    return {"success": True, "upload_extensions": list(LORA_UPLOAD_EXTENSIONS)}
+
+
+@app.get("/api/lora/characters")
+async def lora_characters():
+    """Characters grouped from the installed LoRAs. See lora_service.get_characters."""
+    return {"success": True, "characters": lora_service.get_characters()}
+
+
+@app.get("/api/lora/preview")
+async def lora_preview_get(file: str):
+    """Serve a preview image for an installed LoRA.
+
+    /lora-previews/* is NOT served by the backend — it only ever resolved through
+    Vite's public/ at build time, so previews for anything acquired at runtime
+    (uploads, imports, linked stashes) could never load. This route replaces it.
+    """
+    if not _resolve_lora_file(file):
+        raise HTTPException(status_code=404, detail="Unknown LoRA")
+    img = lora_service.preview_file_for(file)
+    if not img:
+        raise HTTPException(status_code=404, detail="No preview")
+    return FileResponse(str(img))
+
+
+@app.post("/api/lora/preview")
+async def lora_preview_set(file: str = Form(...), image: UploadFile = File(...)):
+    """Store a preview image for an installed LoRA."""
+    if not _resolve_lora_file(file):
+        raise HTTPException(status_code=404, detail="Unknown LoRA")
+    data = await image.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="Empty image")
+    result = lora_service.save_preview_for(file, data)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error", "Could not save preview"))
+    return result
+
+
 @app.get("/api/lora/list")
 async def lora_list(prefix: str = ""):
     """List installed LoRA paths. Optional ?prefix= filters by subfolder (e.g. zimage_turbo)."""
@@ -4321,10 +4378,29 @@ class ImportUrlRequest(BaseModel):
     url: str
     hf_token: Optional[str] = None
     civitai_token: Optional[str] = None
+    dest_subfolder: Optional[str] = None
 
 @app.post("/api/lora/import-url")
 async def lora_import_url(req: ImportUrlRequest):
-    return lora_service.import_from_url(req.url, req.hf_token, req.civitai_token)
+    # Fall back to the saved tokens: the UI stores them via /api/settings/* but
+    # only ever sends the URL, so without this a configured HF token was never
+    # applied and gated-repo imports failed with 401.
+    return lora_service.import_from_url(
+        req.url,
+        hf_token=req.hf_token or load_settings().get("hf_token"),
+        civitai_token=req.civitai_token or load_settings().get("civitai_api_key"),
+        dest_subfolder=req.dest_subfolder or "imported",
+    )
+
+
+@app.get("/api/lora/downloads")
+async def lora_downloads():
+    """All in-flight download states in one call.
+
+    The Library previously issued one download-status request per LoRA on an 8s
+    interval (N+1); this collapses that to a single poll.
+    """
+    return {"success": True, "downloads": lora_service._downloads}
 
 
 # ─────────────────────────────────────────────────────────────
@@ -4340,8 +4416,11 @@ async def lora_upload_local(
     Places it automatically into the correct subfolder under ComfyUI/models/loras/
     based on the current family/tab the user has open.
     """
-    if not file.filename.lower().endswith(('.safetensors', '.ckpt', '.pt')):
-        raise HTTPException(status_code=400, detail="Only .safetensors (and common model formats) are allowed.")
+    if not file.filename.lower().endswith(LORA_UPLOAD_EXTENSIONS):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only {', '.join(LORA_UPLOAD_EXTENSIONS)} files are allowed.",
+        )
 
     # Get the destination subfolder from lora_service
     dest_subfolder = lora_service.get_dest_for_family(family)
@@ -4353,11 +4432,22 @@ async def lora_upload_local(
 
     target_path = target_dir / file.filename
 
+    # Stream to a sidecar and promote on success. `await file.read()` pulled the
+    # entire file into RAM, which for a multi-GB LoRA is a straight OOM risk, and
+    # a failed write left a truncated file that later scans counted as valid.
+    tmp_path = target_path.with_suffix(target_path.suffix + ".fedda_tmp")
     try:
-        contents = await file.read()
-        with open(target_path, "wb") as f:
-            f.write(contents)
+        with open(tmp_path, "wb") as f:
+            shutil.copyfileobj(file.file, f, length=1024 * 1024)
+        if target_path.exists():
+            target_path.unlink()
+        tmp_path.rename(target_path)
     except Exception as e:
+        try:
+            if tmp_path.exists():
+                tmp_path.unlink()
+        except OSError:
+            pass
         raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
 
     # Refresh cache in lora_service if it has one
