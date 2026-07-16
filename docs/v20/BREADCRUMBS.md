@@ -1078,3 +1078,61 @@ Long multi-day session. Highlights (all pushed; HEAD = skin-gloss commit):
 **PENDING backlog**: Steady Dancer full redesign; Scail inline Z-Image subject panel;
   standardize big live preview everywhere; Dual LoRA dead-UI cleanup; per-person
   face-restore LoRA + bodies-mode test.
+
+## 2026-07-16 - Delegated UX session: Steady Dancer, Dual LoRA cleanup, live preview everywhere
+
+Worked through the pending UX backlog by delegating frontend work to a third agent
+("Copilot") in VS Code. Commits `674eec1` + `0ffb1cd`, both pushed. HEAD = `0ffb1cd`.
+
+**Delegation setup (repeat this if using Copilot again)**
+- Copilot works ONLY in `install/app`; `repo/` is locked to it (no edits, no copy-in,
+  no git commit/push/pull). Claude does all repo writes + git.
+- Copilot keeps a timestamped action log at `install/logs/copilotlog.txt`.
+- Gate for every task = **frontend typecheck at the 44-error baseline**
+  (`cd install/app/frontend && node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`).
+
+**Shipped (674eec1)**
+- **Steady Dancer redesign**: full-width two-column stages, single-surface motion-clip
+  editor with draggable trim handles + capture-start-frame, inline stage guidance,
+  Stage 4 prompt presets, dropped duplicate length field, auto-uses clip dimensions.
+- **Dual LoRA dead-UI cleanup**: removed vestigial side-picker, manual box-draw/auto-mark,
+  and old Swap-Prompt panel + dead state (-338 lines). Deterministic 2-pass refiner intact.
+
+**Shipped (0ffb1cd)**
+- **Shared `LiveSamplingPreview`** (`components/workflows/LiveSamplingPreview.tsx`):
+  3-state — live `previewUrl` → final output → empty state. Wired into SimpleImageCockpit
+  (covers all Txt2ImgPage image pages) + 10 custom-output pages: LTX ai2v/flf/img2vid,
+  WAN22 img2vid/vid2vid/xxx, WAN21 Scail2/SteadyDancer, Hunyuan i2v, Qwen multi-angles.
+- **Scail inline "Generate subject"** panel: prompt → z-image-turbo → result uploaded back
+  as a Comfy input and dropped straight into the reference-image slot.
+
+**Bugs caught in review — the interesting part**
+- **Dead wiring x2, same class.** `LtxAi2vPage` passed `previewUrl={undefined}` (hardcoded);
+  and `ZImageTxt2Img` never passed `previewUrl` to `SimpleImageCockpit` at all, so the
+  cockpit's prop fell back to its `null` default — the "central" preview was dead code for
+  EVERY image page. One-line fix at the cockpit call site is what actually delivered the
+  feature. Lesson: a rendered wrapper != a wired wrapper; always grep the prop's real source.
+- **`Loader2` used without importing it** in LtxFlfPage + Wan22XxxImg2VidPage → runtime
+  `ReferenceError` (white-screen) when the empty state renders. **`npm run build` (Vite)
+  did NOT catch this** — only tsc did. Never accept "the build passes" as verification;
+  the typecheck count is the gate.
+- Image pages already had a small live preview via `WorkflowShell` →
+  `WorkflowPreviewBar liveImage={previewUrl}`; what they lacked was the BIG cockpit preview.
+
+**Two-tree sync (important)**
+- `install/app` git HEAD is an old divergent base (`bea63c5`); `repo` carries real history.
+  A `diff -rq install/app repo` shows ~70 files "differing" that are mostly stale-base +
+  CRLF noise. **NEVER bulk-copy install→repo** — it rolls files backward. Copy only the
+  specific files changed, `git add -- <paths>` explicitly, never `git add -A`.
+  See memory `two-tree-sync-gotcha.md`.
+
+**Untouched / needs a decision**: `repo` has an uncommitted ` M backend/server.py` and an
+  untracked `backend/server_backup.py`, origin unknown, not from this session. Left alone
+  across both commits; they show up in every `git status`.
+
+**PENDING backlog** (updated — Steady Dancer redesign, Scail subject panel, live preview
+  standardization, and Dual LoRA dead-UI cleanup are now DONE):
+- Rig-only live tests: Scail generate→slot round-trip; Dual LoRA **Bodies mode** (wired,
+  never render-tested); whether ComfyUI emits preview frames during **video** sampling
+  (LTX/WAN/Hunyuan) — wiring is correct either way, degrades to empty state.
+- Dual LoRA per-person face-restore LoRA.
