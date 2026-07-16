@@ -421,7 +421,7 @@ Current context: User is requesting images of Elara at the safari camp, now spec
   };
 
   return (
-    <div className="p-6 max-w-[1100px] mx-auto">
+    <div className="h-full overflow-y-auto custom-scrollbar p-6 max-w-[1100px] mx-auto">
       <FeddaPanel className="overflow-hidden">
         {/* Shared Header + Tabs */}
         <div className="border-b border-white/10 px-6 py-4 bg-black/20">

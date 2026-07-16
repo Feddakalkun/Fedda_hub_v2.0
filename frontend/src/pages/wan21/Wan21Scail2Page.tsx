@@ -337,7 +337,7 @@ export function Wan21Scail2Page() {
     setSubjectGenerateOpen(true);
     try {
       try {
-        const nodeMapResponse = await fetch(`${BACKEND_API.BASE_URL}/api/workflow/node-map/z-image-turbo`);
+        const nodeMapResponse = await fetch(`${BACKEND_API.BASE_URL}/api/workflow/node-map/z-image`);
         const nodeMapData = await nodeMapResponse.json();
         if (nodeMapData.success) registerNodeMap(nodeMapData.node_map);
       } catch {
@@ -348,7 +348,7 @@ export function Wan21Scail2Page() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          workflow_id: 'z-image-turbo',
+          workflow_id: 'z-image',
           params: {
             prompt: subjectPrompt.trim(),
             negative: '',
@@ -429,7 +429,7 @@ export function Wan21Scail2Page() {
     const timer = window.setInterval(async () => {
       if (cancelled) return;
       try {
-        const res = await fetch(`${BACKEND_API.BASE_URL}/api/generate/status/${encodeURIComponent(subjectPendingPromptId)}?workflow_id=${encodeURIComponent('z-image-turbo')}`);
+        const res = await fetch(`${BACKEND_API.BASE_URL}/api/generate/status/${encodeURIComponent(subjectPendingPromptId)}?workflow_id=${encodeURIComponent('z-image')}`);
         const data = await res.json();
         if (!res.ok || !data.success) return;
         if (data.status !== 'completed') return;

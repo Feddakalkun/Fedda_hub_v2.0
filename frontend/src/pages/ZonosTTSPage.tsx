@@ -147,7 +147,7 @@ export function ZonosTTSPage() {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <div className="h-full overflow-y-auto custom-scrollbar p-6 max-w-3xl mx-auto">
       <FeddaPanel>
         <div className="p-6 space-y-6">
           <div className="flex items-center gap-3">

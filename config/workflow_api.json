@@ -1642,18 +1642,6 @@
         "type": "number",
         "label": "Seed"
       },
-      "lora_name": {
-        "node_id": "4922",
-        "input_key": "lora_name",
-        "type": "string",
-        "label": "LoRA"
-      },
-      "lora_strength": {
-        "node_id": "4922",
-        "input_key": "strength_model",
-        "type": "number",
-        "label": "LoRA Strength"
-      },
       "width": {
         "node_id": "4995",
         "input_key": "width",
@@ -1671,6 +1659,11 @@
         "input_key": "value",
         "type": "number",
         "label": "Length (s)"
+      },
+      "loras": {
+        "node_id": "5584",
+        "type": "loras",
+        "label": "LoRAs"
       }
     }
   },
@@ -2586,18 +2579,6 @@
         "type": "number",
         "label": "Seed"
       },
-      "lora_name": {
-        "node_id": "4922",
-        "input_key": "lora_name",
-        "type": "string",
-        "label": "LoRA"
-      },
-      "lora_strength": {
-        "node_id": "4922",
-        "input_key": "strength_model",
-        "type": "number",
-        "label": "LoRA Strength"
-      },
       "width": {
         "node_id": "4995",
         "input_key": "width",
@@ -2615,6 +2596,11 @@
         "input_key": "value",
         "type": "number",
         "label": "Length (s)"
+      },
+      "loras": {
+        "node_id": "5584",
+        "type": "loras",
+        "label": "LoRAs"
       }
     }
   },

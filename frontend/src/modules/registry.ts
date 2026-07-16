@@ -31,6 +31,8 @@ export interface FeddaModule {
   defaultTab: string;
 
   Icon: LucideIcon;
+  /** Feature still being built — surfaces an "Under construction" badge on its card. */
+  wip?: boolean;
   card?: {
     poster?: string;
     video?: string;
@@ -171,6 +173,7 @@ export const FEDDA_MODULES: FeddaModule[] = [
     tabs: ['transform-reel'],
     defaultTab: 'transform-reel',
     Icon: Wand2,
+    wip: true,
     card: veniceCard(36),
   },
   {
@@ -183,6 +186,8 @@ export const FEDDA_MODULES: FeddaModule[] = [
     tabs: ['reel-machine'],
     defaultTab: 'reel-machine',
     Icon: Film,
+    wip: true,
+    card: { poster: '/cards/new/venice/39.jpeg' },
   },
   {
     id: 'scail-studio',
@@ -194,6 +199,8 @@ export const FEDDA_MODULES: FeddaModule[] = [
     tabs: ['scail-studio'],
     defaultTab: 'scail-studio',
     Icon: Sparkles,
+    wip: true,
+    card: { poster: '/cards/new/venice/40.jpeg' },
   },
   {
     id: 'companion',

@@ -413,7 +413,7 @@ export function GrokPage() {
   };
 
   return (
-    <div className="p-6 max-w-[1100px] mx-auto">
+    <div className="h-full overflow-y-auto custom-scrollbar p-6 max-w-[1100px] mx-auto">
       <FeddaPanel className="overflow-hidden">
         {/* Header with Key */}
         <div className="border-b border-white/10 px-6 py-4 bg-black/20">

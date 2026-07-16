@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, Play, Wand2 } from 'lucide-react';
 import { PromptAssistant } from '../../components/ui/PromptAssistant';
 import { LoraSelector } from '../../components/ui/LoraSelector';
+import type { SimpleImageLoraEntry } from '../../components/workflows/SimpleImageCockpit';
 import { useToast } from '../../components/ui/Toast';
 import { BACKEND_API } from '../../config/api';
 import { usePersistentState } from '../../hooks/usePersistentState';
@@ -23,8 +24,13 @@ export const LtxImg2VidPage = () => {
   const [prompt, setPrompt] = usePersistentState('ltx_img2vid_prompt', '');
   const [negative, setNegative] = usePersistentState('ltx_img2vid_negative', DEFAULT_NEGATIVE);
   const [seed, setSeed] = usePersistentState('ltx_img2vid_seed', -1);
-  const [loraName, setLoraName] = usePersistentState('ltx_img2vid_lora_name', '');
-  const [loraStrength, setLoraStrength] = usePersistentState('ltx_img2vid_lora_strength', 0.65);
+  // Multi-LoRA: injected into the Power Lora Loader (node 5584), which stacks up to 10.
+  // The old single lora_name pointed at node 4922 — the distill LoRA — so picking one
+  // replaced the distill weights instead of adding to them.
+  const [loraEntries, setLoraEntries] = usePersistentState<SimpleImageLoraEntry[]>(
+    'ltx_img2vid_loras',
+    [],
+  );
   const [batchRaw, setBatchRaw] = usePersistentState('ltx_img2vid_batch_raw', '');
   const [aspectRatio, setAspectRatio] = usePersistentState('ltx_img2vid_ar', '16:9');
   const [resolution, setResolution] = usePersistentState<LtxResolution>('ltx_img2vid_res', 'M');
@@ -140,7 +146,7 @@ export const LtxImg2VidPage = () => {
       height: dims.height,
       length_seconds: lengthSec,
       seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
-      ...(loraName ? { lora_name: loraName, lora_strength: loraStrength } : {}),
+      loras: loraEntries.filter((entry) => entry.name && entry.name.trim()),
     };
   };
 
@@ -286,24 +292,67 @@ export const LtxImg2VidPage = () => {
             </Field>
 
             <div className="space-y-3">
-              <LoraSelector
-                options={availableLoras}
-                value={loraName}
-                onChange={setLoraName}
-                strength={loraStrength}
-                onStrengthChange={setLoraStrength}
-                accent="violet"
-                label="LTX LoRA"
-              />
-              {loraName && (
-                <SliderField
-                  label="LoRA Strength"
-                  value={loraStrength}
-                  onChange={setLoraStrength}
-                  min={0}
-                  max={1.5}
-                />
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                  LTX LoRAs {loraEntries.length > 0 ? `(${loraEntries.length})` : ''}
+                </span>
+                {loraEntries.length < 10 && (
+                  <button
+                    type="button"
+                    onClick={() => setLoraEntries((prev) => [...prev, { name: '', strength: 0.65 }])}
+                    className="rounded-md border border-white/10 px-2 py-0.5 text-[10px] text-zinc-400 transition hover:border-white/25 hover:text-zinc-200"
+                  >
+                    + Add LoRA
+                  </button>
+                )}
+              </div>
+
+              {loraEntries.length === 0 && (
+                <p className="text-[10px] text-zinc-600">
+                  No LoRAs — stack up to 10. They apply on top of the distill LoRA, not instead of it.
+                </p>
               )}
+
+              {loraEntries.map((entry, i) => (
+                <div key={i} className="space-y-2 rounded-lg border border-white/[0.07] bg-black/20 p-2">
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <LoraSelector
+                        options={availableLoras}
+                        value={entry.name}
+                        onChange={(name) =>
+                          setLoraEntries((prev) => prev.map((e, j) => (j === i ? { ...e, name } : e)))
+                        }
+                        strength={entry.strength}
+                        onStrengthChange={(strength) =>
+                          setLoraEntries((prev) => prev.map((e, j) => (j === i ? { ...e, strength } : e)))
+                        }
+                        accent="violet"
+                        label={`LoRA ${i + 1}`}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setLoraEntries((prev) => prev.filter((_, j) => j !== i))}
+                      aria-label={`Remove LoRA ${i + 1}`}
+                      className="mt-5 rounded-md border border-white/10 px-1.5 py-0.5 text-[11px] leading-none text-zinc-500 transition hover:border-red-500/40 hover:text-red-400"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  {entry.name && (
+                    <SliderField
+                      label={`Strength — ${entry.name.split(/[\\/]/).pop()}`}
+                      value={entry.strength}
+                      onChange={(strength) =>
+                        setLoraEntries((prev) => prev.map((e, j) => (j === i ? { ...e, strength } : e)))
+                      }
+                      min={0}
+                      max={1.5}
+                    />
+                  )}
+                </div>
+              ))}
 
               <Field label="Aspect Ratio">
                 <ChipGroup options={LTX_RATIOS} value={aspectRatio as LtxRatio} onChange={setAspectRatio} />

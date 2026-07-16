@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+import { Construction, Sparkles } from 'lucide-react';
 import { useModules } from '../../contexts/ModuleContext';
 import type { FeddaModule } from '../../modules/registry';
 
@@ -83,10 +83,13 @@ function AutomationCard({ module, onSelect }: { module?: FeddaModule; onSelect: 
           <Icon className="h-6 w-6 text-white/40" />
         </div>
       )}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-3 pt-8">
-        <p className="text-sm font-semibold text-white">{module.label}</p>
-      </div>
       <span className="absolute left-2 top-2 rounded-md bg-violet-500/80 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">Automation</span>
+      {module.wip ? (
+        <span className="absolute right-2 top-2 flex items-center gap-1 rounded-md bg-amber-500/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-black">
+          <Construction className="h-2.5 w-2.5" />
+          Under construction
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -102,19 +105,19 @@ export const RichHome = ({ onSelect }: RichHomeProps) => {
 
   return (
     <div className="h-full overflow-y-auto custom-scrollbar bg-[#050506]">
-      <div className="flex min-h-full w-full flex-col px-8 py-8 pt-4">
+      <div className="mx-auto flex min-h-full w-full max-w-7xl flex-col px-6 py-5 pt-3">
         {automations.length > 0 && (
-          <section className="mb-6 flex flex-col items-center space-y-3">
+          <section className="mb-4 flex flex-col items-center space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">Automations</p>
-            <div className="grid w-full max-w-5xl gap-4 grid-cols-4">
+            <div className="grid w-full max-w-2xl gap-3 grid-cols-4">
               {automationSlots.map((module, i) => (
                 <AutomationCard key={module?.id ?? `soon-${i}`} module={module} onSelect={onSelect} />
               ))}
             </div>
           </section>
         )}
-        <section className="space-y-4">
-          <div className="grid w-full gap-4 md:grid-cols-2">
+        <section className="space-y-3">
+          <div className="grid w-full gap-3 md:grid-cols-2">
             {topCards.map((module) => (
               <HomeCard key={module.id} module={module} onSelect={onSelect} />
             ))}

@@ -1,6 +1,7 @@
 import type { ElementType, ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { WorkflowDownloadBanner } from '../ui/WorkflowDownloadBanner';
+import { usePersistentState } from '../../hooks/usePersistentState';
 
 interface WorkflowShellProps {
   title: string;
@@ -19,50 +20,38 @@ interface WorkflowShellProps {
 }
 
 export const WorkflowShell = ({
-  title,
-  eyebrow = 'Workflow',
-  description,
-  icon: Icon,
   preview,
   children,
   output,
-  isGenerating = false,
-  canGenerate = true,
   leftClassName = '',
   outputClassName = '',
   hideOutputPane = false,
   workflowId,
 }: WorkflowShellProps) => {
+  // Remembered per workflow — the strip reserves up to 42vh, so collapsing it is
+  // a per-page preference the user shouldn't have to redo on every visit.
+  const [outputCollapsed, setOutputCollapsed] = usePersistentState(
+    `workflow_output_collapsed_${workflowId ?? 'default'}`,
+    false,
+  );
+
   return (
     <div className={`workflow-shell ${hideOutputPane ? 'workflow-shell-no-output' : ''}`.trim()}>
-      <div className="workflow-header">
-          <div className="workflow-header-icon">
-            {Icon ? <Icon className="h-4 w-4" /> : null}
-          </div>
-          <div className="min-w-0">
-            <p className="workflow-eyebrow">{eyebrow}</p>
-            <h1 className="workflow-title">{title}</h1>
-            {description ? <div className="workflow-description">{description}</div> : null}
-          </div>
-          {isGenerating ? (
-            <div className="workflow-status-pill workflow-status-neutral">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Running
-            </div>
-          ) : canGenerate ? (
-            <div className="workflow-status-pill workflow-status-ready">
-              Ready
-            </div>
-          ) : (
-            <div className="workflow-status-pill workflow-status-setup">
-              Setup
-            </div>
-          )}
-      </div>
-
       {!hideOutputPane && (
-        <section className={`workflow-output-strip ${outputClassName}`.trim()}>
-          {output}
+        <section
+          className={`workflow-output-strip ${outputCollapsed ? 'workflow-output-strip-collapsed' : ''} ${outputClassName}`.trim()}
+        >
+          <button
+            type="button"
+            onClick={() => setOutputCollapsed((v) => !v)}
+            aria-expanded={!outputCollapsed}
+            title={outputCollapsed ? 'Show output' : 'Hide output'}
+            className="workflow-output-toggle"
+          >
+            {outputCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+            <span>{outputCollapsed ? 'Show output' : 'Hide output'}</span>
+          </button>
+          {!outputCollapsed && output}
         </section>
       )}
 
