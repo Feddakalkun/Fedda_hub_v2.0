@@ -35,7 +35,7 @@
       "save_metadata": true,
       "trim_to_audio": false,
       "pingpong": false,
-      "save_output": true,
+      "save_output": false,
       "images": [
         "288:282",
         0
@@ -57,7 +57,7 @@
       "save_metadata": true,
       "trim_to_audio": false,
       "pingpong": false,
-      "save_output": true,
+      "save_output": false,
       "images": [
         "258:252",
         0
@@ -79,7 +79,7 @@
       "save_metadata": true,
       "trim_to_audio": false,
       "pingpong": false,
-      "save_output": true,
+      "save_output": false,
       "images": [
         "243:237",
         0
@@ -101,7 +101,7 @@
       "save_metadata": true,
       "trim_to_audio": false,
       "pingpong": false,
-      "save_output": true,
+      "save_output": false,
       "images": [
         "333:328",
         0
@@ -1342,7 +1342,7 @@
       "save_metadata": true,
       "trim_to_audio": false,
       "pingpong": false,
-      "save_output": true,
+      "save_output": false,
       "images": [
         "273:267",
         0
@@ -1364,7 +1364,7 @@
       "save_metadata": true,
       "trim_to_audio": false,
       "pingpong": false,
-      "save_output": true,
+      "save_output": false,
       "images": [
         "303:297",
         0
@@ -1388,7 +1388,7 @@
       "pingpong": false,
       "save_output": true,
       "images": [
-        "210",
+        "209",
         0
       ]
     },
