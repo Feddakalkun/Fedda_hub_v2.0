@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
-import { Download, ExternalLink, Film, Loader2, Play, Sparkles, Upload, Video } from 'lucide-react';
+import { Download, ExternalLink, Film, Loader2, Play, Sparkles, Video } from 'lucide-react';
 import { BACKEND_API } from '../../config/api';
 import { useToast } from '../../components/ui/Toast';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
@@ -8,6 +7,7 @@ import { usePersistentState } from '../../hooks/usePersistentState';
 import { comfyService } from '../../services/comfyService';
 import { WorkflowShell } from '../../components/layout/WorkflowShell';
 import { LiveSamplingPreview } from '../../components/workflows/LiveSamplingPreview';
+import { UploadDrop } from '../../components/workflows/UploadDrop';
 import { MediaSource } from '../../components/workflows/MediaSource';
 import { VideoTrimmer } from '../../components/workflows/VideoTrimmer';
 import { GeneratePersonPanel } from '../../components/workflows/GeneratePersonPanel';
@@ -23,58 +23,6 @@ function isScail2Url(url: string) {
 const QUALITY_SCALES: Record<number, number> = { [-4]: 0.25, [-3]: 1/3, [-2]: 0.5, [-1]: 0.75, [0]: 1.0, [1]: 1.25, [2]: 1.5, [3]: 1.75, [4]: 2.0 };
 const QUALITY_STEPS = [-4, -3, -2, -1, 0, 1, 2, 3, 4] as const;
 
-const UploadDrop = ({
-  accept,
-  label,
-  filename,
-  preview,
-  busy,
-  onFile,
-}: {
-  accept: string;
-  label: string;
-  filename: string | null;
-  preview?: ReactNode;
-  busy: boolean;
-  onFile: (file: File) => void;
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  return (
-    <div className="space-y-2">
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        className="flex min-h-[92px] w-full items-center justify-center rounded-xl border border-dashed border-white/15 bg-black/30 px-4 py-4 text-center transition hover:border-white/30 hover:bg-white/[0.03]"
-      >
-        {busy ? (
-          <span className="inline-flex items-center gap-2 text-sm text-zinc-400">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Uploading
-          </span>
-        ) : preview ? (
-          preview
-        ) : (
-          <span className="inline-flex items-center gap-2 text-sm text-zinc-400">
-            <Upload className="h-4 w-4" />
-            {label}
-          </span>
-        )}
-      </button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        className="hidden"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) onFile(file);
-          event.currentTarget.value = '';
-        }}
-      />
-      {filename ? <p className="truncate text-[11px] text-zinc-500">{filename}</p> : null}
-    </div>
-  );
-};
 
 const VideoPreviewStrip = ({
   currentVideo,
