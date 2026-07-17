@@ -8,6 +8,9 @@ import { usePersistentState } from '../../hooks/usePersistentState';
 import { comfyService } from '../../services/comfyService';
 import { WorkflowShell } from '../../components/layout/WorkflowShell';
 import { LiveSamplingPreview } from '../../components/workflows/LiveSamplingPreview';
+import { MediaSource } from '../../components/workflows/MediaSource';
+import { VideoTrimmer } from '../../components/workflows/VideoTrimmer';
+import { GeneratePersonPanel } from '../../components/workflows/GeneratePersonPanel';
 import { consumeHandoff } from '../../utils/workflowHandoff';
 import { triggerMediaDownload } from '../../utils/mediaStore';
 import { inputBase, panel, cn } from '../../lib/styles';
@@ -172,9 +175,6 @@ export function Wan21Scail2Page() {
   const [referenceImageFile, setReferenceImageFile] = usePersistentState<string | null>('scail2_ref_image', null);
   const [motionVideoFile, setMotionVideoFile] = usePersistentState<string | null>('scail2_motion_video', null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [uploadingVideo, setUploadingVideo] = useState(false);
-  const [sourceUrl, setSourceUrl] = useState('');
-  const [isDownloading, setIsDownloading] = useState(false);
 
   const [prompt, setPrompt] = usePersistentState('scail2_prompt', 'a person dancing, cinematic lighting, natural movement');
   const [negative, setNegative] = usePersistentState('scail2_negative', '');
@@ -182,6 +182,8 @@ export function Wan21Scail2Page() {
   const [motionStartSec, setMotionStartSec] = usePersistentState('scail2_start_sec', 0);
   const [motionEndSec, setMotionEndSec] = usePersistentState('scail2_end_sec', 2.0);
   const [clipDuration, setClipDuration] = useState(0);
+  const [capturedFrameFile, setCapturedFrameFile] = usePersistentState<string | null>('scail2_captured_frame', null);
+  const [isCapturing, setIsCapturing] = useState(false);
   const [qualityStep, setQualityStep] = usePersistentState('scail2_quality', 0);
   const [uploadedImageDimensions, setUploadedImageDimensions] = useState<{ w: number; h: number } | null>(null);
   const [seed, setSeed] = usePersistentState('scail2_seed', -1);
@@ -369,36 +371,33 @@ export function Wan21Scail2Page() {
     }
   };
 
-  const downloadMotion = async () => {
-    if (!sourceUrl.trim()) return;
-    setIsDownloading(true);
-    try {
-      const res = await fetch(`${BACKEND_API.BASE_URL}/api/media/download-video`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: sourceUrl.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.detail || 'Download failed');
-      setMotionVideoFile(data.filename);
-      toast(data.title ? `Downloaded: ${data.title}` : 'Video downloaded', 'success');
-    } catch (err: any) {
-      toast(err.message || 'Download failed', 'error');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
   const handleVideoUpload = async (file: File) => {
-    setUploadingVideo(true);
     try {
       const filename = await uploadToComfy(file);
       setMotionVideoFile(filename);
       toast('Motion video uploaded', 'success');
     } catch (err: any) {
       toast(err.message || 'Video upload failed', 'error');
+    }
+  };
+
+  const captureStartFrame = async () => {
+    if (!motionVideoFile) return;
+    setIsCapturing(true);
+    try {
+      const res = await fetch(`${BACKEND_API.BASE_URL}/api/media/capture-frame`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: motionVideoFile, time_sec: motionStartSec }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.detail || 'Capture failed');
+      setCapturedFrameFile(data.filename);
+      toast('Start frame captured', 'success');
+    } catch (err: any) {
+      toast(err.message || 'Capture failed', 'error');
     } finally {
-      setUploadingVideo(false);
+      setIsCapturing(false);
     }
   };
 
@@ -520,7 +519,7 @@ export function Wan21Scail2Page() {
       hideOutputPane
       output={null}
     >
-      <div className="mx-auto max-w-5xl space-y-4 px-4 pb-8">
+      <div className="w-full space-y-4 px-6 pb-8">
         <LiveSamplingPreview
           previewUrl={previewUrl}
           isRunning={isGenerating}
@@ -542,8 +541,8 @@ export function Wan21Scail2Page() {
           />
         </LiveSamplingPreview>
 
-        <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-          {/* Left: uploads */}
+        <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
+          {/* Left: uploads (wider so the timeline + reference/motion have room) */}
           <div className="space-y-4">
             <section className={panel}>
               <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-600">
@@ -605,72 +604,51 @@ export function Wan21Scail2Page() {
                 Motion Video
               </p>
               <div className="space-y-2">
-                <div className="flex gap-2">
-                  <input
-                    value={sourceUrl}
-                    onChange={(e) => setSourceUrl(e.target.value)}
-                    placeholder="TikTok, Instagram Reel, YouTube Shorts or direct URL"
-                    className={inputBase}
-                  />
-                  <NeutralButton onClick={downloadMotion} disabled={!sourceUrl.trim() || isDownloading}>
-                    {isDownloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                    Download
-                  </NeutralButton>
-                </div>
-                <UploadDrop
+                <MediaSource
                   accept="video/*"
-                  label="Upload pose/dance video"
+                  uploadLabel="Upload pose/dance video"
                   filename={motionVideoFile}
-                  busy={uploadingVideo}
-                  onFile={handleVideoUpload}
-                  preview={
-                    motionPreviewUrl ? (
-                      <div className="space-y-2">
-                        <video
-                          src={motionPreviewUrl}
-                          className="max-h-40 w-full rounded-lg object-contain"
-                          muted
-                          playsInline
-                          controls
-                          onLoadedMetadata={(e) => {
-                            const d = e.currentTarget.duration;
-                            if (Number.isFinite(d) && d > 0) {
-                              setClipDuration(d);
-                              if (motionEndSec > d || motionEndSec <= motionStartSec) {
-                                setMotionEndSec(Math.min(d, motionStartSec + 2));
-                              }
-                            }
-                          }}
-                        />
-                        {clipDuration > 0 && (
-                          <div
-                            className="rounded-lg border border-white/10 bg-black/30 p-2.5"
-                            onClick={(e) => e.stopPropagation()}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onPointerDown={(e) => e.stopPropagation()}
-                          >
-                            <div className="mb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-                              <span>Trim motion clip</span>
-                              <span className="font-mono text-zinc-400">{trimStart.toFixed(1)}s → {trimEnd.toFixed(1)}s · {(trimEnd - trimStart).toFixed(1)}s ({frameLength}f)</span>
-                            </div>
-                            <label className="block text-[9px] uppercase tracking-wide text-zinc-600">Start</label>
-                            <input
-                              type="range" min={0} max={clipDuration} step={0.1} value={trimStart}
-                              onChange={(e) => setMotionStartSec(Math.min(Number(e.target.value), motionEndSec - 0.2))}
-                              className="w-full accent-emerald-500"
-                            />
-                            <label className="block text-[9px] uppercase tracking-wide text-zinc-600">End</label>
-                            <input
-                              type="range" min={0} max={clipDuration} step={0.1} value={trimEnd}
-                              onChange={(e) => setMotionEndSec(Math.max(Number(e.target.value), motionStartSec + 0.2))}
-                              className="w-full accent-emerald-500"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    ) : undefined
-                  }
+                  urlPlaceholder="TikTok, Instagram Reel, YouTube Shorts or direct URL"
+                  onResolved={(name) => setMotionVideoFile(name)}
                 />
+                {motionPreviewUrl && (
+                  <VideoTrimmer
+                    videoUrl={motionPreviewUrl}
+                    startSec={motionStartSec}
+                    endSec={motionEndSec}
+                    onChange={(s, e) => {
+                      setMotionStartSec(s);
+                      setMotionEndSec(e);
+                    }}
+                    onLoaded={({ durationSec }) => {
+                      setClipDuration(durationSec);
+                      if (motionEndSec > durationSec || motionEndSec <= motionStartSec) {
+                        setMotionEndSec(Math.min(durationSec, motionStartSec + 2));
+                      }
+                    }}
+                    onCapture={captureStartFrame}
+                    capturing={isCapturing}
+                  />
+                )}
+                {clipDuration > 0 && (
+                  <p className="text-right font-mono text-[10px] text-zinc-500">
+                    {trimStart.toFixed(1)}s → {trimEnd.toFixed(1)}s · {(trimEnd - trimStart).toFixed(1)}s ({frameLength}f)
+                  </p>
+                )}
+                {motionVideoFile && (
+                  <GeneratePersonPanel
+                    sourceImageFile={capturedFrameFile}
+                    sourcePreviewUrl={
+                      capturedFrameFile
+                        ? `/comfy/view?filename=${encodeURIComponent(capturedFrameFile)}&subfolder=&type=input`
+                        : null
+                    }
+                    onApprove={(filename) => {
+                      setReferenceImageFile(filename);
+                      setUploadedImageDimensions(null);
+                    }}
+                  />
+                )}
               </div>
             </section>
           </div>
