@@ -572,6 +572,14 @@ $Deps = @(
     "browser-cookie3"
 )
 Venv-Pip "install $($Deps -join ' ')"
+# The batch above is one pip command: if ANY package fails to build/resolve on a
+# fresh box, pip aborts and later packages (scipy, etc.) silently don't install -
+# and ComfyUI's pinned commit hard-imports scipy at startup, so it won't boot.
+# Fall back to per-package installs so one bad package can't take down the rest.
+if ($LASTEXITCODE -ne 0) {
+    Write-Step "Batch dep install failed - retrying each package individually so critical ones still land..." "Yellow"
+    foreach ($pkg in $Deps) { Venv-Pip "install $pkg" }
+}
 
 # SageAttention for 40/50-series
 try {
