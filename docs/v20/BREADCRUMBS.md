@@ -1136,3 +1136,22 @@ Worked through the pending UX backlog by delegating frontend work to a third age
   never render-tested); whether ComfyUI emits preview frames during **video** sampling
   (LTX/WAN/Hunyuan) — wiring is correct either way, degrades to empty state.
 - Dual LoRA per-person face-restore LoRA.
+
+## 2026-07-16 — Handover (Fable) — WAN Story dynamic + Scail2 rescue + installer/RunPod
+
+**Shipped + pushed this session (all on origin/main, reach RunPod on `git pull`):**
+- WAN Story is now **dynamic single-pass, 2–20 frames** (was fixed-6 that looped). New backend `POST /api/wan-story/generate` + `_build_wan_story_graph()` in server.py builds the graph on the fly: shared GGUF UNet pair + LoRAs + VAE + CLIP, N-1 FLF→high/low sampler→decode blocks, joined via ImageBatch, one RIFE+VideoCombine = unbroken motion. Template = `backend/workflows/wan22/wan22-flf-segment.json`. Page (`Wan226FramesPage.tsx`) posts to it + polls `/api/generate/status`. Settings exposed: aspect, resolution 480–1024, seconds/transition 2–12, seed, hi/lo LoRA. Frame add/remove + drag-drop.
+- Old fixed-6 graph (`img2vid-6frames-wan22.json`) loop-back removed (final VideoCombine → ImageBatch 209) — kept as fallback but page uses the dynamic endpoint now.
+- **Scail 2 char-animation RESCUED from install-only → committed** (`38b1379`+1): 6 new components (`components/workflows/{GeneratePersonPanel,MediaSource,UploadDrop,VideoHistoryStrip,VideoTrimmer}.tsx`, `utils/comfyUpload.ts`) + `Wan21Scail2Page.tsx`. All backend endpoints it uses already existed in repo. It was NOT on RunPod until now.
+- Installer fix: `install.ps1` comprehensive-deps now retries **per-package** if the batch fails (a friend's RTX 5070 Ti install had scipy silently dropped → ComfyUI wouldn't boot: `ModuleNotFoundError: scipy`). Immediate user fix: `python_embeded\python.exe -m pip install scipy`.
+- Venice.ai key button added to top bar (`TopSystemStrip.tsx`) — key was read but never settable.
+- Caption single-subject guard (`_SINGLE_SUBJECT_RULE`) + storyboard brain (`/api/ollama/storyboard`) + Ollama `keep_alive:0` (frees GPU between vision calls).
+
+**NEEDS ATTENTION (next agent):**
+1. **RunPod NOT auto-updated** — someone must `git pull` in the pod's app dir to get all the above.
+2. **`preview_method` fix is runtime-only** (`ComfyUI/user/__manager/config.ini`, gitignored) → does NOT reach RunPod via commit. Durable fix = run `setup_comfyui_config.py` after `update.bat` (parked installer task). Requires ComfyUI restart to bite.
+3. **install/app/backend/server.py is DIVERGED from repo** (user's local NSFW additions + my crossfade/wan-story builder applied manually). `git pull` into install WILL conflict on server.py — reconcile carefully; do NOT clobber the user's local edits, and do NOT push those to public repo. The wan-story builder IS in both repo and install.
+4. Pre-existing baseline TS error: `SimpleImageCockpit.tsx:130` `promptLabel` not on props (2-line fix: add `promptLabel?: string` to props). Baseline is 44 errors; don't regress.
+5. Untested end-to-end (needs real rig): Scail2 capture→caption→generate flow, WAN Story dynamic at high frame counts (VRAM scales with total length — 24GB should stay ≤720/≤6s).
+
+**Open backlog:** LTX Audio-to-Video: remove 30s cap + make upscale step optional (user OOM'd on RTX 6000 with a 3-min song at 720). Transform Reel edit-strength slider. Z-Image advanced sampler options.
