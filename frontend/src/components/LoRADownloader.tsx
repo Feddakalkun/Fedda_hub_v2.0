@@ -41,6 +41,8 @@ interface CatalogItem {
     installed: boolean;
     size_mb?: number | null;
     preview_url?: string | null;
+    description?: string;
+    download_url?: string;   // when set, the card links straight to this (e.g. Google Drive)
 }
 
 const FAMILY_PACKS: Record<LoRAFamily, PackConfig[]> = {
@@ -106,11 +108,23 @@ const CharacterCard = ({
                 <p className="text-[11px] font-black text-white uppercase tracking-widest truncate leading-tight">
                     {item.name}
                 </p>
+                {item.description && (
+                    <p className="text-[10px] text-white/55 leading-snug mt-1 line-clamp-2">{item.description}</p>
+                )}
                 {item.size_mb && (
                     <p className="text-[9px] text-white/30 font-mono mt-0.5">{item.size_mb} MB</p>
                 )}
                 <div className="mt-3">
-                    {item.installed ? (
+                    {item.download_url ? (
+                        <a
+                            href={item.download_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block px-3 py-1.5 bg-white/10 hover:bg-white hover:text-black text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                        >
+                            Download
+                        </a>
+                    ) : item.installed ? (
                         <span className="inline-flex items-center gap-1.5 text-[9px] font-black text-emerald-400 uppercase tracking-widest">
                             <Check className="w-3 h-3" /> Ready
                         </span>
@@ -348,6 +362,7 @@ export const LoRADownloader = ({ family = 'z-image' }: LoRADownloaderProps) => {
         setPreviewTitle('Starter Pack');
         setPreviewItems(FREE_LORAS.map(l => ({
             name: l.name, file: l.filename, installed: !!loraStatus[l.id]?.installed,
+            preview_url: l.preview, size_mb: l.size_mb, description: l.description, download_url: l.download_url,
         })));
         setActivePack(null);
         setPreviewOpen(true);

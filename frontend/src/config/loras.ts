@@ -4,40 +4,39 @@ export interface LoRAInfo {
     name: string;
     filename: string;
     emoji: string;
+    trigger: string;
     description: string;
+    /** Appearance anchor — prepend to prompts so the character stays consistent. */
+    appearance: string;
     size_mb: number;
-    url: string;
+    preview: string;       // card image (public path)
+    download_url: string;  // direct download link
 }
-
-const BASE_URL = 'https://huggingface.co/datasets/FeddaKalkun/free-loras/resolve/main';
 
 export const FREE_LORAS: LoRAInfo[] = [
     {
         id: 'emmy',
         name: 'Emmy',
-        filename: 'Emmy.safetensors',
+        filename: 'emmie_zimage.safetensors',
         emoji: '👱‍♀️',
-        description: 'Scandinavian blonde character LoRA',
+        trigger: 'emmy',
+        description: 'Scandinavian blonde — pale freckled skin, ash-blonde hair, blue-grey eyes.',
+        appearance: 'emmy, a Scandinavian woman in her mid-twenties, ash-blonde hair, pale fair skin with light freckles across the nose and cheeks, thick dark eyebrows, pale blue-grey eyes, natural full lips, slim oval face',
         size_mb: 325,
-        url: `${BASE_URL}/Emmy/Emmy.safetensors`,
+        preview: '/loras/emmy.jpg',
+        download_url: 'https://drive.google.com/file/d/1FKAtC5gE_Ng4Tw8pvbiCU_iiZq73MqFG/view?usp=sharing',
     },
     {
-        id: 'sana',
-        name: 'Sana',
-        filename: 'sana.safetensors',
-        emoji: '👤',
-        description: 'Character LoRA for portraits',
+        id: 'zana',
+        name: 'Zana',
+        filename: 'sana_zimage.safetensors',
+        emoji: '👩🏽',
+        trigger: 'sana',
+        description: 'Warm tan skin, long wavy chestnut hair, hazel eyes.',
+        appearance: 'sana, a woman in her early twenties, warm tan light-brown skin, long wavy chestnut-brown hair, hazel almond eyes, full lips, subtle freckles, soft oval face',
         size_mb: 162,
-        url: `${BASE_URL}/Sana/sana.safetensors`,
-    },
-    {
-        id: 'maya',
-        name: 'Maya',
-        filename: 'Maya-Sol.safetensors',
-        emoji: '👩🏻',
-        description: 'Maya character LoRA',
-        size_mb: 324,
-        url: `${BASE_URL}/Maya/Maya-Sol.safetensors`,
+        preview: '/loras/zana.jpg',
+        download_url: 'https://drive.google.com/file/d/1p_xgPyBFpIleISs-Nwy5rqemoBVCOQPF/view?usp=sharing',
     },
 ];
 
