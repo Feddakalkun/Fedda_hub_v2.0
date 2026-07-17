@@ -8,10 +8,16 @@ import { PromptAssistant } from '../../components/ui/PromptAssistant';
 import { LoraSelector } from '../../components/ui/LoraSelector';
 import { WorkflowShell, WorkflowSection } from '../../components/layout/WorkflowShell';
 import { WorkflowVideoPreviewStrip } from '../../components/layout/WorkflowVideoPreviewStrip';
-import { GenerateButton, SeedField } from '../../components/ui/WorkflowControls';
+import { ChipGroup, GenerateButton, SeedField, SliderField } from '../../components/ui/WorkflowControls';
 
-// Single-pass 6-frame graph (ImageBatch join = unbroken motion), fixed 720x720.
-const MAX_FRAMES = 6;
+// Dynamic single-pass graph (backend builds N-1 transitions, ImageBatch join = unbroken motion).
+const MAX_FRAMES = 20;
+
+type StoryRatio = '1:1' | '3:4' | '9:16' | '4:3' | '16:9';
+const RATIOS: StoryRatio[] = ['1:1', '3:4', '9:16', '4:3', '16:9'];
+const RATIO_ASPECT: Record<StoryRatio, string> = { '1:1': '1:1', '3:4': '4:3', '9:16': '16:9', '4:3': '4:3', '16:9': '16:9' };
+const RATIO_DIRECTION: Record<StoryRatio, string> = { '1:1': 'Horizontal', '3:4': 'Vertical', '9:16': 'Vertical', '4:3': 'Horizontal', '16:9': 'Horizontal' };
+const RES_PRESETS = ['480', '576', '640', '720'] as const;
 
 const DEFAULT_TRANSITION = 'smooth cinematic transition, natural motion, consistent subject';
 
@@ -24,6 +30,9 @@ export const Wan226FramesPage = () => {
   const [frames, setFrames] = usePersistentState<string[]>('wanstory_frames', []);
   const [prompts, setPrompts] = usePersistentState<string[]>('wanstory_prompts', []);
   const [seed, setSeed] = usePersistentState('wanstory_seed', -1);
+  const [ratio, setRatio] = usePersistentState<StoryRatio>('wanstory_ratio', '9:16');
+  const [resolution, setResolution] = usePersistentState('wanstory_resolution', '640');
+  const [seconds, setSeconds] = usePersistentState('wanstory_seconds', 5);
   const [loraHigh, setLoraHigh] = usePersistentState('wanstory_lora_high', '');
   const [loraLow, setLoraLow] = usePersistentState('wanstory_lora_low', '');
   const [loraHighStr, setLoraHighStr] = usePersistentState('wanstory_lora_high_str', 1.0);
@@ -132,55 +141,49 @@ export const Wan226FramesPage = () => {
   };
 
   // ── generation ──────────────────────────────────────────────────────────
-  const runWorkflow = async (workflowId: string, params: Record<string, unknown>): Promise<SegmentVideo> => {
-    const r = await fetch(`${BACKEND_API.BASE_URL}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ workflow_id: workflowId, params }),
-    });
-    const d = await r.json();
-    if (!d.prompt_id) throw new Error(d.detail || d.error || 'Submit failed');
-    for (;;) {
-      if (cancelRef.current) throw new Error('Cancelled');
-      await sleep(5000);
-      const s = await (await fetch(`${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.GENERATE_STATUS}/${d.prompt_id}`)).json();
-      if (s.status === 'completed') {
-        const vid = s.videos?.[0];
-        if (!vid) throw new Error('Segment finished but produced no video');
-        return vid;
-      }
-      if (s.status === 'error') throw new Error(s.error || 'Segment failed in ComfyUI');
-    }
-  };
-
   const generate = async () => {
     if (isGenerating || frames.length < 2) return;
     cancelRef.current = false;
     setIsGenerating(true);
     setCurrentVideo(null);
-    setProgress('Rendering continuous story (single pass)…');
+    const segs = frames.length - 1;
+    setProgress(`Rendering continuous story — ${segs} transition${segs === 1 ? '' : 's'}, single pass…`);
     try {
-      // Single-pass 6-frame graph: all segments decode to frames and join via
-      // ImageBatch into one continuous video (unbroken motion). Pad unused slots
-      // with the last frame so the fixed 6-slot graph always gets 6 images.
-      const last = frames[frames.length - 1];
-      const img = (i: number) => frames[i] ?? last;
-      const pr = (i: number) => (prompts[i] || DEFAULT_TRANSITION).trim();
-      const params: Record<string, unknown> = {
-        seed: seed === -1 ? Math.floor(Math.random() * 10_000_000_000) : seed,
-        ...(loraHigh ? { lora_high: { on: true, lora: loraHigh, strength: loraHighStr } } : {}),
-        ...(loraLow ? { lora_low: { on: true, lora: loraLow, strength: loraLowStr } } : {}),
-      };
-      for (let i = 0; i < 6; i++) {
-        params[`image${i + 1}`] = img(i);
-        // prompts drive transitions; padded tail holds on the last frame
-        params[`prompt${i + 1}`] = i < frames.length - 1 ? pr(i) : 'hold still, minimal motion, steady';
+      // Dynamic backend graph: N-1 transitions rendered in one ComfyUI pass, joined
+      // in pixel space (ImageBatch) -> unbroken motion for any 2..20 frames.
+      const r = await fetch(`${BACKEND_API.BASE_URL}/api/wan-story/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          images: frames,
+          prompts: frames.slice(0, -1).map((_, i) => (prompts[i] || DEFAULT_TRANSITION).trim()),
+          seed: seed === -1 ? -1 : seed,
+          aspect_ratio: RATIO_ASPECT[ratio],
+          direction: RATIO_DIRECTION[ratio],
+          width: parseInt(resolution, 10),
+          seconds,
+          ...(loraHigh ? { lora_high: { lora: loraHigh, strength: loraHighStr } } : {}),
+          ...(loraLow ? { lora_low: { lora: loraLow, strength: loraLowStr } } : {}),
+        }),
+      });
+      const d = await r.json();
+      if (!d.prompt_id) throw new Error(d.detail || d.error || 'Submit failed');
+
+      for (;;) {
+        if (cancelRef.current) throw new Error('Cancelled');
+        await sleep(5000);
+        const s = await (await fetch(`${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.GENERATE_STATUS}/${d.prompt_id}`)).json();
+        if (s.status === 'completed') {
+          const vid = s.videos?.[0];
+          if (!vid) throw new Error('Story finished but produced no video');
+          const url = videoUrl(vid);
+          setCurrentVideo(url);
+          setHistory((prev) => [url, ...prev.filter((u) => u !== url)].slice(0, 40));
+          toast('Story ready — continuous motion', 'success');
+          break;
+        }
+        if (s.status === 'error') throw new Error(s.error || 'Story failed in ComfyUI');
       }
-      const vid = await runWorkflow('wan22-img2vid-6frames', params);
-      const url = videoUrl(vid);
-      setCurrentVideo(url);
-      setHistory((prev) => [url, ...prev.filter((u) => u !== url)].slice(0, 40));
-      toast('Story ready — continuous motion', 'success');
     } catch (err: any) {
       if (err.message !== 'Cancelled') toast(err.message || 'Generation failed', 'error');
       else toast('Stopped', 'info');
@@ -196,7 +199,7 @@ export const Wan226FramesPage = () => {
     <WorkflowShell
       title="Storyboard"
       eyebrow="WAN 2.2"
-      description={`Chain up to ${MAX_FRAMES} keyframes into one continuous video — single-pass render for smooth unbroken motion, each transition gets its own prompt.`}
+      description={`Chain 2–${MAX_FRAMES} keyframes into one continuous video — single-pass render for smooth unbroken motion, each transition gets its own prompt.`}
       icon={Layers}
       isGenerating={isGenerating}
       canGenerate={canGenerate}
@@ -314,10 +317,21 @@ export const Wan226FramesPage = () => {
         </WorkflowSection>
 
         <WorkflowSection title="Settings">
-          <div className="space-y-2">
-            <SeedField value={seed} onChange={setSeed} />
+          <div className="space-y-3">
+            <div>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Aspect Ratio</p>
+              <ChipGroup options={RATIOS} value={ratio} onChange={setRatio} />
+            </div>
+            <div>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Resolution</p>
+              <ChipGroup options={[...RES_PRESETS]} value={resolution} onChange={setResolution} renderLabel={(r) => `${r}px`} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <SliderField label="Seconds per transition" value={seconds} onChange={setSeconds} min={2} max={8} step={1} format={(v) => `${v}s`} />
+              <SeedField value={seed} onChange={setSeed} />
+            </div>
             <p className="text-[11px] text-zinc-600">
-              Renders all {segments + 1} frames in one continuous pass (unbroken motion), 720×720. Up to 6 frames.
+              {segments + 1} frames → {segments} transition{segments === 1 ? '' : 's'} rendered in one continuous pass (unbroken motion). Big frame counts are slower — lower resolution if you hit VRAM limits.
             </p>
           </div>
         </WorkflowSection>

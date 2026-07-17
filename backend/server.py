@@ -3929,6 +3929,110 @@ async def start_workflow_model_downloads(workflow_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class WanStoryRequest(BaseModel):
+    images: List[str]                  # ComfyUI input filenames, in play order (2..20+)
+    prompts: List[str] = []            # transition prompts (len images-1); missing -> default
+    seed: int = -1
+    aspect_ratio: str = "1:1"
+    direction: str = "Horizontal"
+    width: int = 720
+    seconds: int = 5                   # per-transition length
+    lora_high: Optional[Dict[str, Any]] = None
+    lora_low: Optional[Dict[str, Any]] = None
+    client_id: str = "fedda_hub_v2"
+
+
+_WANSTORY_TEMPLATE = ROOT_DIR / "backend" / "workflows" / "wan22" / "wan22-flf-segment.json"
+
+
+def _build_wan_story_graph(req: "WanStoryRequest") -> Dict[str, Any]:
+    """Build a single-pass WAN Story graph for ANY number of frames.
+
+    Replicates the transition block (FLF -> high/low sampler -> VAEDecode) once per
+    pair of frames, SHARING the two GGUF UNet loaders + LoRAs + VAE + CLIP across all
+    segments, then joins every decoded segment in pixel space via ImageBatch and ends
+    on one RIFE + VideoCombine -> unbroken motion, no per-clip re-encode."""
+    import copy as _copy
+    tpl = json.loads(_WANSTORY_TEMPLATE.read_text(encoding="utf-8-sig"))
+    n = len(req.images)
+    seed = req.seed if req.seed is not None and req.seed >= 0 else random.randint(1, 2_000_000_000)
+
+    g: Dict[str, Any] = {}
+    # Shared: unet loaders, loras, blockswap, model-sampling, clip, vae, negative, length
+    SHARED = ["217", "218", "219", "220", "266", "269", "270", "273", "465", "466", "470", "479", "480"]
+    for nid in SHARED:
+        g[nid] = _copy.deepcopy(tpl[nid])
+    g["266"]["inputs"]["value"] = int(req.seconds)
+    # optional user character LoRA -> unused slot on the Power Lora loaders
+    if req.lora_high and req.lora_high.get("lora"):
+        g["480"]["inputs"]["lora_4"] = {"on": True, "lora": req.lora_high["lora"], "strength": float(req.lora_high.get("strength", 1.0))}
+    if req.lora_low and req.lora_low.get("lora"):
+        g["479"]["inputs"]["lora_4"] = {"on": True, "lora": req.lora_low["lora"], "strength": float(req.lora_low.get("strength", 1.0))}
+
+    # Per-frame: LoadImage + AspectRatioResizeImage
+    for i, img in enumerate(req.images):
+        li, ri = str(1000 + i), str(1100 + i)
+        g[li] = {"class_type": "LoadImage", "inputs": {"image": img}}
+        g[ri] = {"class_type": "AspectRatioResizeImage", "inputs": {
+            "width": int(req.width), "height": 0, "aspect_ratio": req.aspect_ratio,
+            "direction": req.direction, "crop_method": "Stretch", "image": [li, 0]}}
+
+    # Per transition: prompt -> FLF -> high sampler -> low sampler -> decode
+    decode_ids: List[str] = []
+    for k in range(n - 1):
+        base = 2000 + k * 10
+        pos, flf, ksh, ksl, dec = str(base), str(base + 1), str(base + 2), str(base + 3), str(base + 4)
+        start_r, end_r = str(1100 + k), str(1100 + k + 1)
+        prompt_text = (req.prompts[k].strip() if k < len(req.prompts) and req.prompts[k].strip()
+                       else "smooth cinematic transition, natural motion, consistent subject")
+        g[pos] = {"class_type": "CLIPTextEncode", "inputs": {"text": prompt_text, "clip": ["218", 0]}}
+        g[flf] = {"class_type": "WanFirstLastFrameToVideo", "inputs": {
+            "width": [start_r, 1], "height": [start_r, 2], "length": ["470", 0], "batch_size": 1,
+            "positive": [pos, 0], "negative": ["273", 0], "vae": ["219", 0],
+            "start_image": [start_r, 0], "end_image": [end_r, 0]}}
+        g[ksh] = _copy.deepcopy(tpl["271"])
+        g[ksh]["inputs"].update({"model": ["269", 0], "positive": [flf, 0], "negative": [flf, 1], "latent_image": [flf, 2], "noise_seed": seed})
+        g[ksl] = _copy.deepcopy(tpl["272"])
+        g[ksl]["inputs"].update({"model": ["220", 0], "positive": [flf, 0], "negative": [flf, 1], "latent_image": [ksh, 0], "noise_seed": seed})
+        g[dec] = {"class_type": "VAEDecode", "inputs": {"samples": [ksl, 0], "vae": ["219", 0]}}
+        decode_ids.append(dec)
+
+    # Join decoded segments in pixel space
+    joined = decode_ids[0]
+    for j in range(1, len(decode_ids)):
+        bid = str(3000 + j)
+        g[bid] = {"class_type": "ImageBatch", "inputs": {"image1": [joined, 0], "image2": [decode_ids[j], 0]}}
+        joined = bid
+
+    # One RIFE interpolation + one VideoCombine on the whole joined stream
+    g["9000"] = _copy.deepcopy(tpl["287"]); g["9000"]["inputs"]["frames"] = [joined, 0]
+    g["9001"] = _copy.deepcopy(tpl["288"]); g["9001"]["inputs"].update({"images": ["9000", 0], "filename_prefix": "VIDEO/WANSTORY/story", "save_output": True})
+    return g
+
+
+@app.post("/api/wan-story/generate")
+async def wan_story_generate(req: WanStoryRequest):
+    """Dynamic WAN Story: single-pass unbroken motion for any 2..N frames."""
+    if len(req.images) < 2:
+        raise HTTPException(status_code=400, detail="WAN Story needs at least 2 frames")
+    try:
+        graph = _build_wan_story_graph(req)
+        resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": graph, "client_id": req.client_id}, timeout=10)
+        if not resp.ok:
+            try:
+                msg = resp.json().get("error", {}).get("message") or resp.text
+            except Exception:
+                msg = resp.text
+            raise HTTPException(status_code=resp.status_code, detail=f"ComfyUI rejected the story graph: {msg}")
+        return {"success": True, "prompt_id": resp.json().get("prompt_id"), "segments": len(req.images) - 1}
+    except HTTPException:
+        raise
+    except requests_exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail=_comfy_proxy_error())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/generate")
 async def generate(req: GenerateRequest):
     """
