@@ -2304,12 +2304,83 @@ async def influencer_prompt_batch(count: int = 10, context: str = "zimage", nsfw
     ]
     return {"success": True, "prompts": prompts}
 
+
+# ── ComfyUI-native text tools (no-Ollama fallback, e.g. RunPod) ──────────────
+# Florence-2 for image captioning, Searge LLM (Mistral GGUF) for prompt gen.
+# Both run as ComfyUI graphs and surface their result through the node history.
+_COMFY_CAPTION_TPL = ROOT_DIR / "backend" / "workflows" / "imagecaption" / "FLORENCEIMAGECAPTIONING2.json"
+_COMFY_LLM_TPL = ROOT_DIR / "backend" / "workflows" / "llmpromptgenerator" / "LLMPROMPTGENERATOR.json"
+
+
+def _comfy_run_text(graph: Dict[str, Any], timeout: int = 180) -> str:
+    """Submit a text-producing graph to ComfyUI, wait, and return the longest
+    text output (Florence2 caption / Searge LLM prompt via showAnything/SaveText)."""
+    import time as _t
+    resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": graph, "client_id": "fedda_text"}, timeout=15)
+    if not resp.ok:
+        raise RuntimeError(f"ComfyUI rejected the text graph: {resp.text[:300]}")
+    pid = resp.json().get("prompt_id")
+    if not pid:
+        raise RuntimeError("ComfyUI did not return a prompt_id")
+    deadline = _t.time() + timeout
+    while _t.time() < deadline:
+        _t.sleep(2)
+        h = requests.get(f"{COMFY_URL}/history/{pid}", timeout=15).json()
+        entry = h.get(pid)
+        if not entry:
+            continue
+        status = entry.get("status", {})
+        if status.get("status_str") == "error":
+            raise RuntimeError("ComfyUI text workflow errored")
+        if status.get("completed") or status.get("status_str") == "success":
+            texts: List[str] = []
+            for _nid, o in (entry.get("outputs") or {}).items():
+                for key in ("text", "string", "STRING"):
+                    v = o.get(key)
+                    if isinstance(v, list):
+                        texts += [str(x) for x in v if str(x).strip()]
+                    elif isinstance(v, str) and v.strip():
+                        texts.append(v)
+            return max(texts, key=len).strip() if texts else ""
+    raise RuntimeError("ComfyUI text workflow timed out")
+
+
+def _comfy_caption_image(image_filename: str) -> str:
+    """Detailed caption of a ComfyUI-input image via Florence-2."""
+    tpl = json.loads(_COMFY_CAPTION_TPL.read_text(encoding="utf-8-sig"))
+    tpl["3"]["inputs"]["image"] = image_filename
+    return _clean_caption_text(_comfy_run_text(tpl))
+
+
+def _comfy_generate_prompt(seed_text: str) -> str:
+    """Expand a short idea into a detailed image prompt via the Searge LLM (Mistral)."""
+    tpl = json.loads(_COMFY_LLM_TPL.read_text(encoding="utf-8-sig"))
+    tpl["3"]["inputs"]["text"] = seed_text or "a photorealistic portrait"
+    tpl["3"]["inputs"]["random_seed"] = random.randint(1, 2_000_000_000)
+    return _clean_caption_text(_comfy_run_text(tpl))
+
+
 @app.post("/api/ollama/prompt")
 async def ollama_generate_prompt(req: OllamaPromptRequest):
-    """Generate or enhance a prompt using Ollama. Returns SSE stream of tokens."""
+    """Generate or enhance a prompt. Ollama if available, else ComfyUI Searge LLM (Mistral).
+    Returns an SSE stream of tokens either way."""
     model = _get_ollama_text_model()
     if not model:
-        raise HTTPException(status_code=503, detail="No Ollama text model available. Pull a model with: ollama pull llama3.2")
+        # No Ollama (e.g. RunPod) -> run the Mistral GGUF prompt workflow in ComfyUI,
+        # emit the whole result as one SSE token so the frontend parser is unchanged.
+        seed = (req.current_prompt or "").strip() or ("a photorealistic portrait" if req.context == "zimage" else "cinematic scene")
+
+        def comfy_stream():
+            try:
+                result = _comfy_generate_prompt(seed)
+                if result:
+                    yield f"data: {json.dumps({'token': result})}\n\n"
+                yield "data: [DONE]\n\n"
+            except Exception as exc:
+                yield f"data: {json.dumps({'error': f'No Ollama and ComfyUI LLM failed: {exc}'})}\n\n"
+
+        return StreamingResponse(comfy_stream(), media_type="text/event-stream",
+                                 headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
     mode = req.mode
     if mode == "influencer":
@@ -2365,17 +2436,23 @@ async def ollama_generate_prompt(req: OllamaPromptRequest):
 
 @app.post("/api/ollama/caption")
 async def ollama_caption_image(file: UploadFile = File(...), context: str = Form("zimage")):
-    """Caption an uploaded image using an Ollama vision model."""
-    import base64
-
-    model = _get_ollama_vision_model()
-    if not model:
-        raise HTTPException(
-            status_code=503,
-            detail="No vision model available. Install one with: ollama pull llava or ollama pull minicpm-v"
-        )
+    """Caption an uploaded image. Ollama vision if available, else ComfyUI Florence-2."""
+    import base64, uuid as _uuid
 
     img_bytes = await file.read()
+    model = _get_ollama_vision_model()
+    if not model:
+        # No Ollama vision (e.g. RunPod) -> stage the image in ComfyUI input and run Florence-2.
+        try:
+            fname = f"fedda_caption_{_uuid.uuid4().hex[:12]}.png"
+            (_comfy_input_dir() / fname).write_bytes(img_bytes)
+            caption = _comfy_caption_image(fname)
+            if not caption:
+                raise RuntimeError("Florence returned no text")
+            return {"success": True, "caption": caption, "model": "florence-2 (comfyui)"}
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail=f"No Ollama vision model and ComfyUI Florence-2 failed: {exc}")
+
     img_b64 = base64.b64encode(img_bytes).decode()
 
     payload = {
