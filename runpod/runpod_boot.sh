@@ -61,6 +61,14 @@ else
     cd "$COMFY_DIR" && git pull && pip install -r requirements.txt && cd ..
 fi
 
+# styles.csv for the "Load Styles CSV" node (must sit in ComfyUI root, else the
+# node fails validation: "No styles.csv found"). The local installer does this;
+# the pod must too.
+if [ -f "$WORKSPACE/feddafront/assets/styles.csv" ]; then
+    cp -f "$WORKSPACE/feddafront/assets/styles.csv" "$COMFY_DIR/styles.csv"
+    echo "ðŸŽ¬ [FEDDA] styles.csv installed to ComfyUI root."
+fi
+
 # â”€â”€ 6. PERSISTENT MODELS (Network Volume) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 echo "ðŸ’¾ [FEDDA] Linking Persistent Storage..."
 mkdir -p "$MODELS_DIR"/{checkpoints,diffusion_models,clip,text_encoders,vae,loras,sams,upscale_models,unet}
