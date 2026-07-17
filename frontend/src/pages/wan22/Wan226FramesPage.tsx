@@ -17,7 +17,7 @@ type StoryRatio = '1:1' | '3:4' | '9:16' | '4:3' | '16:9';
 const RATIOS: StoryRatio[] = ['1:1', '3:4', '9:16', '4:3', '16:9'];
 const RATIO_ASPECT: Record<StoryRatio, string> = { '1:1': '1:1', '3:4': '4:3', '9:16': '16:9', '4:3': '4:3', '16:9': '16:9' };
 const RATIO_DIRECTION: Record<StoryRatio, string> = { '1:1': 'Horizontal', '3:4': 'Vertical', '9:16': 'Vertical', '4:3': 'Horizontal', '16:9': 'Horizontal' };
-const RES_PRESETS = ['480', '576', '640', '720'] as const;
+const RES_PRESETS = ['480', '576', '640', '720', '832', '960', '1024'] as const;
 
 const DEFAULT_TRANSITION = 'smooth cinematic transition, natural motion, consistent subject';
 
@@ -327,11 +327,11 @@ export const Wan226FramesPage = () => {
               <ChipGroup options={[...RES_PRESETS]} value={resolution} onChange={setResolution} renderLabel={(r) => `${r}px`} />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <SliderField label="Seconds per transition" value={seconds} onChange={setSeconds} min={2} max={8} step={1} format={(v) => `${v}s`} />
+              <SliderField label="Seconds per transition" value={seconds} onChange={setSeconds} min={2} max={12} step={1} format={(v) => `${v}s`} />
               <SeedField value={seed} onChange={setSeed} />
             </div>
             <p className="text-[11px] text-zinc-600">
-              {segments + 1} frames → {segments} transition{segments === 1 ? '' : 's'} rendered in one continuous pass (unbroken motion). Big frame counts are slower — lower resolution if you hit VRAM limits.
+              {segments + 1} frames → {segments} transition{segments === 1 ? '' : 's'} · ≈ {segments * seconds}s total, one continuous pass. 720+ and 8s+ want a big GPU (A40/RTX 6000); on 24GB stay ≤720 / ≤6s or drop resolution if you OOM.
             </p>
           </div>
         </WorkflowSection>
