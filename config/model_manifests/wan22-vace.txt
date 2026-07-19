@@ -1,0 +1,14 @@
+# Models for workflow: wan22-vace (WAN 2.2 VACE full-body motion transfer)
+# Format: URL folder [filename]
+# SECRET_SAUCE has no stable public source -> served from the FeddaKalkun mirror.
+https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors diffusion_models
+https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_t2v_low_noise_14B_fp8_scaled.safetensors diffusion_models
+https://huggingface.co/Kijai/WanVideo_comfy_fp8_scaled/resolve/main/VACE/Wan2_2_Fun_VACE_module_A14B_HIGH_fp8_e5m2_scaled_KJ.safetensors diffusion_models
+https://huggingface.co/Kijai/WanVideo_comfy_fp8_scaled/resolve/main/VACE/Wan2_2_Fun_VACE_module_A14B_LOW_fp8_e5m2_scaled_KJ.safetensors diffusion_models
+https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/umt5-xxl-enc-bf16.safetensors clip
+https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors vae
+https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Lightx2v/lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank32_bf16.safetensors loras/wan
+https://huggingface.co/vrgamedevgirl84/Wan14BT2VFusioniX/resolve/main/FusionX_LoRa/Wan2.1_T2V_14B_FusionX_LoRA.safetensors loras/wan
+https://huggingface.co/datasets/FeddaKalkun/fedda-mirror/resolve/main/loras/SECRET_SAUCE_WAN2.1_14B_fp8.safetensors loras/wan
+# Lotus depth (control option); FEDDA's z-image pose stack already ships it.
+https://huggingface.co/jingheya/lotus-depth-g-v2-0-disparity/resolve/main/unet/diffusion_pytorch_model.safetensors unet lotus-depth-g-v2-0-disparity.safetensors

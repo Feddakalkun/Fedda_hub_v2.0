@@ -192,7 +192,18 @@ if ($NeedNodeUpdate -or $HasMissing) {
         $NodeDir_Install = Join-Path $CustomNodesDir $Node.folder
 
         if (-not (Test-Path $NodeDir_Install)) {
-            # Clone missing node
+            # Clone missing node. Vendored copy wins: some nodes have no reliable
+            # upstream (naked folders, purged repos), so the repo ships the code.
+            $VendorDir = Join-Path $RootPath "vendor\custom_nodes\$($Node.folder)"
+            if (Test-Path $VendorDir) {
+                Write-Host "  [$($Node.name)] Installing from vendored copy..." -ForegroundColor White
+                Copy-Item -Recurse -Force $VendorDir $NodeDir_Install
+                $InstalledCount++
+                Write-Host "  [$($Node.name)] Installed OK (vendored)" -ForegroundColor Green
+                $ReqFile = Join-Path $NodeDir_Install "requirements.txt"
+                if (Test-Path $ReqFile) { & $PyExe -m pip install -r "$ReqFile" --no-warn-script-location --quiet 2>&1 | Out-Null }
+                continue
+            }
             Write-Host "  [$($Node.name)] Installing..." -ForegroundColor White
             try {
                 $ErrorActionPreference = "Continue"

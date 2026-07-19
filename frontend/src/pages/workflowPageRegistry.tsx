@@ -19,6 +19,8 @@ import { Wan21SteadyDancerPage } from './wan21/Wan21SteadyDancerPage';
 import { Wan21Scail2Page } from './wan21/Wan21Scail2Page';
 import { LtxImg2VidPage } from './ltx/LtxImg2VidPage';
 import { LtxFlfPage } from './ltx/LtxFlfPage';
+import { LivePortraitPage } from './liveportrait/LivePortraitPage';
+import { Wan22VacePage } from './wan22/Wan22VacePage';
 import { LtxAi2vPage } from './ltx/LtxAi2vPage';
 import { LipsyncPage } from './tools/LipsyncPage';
 import { IdeogramTxt2ImgPage } from './ideogram/IdeogramTxt2ImgPage';
@@ -61,6 +63,8 @@ export const VIDEO_WORKFLOW_PAGES: Record<string, ComponentType> = {
   'ltx': LtxImg2VidPage,
   'ltx-img2vid': LtxImg2VidPage,
   'ltx-flf': LtxFlfPage,
+  'liveportrait': LivePortraitPage,
+  'wan22-vace': Wan22VacePage,
   'ltx-ai2v': LtxAi2vPage,
   'hunyuan-i2v': HunyuanImg2VidPage,
   'wan22xxx-img2vid': Wan22XxxImg2VidPage,

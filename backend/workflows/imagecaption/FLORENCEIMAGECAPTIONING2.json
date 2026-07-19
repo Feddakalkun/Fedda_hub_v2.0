@@ -1,0 +1,76 @@
+{
+  "1": {
+    "inputs": {
+      "text_input": "",
+      "task": "more_detailed_caption",
+      "fill_mask": true,
+      "keep_model_loaded": true,
+      "max_new_tokens": 3000,
+      "num_beams": 10,
+      "do_sample": true,
+      "output_mask_select": "",
+      "seed": 603597602279365,
+      "image": [
+        "3",
+        0
+      ],
+      "florence2_model": [
+        "83",
+        0
+      ]
+    },
+    "class_type": "Florence2Run",
+    "_meta": {
+      "title": "Florence2Run"
+    }
+  },
+  "3": {
+    "inputs": {
+      "image": "fedda_pose_frame_0a66435cb782.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "INPUT IMAGE"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "A close-up portrait of a young Asian woman with dark brown hair. She is wearing a maroon sleeveless top with gold embroidery on it. Her hair is pulled back and cascades over her shoulders. Her eyes are a piercing blue, and her eyebrows are a darker shade of brown. Her lips are pursed, and she has a slight smile on her face. There are two flower crowns on her head, one on each side of her head. The flowers are orange and pink, with green leaves surrounding them. The background is dark, creating a contrast with the vibrant colors of the woman's hair.",
+      "anything": [
+        "1",
+        2
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "IMAGE CAPTION"
+    }
+  },
+  "52": {
+    "inputs": {
+      "root_dir": "output",
+      "file": "FLORENCE.txt",
+      "append": "append",
+      "insert": true,
+      "text": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "SaveText|pysssss",
+    "_meta": {
+      "title": "SAVE TEXT FILE"
+    }
+  },
+  "83": {
+    "inputs": {
+      "model": "gokaygokay/Florence-2-SD3-Captioner",
+      "precision": "fp16",
+      "convert_to_safetensors": "sdpa"
+    },
+    "class_type": "DownloadAndLoadFlorence2Model",
+    "_meta": {
+      "title": "DownloadAndLoadFlorence2Model"
+    }
+  }
+}

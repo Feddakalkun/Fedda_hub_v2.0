@@ -231,7 +231,9 @@
         "wan22xxx-img2vid",
         "wan22-img2vid-6frames",
         "wan21-steady-dancer",
-        "wan21-scail2"
+        "wan21-scail2",
+        "liveportrait",
+        "wan22-vace"
       ],
       "workflows": [
         "wan21-steady-dancer",
@@ -241,7 +243,9 @@
         "wan22xxx-img2vid",
         "wan22-img2vid-6frames",
         "wan22-img2vid-gguf",
-        "wan22-flf-segment"
+        "wan22-flf-segment",
+        "liveportrait",
+        "wan22-vace"
       ],
       "custom_nodes": [
         "ComfyUI-WanVideoWrapper",
@@ -250,7 +254,9 @@
         "ComfyUI-Frame-Interpolation",
         "ComfyUI-GGUF",
         "ComfyMath",
-        "comfy_mtb"
+        "comfy_mtb",
+        "ComfyUI-AdvancedLivePortrait",
+        "comfyui-reactor-node"
       ],
       "models": [
         "clip_vision_h.safetensors",

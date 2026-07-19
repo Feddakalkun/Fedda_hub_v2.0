@@ -2969,5 +2969,121 @@
         "label": "Audio Start (s)"
       }
     }
+  },
+  "liveportrait": {
+    "name": "Live Portrait",
+    "filename": "liveportrait/liveportrait.json",
+    "description": "Animate a still portrait with a driving video (AdvancedLivePortrait + ReActor face restore)",
+    "inputs": {
+      "image": {
+        "node_id": "3",
+        "input_key": "image",
+        "type": "string",
+        "label": "Portrait Image"
+      },
+      "video": {
+        "node_id": "9",
+        "input_key": "video",
+        "type": "string",
+        "label": "Driving Video"
+      },
+      "retarget_eyes": {
+        "node_id": "7",
+        "input_key": "retargeting_eyes",
+        "type": "number",
+        "label": "Eye Retargeting"
+      },
+      "retarget_mouth": {
+        "node_id": "7",
+        "input_key": "retargeting_mouth",
+        "type": "number",
+        "label": "Mouth Retargeting"
+      },
+      "crop_factor": {
+        "node_id": "7",
+        "input_key": "crop_factor",
+        "type": "number",
+        "label": "Crop Factor"
+      },
+      "frame_rate": {
+        "node_id": "10",
+        "input_key": "frame_rate",
+        "type": "number",
+        "label": "FPS"
+      }
+    }
+  },
+  "wan22-vace": {
+    "name": "WAN 2.2 VACE",
+    "filename": "wan22/WAN22-VACE.json",
+    "description": "Full-body motion transfer: animate a reference person with a driving video via WAN 2.2 VACE (pose/depth control)",
+    "inputs": {
+      "image": {
+        "node_id": "1307",
+        "input_key": "image",
+        "type": "string",
+        "label": "Reference Image"
+      },
+      "video": {
+        "node_id": "1295",
+        "input_key": "video",
+        "type": "string",
+        "label": "Driving Video"
+      },
+      "prompt": {
+        "node_id": "925",
+        "input_key": "positive_prompt",
+        "type": "string",
+        "label": "Prompt"
+      },
+      "negative": {
+        "node_id": "925",
+        "input_key": "negative_prompt",
+        "type": "string",
+        "label": "Negative"
+      },
+      "skip_seconds": {
+        "node_id": "1300",
+        "input_key": "Number",
+        "type": "string",
+        "label": "Skip Intro (s)"
+      },
+      "frame_rate": {
+        "node_id": "1301",
+        "input_key": "Number",
+        "type": "string",
+        "label": "Frame Rate"
+      },
+      "length_seconds": {
+        "node_id": "1302",
+        "input_key": "Number",
+        "type": "string",
+        "label": "Length (s)"
+      },
+      "width": {
+        "node_id": "1303",
+        "input_key": "width",
+        "type": "number",
+        "label": "Width"
+      },
+      "height": {
+        "node_id": "1303",
+        "input_key": "height",
+        "type": "number",
+        "label": "Height"
+      },
+      "control_mode": {
+        "node_id": "1340",
+        "input_key": "index",
+        "type": "number",
+        "label": "Control Mode"
+      },
+      "seed": {
+        "node_id": "308",
+        "input_key": "seed",
+        "type": "number",
+        "label": "Seed"
+      }
+    }
   }
 }

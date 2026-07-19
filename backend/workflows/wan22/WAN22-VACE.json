@@ -1,0 +1,773 @@
+{
+ "11": {
+  "inputs": {
+   "model_name": "umt5-xxl-enc-bf16.safetensors",
+   "precision": "fp32",
+   "load_device": "offload_device",
+   "quantization": "disabled"
+  },
+  "class_type": "LoadWanVideoT5TextEncoder",
+  "_meta": {
+   "title": "WanVideo T5 Text Encoder Loader"
+  }
+ },
+ "22": {
+  "inputs": {
+   "model": "wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors",
+   "base_precision": "bf16",
+   "quantization": "disabled",
+   "load_device": "offload_device",
+   "attention_mode": "sdpa",
+   "rms_norm_function": "default",
+   "block_swap_args": [
+    "444",
+    0
+   ],
+   "lora": [
+    "1214",
+    0
+   ],
+   "extra_model": [
+    "411",
+    0
+   ]
+  },
+  "class_type": "WanVideoModelLoader",
+  "_meta": {
+   "title": "WanVideo Model Loader - HIGH"
+  }
+ },
+ "28": {
+  "inputs": {
+   "enable_vae_tiling": false,
+   "tile_x": 512,
+   "tile_y": 512,
+   "tile_stride_x": 256,
+   "tile_stride_y": 256,
+   "normalization": "default",
+   "vae": [
+    "38",
+    0
+   ],
+   "samples": [
+    "392",
+    1
+   ]
+  },
+  "class_type": "WanVideoDecode",
+  "_meta": {
+   "title": "WanVideo Decode"
+  }
+ },
+ "38": {
+  "inputs": {
+   "model_name": "wan_2.1_vae.safetensors",
+   "precision": "bf16",
+   "use_cpu_cache": false,
+   "verbose": false
+  },
+  "class_type": "WanVideoVAELoader",
+  "_meta": {
+   "title": "WanVideo VAE Loader"
+  }
+ },
+ "55": {
+  "inputs": {
+   "weight": 2.0000000000000004,
+   "start_percent": 0,
+   "end_percent": 1
+  },
+  "class_type": "WanVideoEnhanceAVideo",
+  "_meta": {
+   "title": "WanVideo Enhance-A-Video"
+  }
+ },
+ "308": {
+  "inputs": {
+   "steps": 8,
+   "cfg": 1,
+   "shift": 5,
+   "seed": 390806123862894,
+   "force_offload": true,
+   "scheduler": "dpm++_sde",
+   "riflex_freq_index": 0,
+   "denoise_strength": 1,
+   "batched_cfg": false,
+   "rope_function": "comfy",
+   "start_step": 0,
+   "end_step": 4,
+   "add_noise_to_samples": false,
+   "model": [
+    "22",
+    0
+   ],
+   "image_embeds": [
+    "1107",
+    0
+   ],
+   "text_embeds": [
+    "925",
+    0
+   ],
+   "feta_args": [
+    "55",
+    0
+   ]
+  },
+  "class_type": "WanVideoSampler",
+  "_meta": {
+   "title": "WanVideo Sampler (High)"
+  }
+ },
+ "392": {
+  "inputs": {
+   "steps": 8,
+   "cfg": 1,
+   "shift": 5,
+   "seed": 0,
+   "force_offload": true,
+   "scheduler": "deis",
+   "riflex_freq_index": 0,
+   "denoise_strength": 1,
+   "batched_cfg": false,
+   "rope_function": "comfy",
+   "start_step": 4,
+   "end_step": -1,
+   "add_noise_to_samples": false,
+   "model": [
+    "1150",
+    0
+   ],
+   "image_embeds": [
+    "1107",
+    0
+   ],
+   "text_embeds": [
+    "925",
+    0
+   ],
+   "samples": [
+    "308",
+    0
+   ],
+   "feta_args": [
+    "55",
+    0
+   ]
+  },
+  "class_type": "WanVideoSampler",
+  "_meta": {
+   "title": "WanVideo Sampler (Low)"
+  }
+ },
+ "411": {
+  "inputs": {
+   "vace_model": "Wan2_2_Fun_VACE_module_A14B_HIGH_fp8_e5m2_scaled_KJ.safetensors"
+  },
+  "class_type": "WanVideoVACEModelSelect",
+  "_meta": {
+   "title": "WanVideo VACE Module Select - HIGH"
+  }
+ },
+ "444": {
+  "inputs": {
+   "blocks_to_swap": 30,
+   "offload_img_emb": false,
+   "offload_txt_emb": false,
+   "use_non_blocking": true,
+   "vace_blocks_to_swap": 10,
+   "prefetch_blocks": 0,
+   "block_swap_debug": false
+  },
+  "class_type": "WanVideoBlockSwap",
+  "_meta": {
+   "title": "WanVideo Block Swap"
+  }
+ },
+ "497": {
+  "inputs": {
+   "frame_rate": [
+    "1301",
+    0
+   ],
+   "loop_count": 0,
+   "filename_prefix": "VIDEO/VACE/0",
+   "format": "video/h264-mp4",
+   "pix_fmt": "yuv420p",
+   "crf": 19,
+   "save_metadata": false,
+   "trim_to_audio": false,
+   "pingpong": false,
+   "save_output": true,
+   "images": [
+    "1081",
+    0
+   ],
+   "audio": [
+    "1295",
+    2
+   ]
+  },
+  "class_type": "VHS_VideoCombine",
+  "_meta": {
+   "title": "OUTPUT 15FPS"
+  }
+ },
+ "500": {
+  "inputs": {
+   "generation_width": [
+    "1303",
+    0
+   ],
+   "generation_height": [
+    "1303",
+    1
+   ],
+   "aspect_ratio_preservation": "crop_to_new",
+   "image": [
+    "1295",
+    0
+   ]
+  },
+  "class_type": "WanVideoImageResizeToClosest",
+  "_meta": {
+   "title": "WanVideo Image Resize To Closest"
+  }
+ },
+ "772": {
+  "inputs": {
+   "image": [
+    "28",
+    0
+   ]
+  },
+  "class_type": "GetImageSizeAndCount",
+  "_meta": {
+   "title": "Get Image Size & Count"
+  }
+ },
+ "918": {
+  "inputs": {
+   "vace_model": "Wan2_2_Fun_VACE_module_A14B_LOW_fp8_e5m2_scaled_KJ.safetensors"
+  },
+  "class_type": "WanVideoVACEModelSelect",
+  "_meta": {
+   "title": "WanVideo VACE Module Select - LOW"
+  }
+ },
+ "925": {
+  "inputs": {
+   "positive_prompt": "Close-up tracking shot, beautiful blonde girl with cute freckles across her nose and cheeks, long wavy blonde hair, petite slender build, wearing black lace long-sleeve bodysuit \u2014 she stands panting with hands pressed to her chest, then with each inhale her chest heaves and stomach contracts to catch her breath, then releases again revealing her toned abs, camera descends vertically then tilts upward shifting into low-angle near her chin, then suddenly presents low-angle close-up of her hips, underlighting with short-side composition, visible godrays streaming through dust particles in ancient ruined crystal cave at midnight, cool colors with intense bright light and deep dark shadow contrast, ambient heavy breathing and subtle cave ambience.\n\n\n",
+   "negative_prompt": "\u8272\u8c03\u8273\u4e3d\uff0c\u8fc7\u66dd\uff0c\u9759\u6001\uff0c\u7ec6\u8282\u6a21\u7cca\u4e0d\u6e05\uff0c\u5b57\u5e55\uff0c\u98ce\u683c\uff0c\u4f5c\u54c1\uff0c\u753b\u4f5c\uff0c\u753b\u9762\uff0c\u9759\u6b62\uff0c\u6574\u4f53\u53d1\u7070\uff0c\u6700\u5dee\u8d28\u91cf\uff0c\u4f4e\u8d28\u91cf\uff0cJPEG\u538b\u7f29\u6b8b\u7559\uff0c\u4e11\u964b\u7684\uff0c\u6b8b\u7f3a\u7684\uff0c\u591a\u4f59\u7684\u624b\u6307\uff0c\u753b\u5f97\u4e0d\u597d\u7684\u624b\u90e8\uff0c\u753b\u5f97\u4e0d\u597d\u7684\u8138\u90e8\uff0c\u7578\u5f62\u7684\uff0c\u6bc1\u5bb9\u7684\uff0c\u5f62\u6001\u7578\u5f62\u7684\u80a2\u4f53\uff0c\u624b\u6307\u878d\u5408\uff0c\u9759\u6b62\u4e0d\u52a8\u7684\u753b\u9762\uff0c\u6742\u4e71\u7684\u80cc\u666f\uff0c\u4e09\u6761\u817f\uff0c\u80cc\u666f\u4eba\u5f88\u591a\uff0c\u5012\u7740\u8d70\uff0c\u88f8\u9732",
+   "force_offload": true,
+   "use_disk_cache": true,
+   "device": "gpu",
+   "t5": [
+    "11",
+    0
+   ]
+  },
+  "class_type": "WanVideoTextEncode",
+  "_meta": {
+   "title": "WanVideo TextEncode"
+  }
+ },
+ "1081": {
+  "inputs": {
+   "start_index": 10,
+   "num_frames": 400,
+   "images": [
+    "772",
+    0
+   ]
+  },
+  "class_type": "GetImageRangeFromBatch",
+  "_meta": {
+   "title": "Get Image or Mask Range From Batch"
+  }
+ },
+ "1107": {
+  "inputs": {
+   "width": [
+    "1303",
+    0
+   ],
+   "height": [
+    "1303",
+    1
+   ],
+   "num_frames": [
+    "1305",
+    0
+   ],
+   "strength": 0.9,
+   "vace_start_percent": 0,
+   "vace_end_percent": 1,
+   "tiled_vae": false,
+   "vae": [
+    "38",
+    0
+   ],
+   "input_frames": [
+    "1340",
+    0
+   ],
+   "ref_images": [
+    "1308",
+    0
+   ]
+  },
+  "class_type": "WanVideoVACEEncode",
+  "_meta": {
+   "title": "WanVideo VACE Encode (Reference Image)"
+  }
+ },
+ "1150": {
+  "inputs": {
+   "model": "wan2.2_t2v_low_noise_14B_fp8_scaled.safetensors",
+   "base_precision": "bf16",
+   "quantization": "disabled",
+   "load_device": "offload_device",
+   "attention_mode": "sdpa",
+   "rms_norm_function": "default",
+   "block_swap_args": [
+    "444",
+    0
+   ],
+   "lora": [
+    "1213",
+    0
+   ],
+   "extra_model": [
+    "918",
+    0
+   ]
+  },
+  "class_type": "WanVideoModelLoader",
+  "_meta": {
+   "title": "WanVideo Model Loader - LOW"
+  }
+ },
+ "1213": {
+  "inputs": {
+   "lora_0": "wan\\lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank32_bf16.safetensors",
+   "strength_0": 1,
+   "lora_1": "wan\\Wan2.1_T2V_14B_FusionX_LoRA.safetensors",
+   "strength_1": 1,
+   "lora_2": "wan\\SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
+   "strength_2": 0.7,
+   "lora_3": "none",
+   "strength_3": 1,
+   "lora_4": "none",
+   "strength_4": 1,
+   "low_mem_load": false,
+   "merge_loras": false
+  },
+  "class_type": "WanVideoLoraSelectMulti",
+  "_meta": {
+   "title": "WanVideo Lora Select Multi"
+  }
+ },
+ "1214": {
+  "inputs": {
+   "lora_0": "wan\\lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank32_bf16.safetensors",
+   "strength_0": 1,
+   "lora_1": "wan\\Wan2.1_T2V_14B_FusionX_LoRA.safetensors",
+   "strength_1": 1,
+   "lora_2": "wan\\SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
+   "strength_2": 0.7,
+   "lora_3": "none",
+   "strength_3": 1,
+   "lora_4": "none",
+   "strength_4": 1,
+   "low_mem_load": false,
+   "merge_loras": false
+  },
+  "class_type": "WanVideoLoraSelectMulti",
+  "_meta": {
+   "title": "[High] WanVideo Lora Select Multi"
+  }
+ },
+ "1294": {
+  "inputs": {
+   "ckpt_name": "depth_anything_vitl14.pth",
+   "resolution": 768,
+   "image": [
+    "500",
+    0
+   ]
+  },
+  "class_type": "DepthAnythingPreprocessor",
+  "_meta": {
+   "title": "Depth Anything"
+  }
+ },
+ "1295": {
+  "inputs": {
+   "video": "Screen Recording 2026-07-19 000946.mp4",
+   "force_rate": [
+    "1301",
+    0
+   ],
+   "custom_width": 0,
+   "custom_height": 0,
+   "frame_load_cap": [
+    "1305",
+    0
+   ],
+   "skip_first_frames": [
+    "1304",
+    0
+   ],
+   "select_every_nth": 1,
+   "format": "AnimateDiff"
+  },
+  "class_type": "VHS_LoadVideo",
+  "_meta": {
+   "title": "Load Video (Upload) \ud83c\udfa5\ud83c\udd65\ud83c\udd57\ud83c\udd62"
+  }
+ },
+ "1296": {
+  "inputs": {
+   "video_info": [
+    "1295",
+    3
+   ]
+  },
+  "class_type": "VHS_VideoInfo",
+  "_meta": {
+   "title": "Video Info \ud83c\udfa5\ud83c\udd65\ud83c\udd57\ud83c\udd62"
+  }
+ },
+ "1297": {
+  "inputs": {
+   "download_links": "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_t2v_low_noise_14B_fp8_scaled.safetensors diffusion_models\nhttps://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors diffusion_models\n\nhttps://huggingface.co/Kijai/WanVideo_comfy_fp8_scaled/resolve/main/VACE/Wan2_2_Fun_VACE_module_A14B_LOW_fp8_e5m2_scaled_KJ.safetensors diffusion_models\nhttps://huggingface.co/Kijai/WanVideo_comfy_fp8_scaled/resolve/main/VACE/Wan2_2_Fun_VACE_module_A14B_HIGH_fp8_e5m2_scaled_KJ.safetensors diffusion_models\nhttps://huggingface.co/jingheya/lotus-depth-g-v2-0-disparity/resolve/main/unet/diffusion_pytorch_model.safetensors unet lotus-depth-g-v2-0-disparity.safetensors\n\nhttps://huggingface.co/Kijai/WanVideo_comfy/resolve/main/umt5-xxl-enc-bf16.safetensors clip\n\nhttps://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors vae\nhttps://huggingface.co/stabilityai/sd-vae-ft-mse-original/resolve/main/vae-ft-mse-840000-ema-pruned.safetensors vae\n\nhttps://huggingface.co/comfyuistudio/wan2.1_loras/resolve/main/SECRET_SAUCE_WAN2.1_14B_fp8.safetensors loras/wan\nhttps://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Lightx2v/lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank32_bf16.safetensors loras/wan\nhttps://huggingface.co/vrgamedevgirl84/Wan14BT2VFusioniX/resolve/main/FusionX_LoRa/Wan2.1_T2V_14B_FusionX_LoRA.safetensors loras/wan\nhttps://huggingface.co/vrgamedevgirl84/Wan14BT2VFusioniX/resolve/main/FusionX_LoRa/Wan2.1_I2V_14B_FusionX_LoRA.safetensors loras/wan",
+   "auto_download": true,
+   "max_concurrent_downloads": 6,
+   "max_download_speed_mbps": 0,
+   "enable_resume": true,
+   "validate_files": true,
+   "enable_notifications": false,
+   "auto_organize": false,
+   "hf_token": ""
+  },
+  "class_type": "HuggingFaceDownloader",
+  "_meta": {
+   "title": "\ud83e\udd17 HuggingFace Model Downloader Pro"
+  }
+ },
+ "1298": {
+  "inputs": {
+   "text_0": "=== DOWNLOAD REPORT ===\nTotal files: 12\nSuccessful downloads: 0\nAlready existed: 12\nInterrupted: 0\nFailed: 0\nMax concurrent: 6\nSpeed limit: Unlimited\nResume enabled: True\nValidation enabled: True\nAuto-organize: False\n\nDetails:\n\u2713 wan2.2_t2v_low_noise_14B_fp8_scaled.safetensors: Already exists and validated (13.31 GB)\n\u2713 wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors: Already exists and validated (13.31 GB)\n\u2713 Wan2_2_Fun_VACE_module_A14B_LOW_fp8_e5m2_scaled_KJ.safetensors: Already exists and validated (2.84 GB)\n\u2713 Wan2_2_Fun_VACE_module_A14B_HIGH_fp8_e5m2_scaled_KJ.safetensors: Already exists and validated (2.84 GB)\n\u2713 lotus-depth-g-v2-0-disparity.safetensors: Already exists and validated (3.23 GB)\n\u2713 umt5-xxl-enc-bf16.safetensors: Already exists and validated (10.58 GB)\n\u2713 wan_2.1_vae.safetensors: Already exists and validated (242.06 MB)\n\u2713 vae-ft-mse-840000-ema-pruned.safetensors: Already exists and validated (319.14 MB)\n\u2713 SECRET_SAUCE_WAN2.1_14B_fp8.safetensors: Already exists and validated (146.39 MB)\n\u2713 lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank32_bf16.safetensors: Already exists and validated (304.33 MB)\n\u2713 Wan2.1_T2V_14B_FusionX_LoRA.safetensors: Already exists and validated (302.15 MB)\n\u2713 Wan2.1_I2V_14B_FusionX_LoRA.safetensors: Already exists and validated (353.94 MB)",
+   "text": [
+    "1297",
+    0
+   ]
+  },
+  "class_type": "ShowText|pysssss",
+  "_meta": {
+   "title": "Show Text \ud83d\udc0d"
+  }
+ },
+ "1299": {
+  "inputs": {
+   "frame_rate": [
+    "1301",
+    0
+   ],
+   "loop_count": 0,
+   "filename_prefix": "VIDEO/VACE/0",
+   "format": "video/h264-mp4",
+   "pix_fmt": "yuv420p",
+   "crf": 19,
+   "save_metadata": false,
+   "trim_to_audio": false,
+   "pingpong": false,
+   "save_output": true,
+   "images": [
+    "1340",
+    0
+   ]
+  },
+  "class_type": "VHS_VideoCombine",
+  "_meta": {
+   "title": "CONTROLNET"
+  }
+ },
+ "1300": {
+  "inputs": {
+   "Number": "0"
+  },
+  "class_type": "Int",
+  "_meta": {
+   "title": "SKIP FRAMES (IN SECONDS)"
+  }
+ },
+ "1301": {
+  "inputs": {
+   "Number": "15"
+  },
+  "class_type": "Float",
+  "_meta": {
+   "title": "Frame Rate"
+  }
+ },
+ "1302": {
+  "inputs": {
+   "Number": "5"
+  },
+  "class_type": "Int",
+  "_meta": {
+   "title": "Video Length(In seconds)"
+  }
+ },
+ "1303": {
+  "inputs": {
+   "width": 512,
+   "height": 512,
+   "aspect_ratio": "1:1",
+   "direction": "Vertical"
+  },
+  "class_type": "AspectRatioImageSize",
+  "_meta": {
+   "title": "VIDE SIZE"
+  }
+ },
+ "1304": {
+  "inputs": {
+   "value": "a*b",
+   "a": [
+    "1301",
+    0
+   ],
+   "b": [
+    "1300",
+    0
+   ]
+  },
+  "class_type": "SimpleMath+",
+  "_meta": {
+   "title": "\ud83d\udd27 Simple Math"
+  }
+ },
+ "1305": {
+  "inputs": {
+   "value": "a*b",
+   "a": [
+    "1302",
+    0
+   ],
+   "b": [
+    "1301",
+    0
+   ]
+  },
+  "class_type": "SimpleMath+",
+  "_meta": {
+   "title": "\ud83d\udd27 Simple Math"
+  }
+ },
+ "1307": {
+  "inputs": {
+   "image": "VeniceAI_SRyJOusgvUpKvk_0.jpeg"
+  },
+  "class_type": "LoadImage",
+  "_meta": {
+   "title": "Load Image"
+  }
+ },
+ "1308": {
+  "inputs": {
+   "generation_width": [
+    "1303",
+    0
+   ],
+   "generation_height": [
+    "1303",
+    1
+   ],
+   "aspect_ratio_preservation": "crop_to_new",
+   "image": [
+    "1307",
+    0
+   ]
+  },
+  "class_type": "WanVideoImageResizeToClosest",
+  "_meta": {
+   "title": "WanVideo Image Resize To Closest"
+  }
+ },
+ "1309": {
+  "inputs": {
+   "images": [
+    "1308",
+    0
+   ]
+  },
+  "class_type": "PreviewImage",
+  "_meta": {
+   "title": "CROPPED IMAGE"
+  }
+ },
+ "1310": {
+  "inputs": {
+   "frame_rate": 30,
+   "loop_count": 0,
+   "filename_prefix": "VIDEO/VACE/0",
+   "format": "video/h264-mp4",
+   "pix_fmt": "yuv420p",
+   "crf": 19,
+   "save_metadata": false,
+   "trim_to_audio": false,
+   "pingpong": false,
+   "save_output": true,
+   "images": [
+    "1311",
+    0
+   ],
+   "audio": [
+    "1295",
+    2
+   ]
+  },
+  "class_type": "VHS_VideoCombine",
+  "_meta": {
+   "title": "OUTPUT 30FPS"
+  }
+ },
+ "1311": {
+  "inputs": {
+   "ckpt_name": "rife49.pth",
+   "clear_cache_after_n_frames": 100,
+   "multiplier": 2,
+   "fast_mode": true,
+   "ensemble": true,
+   "scale_factor": 1,
+   "dtype": "float32",
+   "torch_compile": false,
+   "batch_size": 1,
+   "frames": [
+    "1081",
+    0
+   ]
+  },
+  "class_type": "RIFE VFI",
+  "_meta": {
+   "title": "RIFE VFI (recommend rife4.25+)"
+  }
+ },
+ "1323": {
+  "inputs": {
+   "pixels": [
+    "500",
+    0
+   ],
+   "vae": [
+    "1325",
+    0
+   ]
+  },
+  "class_type": "VAEEncode",
+  "_meta": {
+   "title": "VAE Encode"
+  }
+ },
+ "1324": {
+  "inputs": {
+   "samples": [
+    "1327",
+    0
+   ],
+   "vae": [
+    "1325",
+    0
+   ]
+  },
+  "class_type": "VAEDecode",
+  "_meta": {
+   "title": "VAE Decode"
+  }
+ },
+ "1325": {
+  "inputs": {
+   "vae_name": "vae-ft-mse-840000-ema-pruned.safetensors"
+  },
+  "class_type": "VAELoader",
+  "_meta": {
+   "title": "Load VAE"
+  }
+ },
+ "1326": {
+  "inputs": {
+   "model": "lotus-depth-g-v2-0.safetensors",
+   "precision": "fp16"
+  },
+  "class_type": "LoadLotusModel",
+  "_meta": {
+   "title": "Load Lotus Model"
+  }
+ },
+ "1327": {
+  "inputs": {
+   "seed": 303,
+   "per_batch": 1,
+   "keep_model_loaded": false,
+   "lotus_unet": [
+    "1326",
+    0
+   ],
+   "samples": [
+    "1323",
+    0
+   ]
+  },
+  "class_type": "LotusSampler",
+  "_meta": {
+   "title": "Lotus Sampler"
+  }
+ },
+ "1340": {
+  "inputs": {
+   "index": 2,
+   "value0": [
+    "500",
+    0
+   ],
+   "value1": [
+    "1294",
+    0
+   ],
+   "value2": [
+    "1324",
+    0
+   ],
+   "value3": [
+    "1342",
+    0
+   ]
+  },
+  "class_type": "easy anythingIndexSwitch",
+  "_meta": {
+   "title": "CHOOSE CONTROLNET"
+  }
+ },
+ "1342": {
+  "inputs": {
+   "detect_hand": "enable",
+   "detect_body": "enable",
+   "detect_face": "enable",
+   "resolution": 704,
+   "bbox_detector": "yolox_l.onnx",
+   "pose_estimator": "dw-ll_ucoco_384_bs5.torchscript.pt",
+   "scale_stick_for_xinsr_cn": "disable",
+   "image": [
+    "500",
+    0
+   ]
+  },
+  "class_type": "DWPreprocessor",
+  "_meta": {
+   "title": "DWPose Estimator"
+  }
+ }
+}

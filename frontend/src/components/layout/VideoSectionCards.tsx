@@ -53,7 +53,19 @@ export const VideoSectionCards = ({ onSelect, onBack }: VideoSectionCardsProps) 
                     />
                   ) : null}
                 </>
-              ) : null}
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] transition group-hover:border-white/20">
+                    <module.Icon className="h-5 w-5 text-white/40 transition group-hover:text-white/70" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white/70 transition group-hover:text-white/90">{module.label}</p>
+                    {module.description ? (
+                      <p className="mt-1 max-w-[220px] text-[10px] leading-relaxed text-white/25">{module.description}</p>
+                    ) : null}
+                  </div>
+                </div>
+              )}
             </button>
           ))}
         </div>

@@ -524,6 +524,36 @@ export const FEDDA_MODULES: FeddaModule[] = [
     card: veniceCard(30),
   },
   {
+    id: 'liveportrait',
+    sourceModuleId: 'wan-video',
+    label: 'Live Portrait',
+    description: 'Animate a still portrait with the motion and expressions of a driving video.',
+    area: 'video',
+    pack: 'booster',
+
+    tabs: ['liveportrait'],
+    workflows: ['liveportrait'],
+    defaultTab: 'liveportrait',
+    Icon: Video,
+    // No poster yet -> the section renders the icon+label fallback. Swap in a
+    // veniceCard(n) once art exists.
+    card: {},
+  },
+  {
+    id: 'wan22-vace',
+    sourceModuleId: 'wan-video',
+    label: 'WAN VACE',
+    description: 'Full-body motion transfer — animate a reference person with a driving video (pose/depth control).',
+    area: 'video',
+    pack: 'booster',
+
+    tabs: ['wan22-vace'],
+    workflows: ['wan22-vace'],
+    defaultTab: 'wan22-vace',
+    Icon: Film,
+    card: {},
+  },
+  {
     id: 'ltx-img2vid',
     sourceModuleId: 'ltx-video',
     label: 'LTX Img2Vid',

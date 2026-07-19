@@ -136,8 +136,13 @@ if exist "%NODES_MANIFEST%" (
             if exist "!CUSTOM_NODES_DIR!\!NFOLDER!" (
                 echo   [!NFOLDER!] already installed
             ) else (
-                echo   [!NFOLDER!] Cloning...
-                git clone --depth 1 "!NURL!" "!CUSTOM_NODES_DIR!\!NFOLDER!"
+                if exist "%APP_DIR%\vendor\custom_nodes\!NFOLDER!" (
+                    echo   [!NFOLDER!] Installing from vendored copy...
+                    xcopy /E /I /Q /Y "%APP_DIR%\vendor\custom_nodes\!NFOLDER!" "!CUSTOM_NODES_DIR!\!NFOLDER!" >nul
+                ) else (
+                    echo   [!NFOLDER!] Cloning...
+                    git clone --depth 1 "!NURL!" "!CUSTOM_NODES_DIR!\!NFOLDER!"
+                )
                 if exist "!CUSTOM_NODES_DIR!\!NFOLDER!\requirements.txt" (
                     echo   [!NFOLDER!] Installing Python deps - this can take a while...
                     "!EMB_PY!" -m pip install -r "!CUSTOM_NODES_DIR!\!NFOLDER!\requirements.txt" --no-warn-script-location

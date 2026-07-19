@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2, Play } from 'lucide-react';
+import { Loader2, Play, Wand2 } from 'lucide-react';
 import { PromptAssistant } from '../../components/ui/PromptAssistant';
 import { LoraSelector } from '../../components/ui/LoraSelector';
 import { useToast } from '../../components/ui/Toast';
@@ -129,6 +129,27 @@ export const LtxFlfPage = () => {
     void run.startBatch(prompts.map(buildParams));
   };
 
+  const [writingPrompt, setWritingPrompt] = useState(false);
+  const writePromptFromFrames = async () => {
+    if (!firstFilename || !lastFilename || writingPrompt) return;
+    setWritingPrompt(true);
+    try {
+      const res = await fetch(`${BACKEND_API.BASE_URL}/api/ollama/flf-prompt`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_first: firstFilename, image_last: lastFilename }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.detail || 'Could not read the frames');
+      if (data.prompt) setPrompt(data.prompt);
+      toast(data.model ? `Prompt written with ${data.model}` : 'Prompt written from the two frames', 'success');
+    } catch (err: any) {
+      toast(err.message || 'Could not write a prompt from the frames', 'error');
+    } finally {
+      setWritingPrompt(false);
+    }
+  };
+
   const canGenerate = !!firstFilename && !!lastFilename && !!prompt.trim() && !run.isGenerating;
   const dims = getLtxDimensions(aspectRatio, resolution);
 
@@ -207,6 +228,16 @@ export const LtxFlfPage = () => {
           </WorkflowSection>
 
           <WorkflowSection title="Motion Prompt">
+            <button
+              type="button"
+              onClick={writePromptFromFrames}
+              disabled={!firstFilename || !lastFilename || writingPrompt}
+              className="mb-2 inline-flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-[11px] font-semibold text-violet-200 transition hover:border-violet-400/50 hover:bg-violet-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+              title="Caption both frames and write the motion/transformation prompt between them"
+            >
+              {writingPrompt ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+              {writingPrompt ? 'Reading both frames…' : 'Write prompt from frames'}
+            </button>
             <PromptAssistant
               context="ltx-flf"
               value={prompt}

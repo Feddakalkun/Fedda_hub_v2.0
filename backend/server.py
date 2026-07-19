@@ -2305,16 +2305,11 @@ async def influencer_prompt_batch(count: int = 10, context: str = "zimage", nsfw
     return {"success": True, "prompts": prompts}
 
 
-# ── ComfyUI-native text tools (no-Ollama fallback, e.g. RunPod) ──────────────
-# Florence-2 for image captioning, Searge LLM (Mistral GGUF) for prompt gen.
-# Both run as ComfyUI graphs and surface their result through the node history.
 _COMFY_CAPTION_TPL = ROOT_DIR / "backend" / "workflows" / "imagecaption" / "FLORENCEIMAGECAPTIONING2.json"
 _COMFY_LLM_TPL = ROOT_DIR / "backend" / "workflows" / "llmpromptgenerator" / "LLMPROMPTGENERATOR.json"
 
 
 def _comfy_run_text(graph: Dict[str, Any], timeout: int = 180) -> str:
-    """Submit a text-producing graph to ComfyUI, wait, and return the longest
-    text output (Florence2 caption / Searge LLM prompt via showAnything/SaveText)."""
     import time as _t
     resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": graph, "client_id": "fedda_text"}, timeout=15)
     if not resp.ok:
@@ -2346,14 +2341,12 @@ def _comfy_run_text(graph: Dict[str, Any], timeout: int = 180) -> str:
 
 
 def _comfy_caption_image(image_filename: str) -> str:
-    """Detailed caption of a ComfyUI-input image via Florence-2."""
     tpl = json.loads(_COMFY_CAPTION_TPL.read_text(encoding="utf-8-sig"))
     tpl["3"]["inputs"]["image"] = image_filename
     return _clean_caption_text(_comfy_run_text(tpl))
 
 
 def _comfy_generate_prompt(seed_text: str) -> str:
-    """Expand a short idea into a detailed image prompt via the Searge LLM (Mistral)."""
     tpl = json.loads(_COMFY_LLM_TPL.read_text(encoding="utf-8-sig"))
     tpl["3"]["inputs"]["text"] = seed_text or "a photorealistic portrait"
     tpl["3"]["inputs"]["random_seed"] = random.randint(1, 2_000_000_000)
@@ -2362,12 +2355,9 @@ def _comfy_generate_prompt(seed_text: str) -> str:
 
 @app.post("/api/ollama/prompt")
 async def ollama_generate_prompt(req: OllamaPromptRequest):
-    """Generate or enhance a prompt. Ollama if available, else ComfyUI Searge LLM (Mistral).
-    Returns an SSE stream of tokens either way."""
+    """Generate or enhance a prompt using Ollama. Returns SSE stream of tokens."""
     model = _get_ollama_text_model()
     if not model:
-        # No Ollama (e.g. RunPod) -> run the Mistral GGUF prompt workflow in ComfyUI,
-        # emit the whole result as one SSE token so the frontend parser is unchanged.
         seed = (req.current_prompt or "").strip() or ("a photorealistic portrait" if req.context == "zimage" else "cinematic scene")
 
         def comfy_stream():
@@ -2436,13 +2426,12 @@ async def ollama_generate_prompt(req: OllamaPromptRequest):
 
 @app.post("/api/ollama/caption")
 async def ollama_caption_image(file: UploadFile = File(...), context: str = Form("zimage")):
-    """Caption an uploaded image. Ollama vision if available, else ComfyUI Florence-2."""
+    """Caption an uploaded image using an Ollama vision model."""
     import base64, uuid as _uuid
 
     img_bytes = await file.read()
     model = _get_ollama_vision_model()
     if not model:
-        # No Ollama vision (e.g. RunPod) -> stage the image in ComfyUI input and run Florence-2.
         try:
             fname = f"fedda_caption_{_uuid.uuid4().hex[:12]}.png"
             (_comfy_input_dir() / fname).write_bytes(img_bytes)
@@ -2732,6 +2721,126 @@ async def ollama_storyboard(req: StoryboardRequest):
         transitions += ["smooth cinematic transition, natural motion, consistent subject"] * (n - 1 - len(transitions))
 
     return {"success": True, "transitions": transitions, "captions": captions, "model": model}
+
+
+class FlfPromptRequest(BaseModel):
+    image_first: str
+    image_last: str
+    style: str = ""
+
+
+def _caption_image_smart(filename: str, instruction: str) -> str:
+    """Caption one input image: Ollama vision if available, else ComfyUI Florence."""
+    vision = _get_ollama_vision_model()
+    if vision:
+        try:
+            import base64 as _b64
+            img_b64 = _b64.b64encode(_resolve_input_file(filename).read_bytes()).decode()
+            r = requests.post(f"{OLLAMA_URL}/api/generate", json={
+                "model": vision, "prompt": instruction, "images": [img_b64],
+                "stream": False, "keep_alive": 0,
+                "options": {"temperature": 0.2, "num_predict": 130},
+            }, timeout=120)
+            if r.ok:
+                txt = _clean_caption_text(r.json().get("response", ""))
+                if txt:
+                    return txt
+        except Exception:
+            pass
+    try:
+        return _comfy_caption_image(filename)
+    except Exception:
+        return ""
+
+
+@app.post("/api/ollama/flf-prompt")
+async def ollama_flf_prompt(req: FlfPromptRequest):
+    """First-Last-Frame brain: caption BOTH keyframes, then write ONE motion
+    prompt for the video BETWEEN them. LTX FLF morphs a fixed first frame into a
+    fixed last frame, and that is used two very different ways — the SAME subject
+    moving, or a TRANSFORMATION (person -> cyborg, day -> night, etc). The
+    instruction handles both; the storyboard brain assumes 'same person' so it is
+    wrong for the transformation case."""
+    if not req.image_first or not req.image_last:
+        raise HTTPException(status_code=400, detail="Need both a first and a last frame")
+
+    # Frame 1: factual, every subject (scenes have more than one person).
+    cap_first = _caption_image_smart(
+        req.image_first,
+        "Describe this image factually in 2-3 short sentences: every person present and "
+        "their position/pose/facing (left, right, kneeling, facing camera/away), plus the "
+        "setting and lighting. Be literal. No style words, no speculation.",
+    )
+    # Frame 2 RELATIVE to frame 1 — this is what surfaces the ACTUAL change and
+    # stops the director inventing a transformation that never happened.
+    cap_last = _caption_image_smart(
+        req.image_last,
+        "This is the LAST frame of a short video whose FIRST frame was:\n"
+        f"\"{cap_first}\"\n\n"
+        "State plainly what is DIFFERENT in THIS frame versus that description: who moved, "
+        "turned, shifted position, changed pose/gesture/expression, or how the camera framing "
+        "changed. If a person or thing is unchanged, say so. If almost nothing changed, say "
+        "'nearly identical'. Be literal and precise. Do NOT invent changes.",
+    )
+
+    style_line = f"Style/mood the user wants: {req.style.strip()}\n" if req.style.strip() else ""
+    system = (
+        "You write the motion prompt for an AI that interpolates a fixed FIRST frame into a fixed "
+        "LAST frame as one continuous cinematic shot. You are told what is in the first frame and "
+        "exactly what CHANGED in the last.\n"
+        "Write ONE flowing shot description — prose, never a comma-list of actions. Build it like a "
+        "cinematographer:\n"
+        "1. Open by anchoring the scene: the setting, light and mood taken from the first frame "
+        "(e.g. 'inside a dim tribal tent, warm firelight flickering across woven walls').\n"
+        "2. Describe the specific movements that produce the stated changes — who moves, how, "
+        "naturally and unhurried.\n"
+        "3. People who did not change hold their pose with natural idle life: subtle breathing, a "
+        "slight sway, cloth and hair stirring. Never frozen.\n"
+        "4. One gentle camera move (slow push-in, drift, pan) and one atmospheric touch consistent "
+        "with the scene (dust motes in light, flame flicker, fabric swaying).\n"
+        "HARD RULES: Animate ONLY the stated changes. Do NOT invent transformations, new people, "
+        "clothing or appearance changes, or events the descriptions do not state. Present tense, "
+        "concrete and visible only."
+    )
+    user_msg = (
+        f"{style_line}FIRST FRAME: {cap_first}\n\nWHAT CHANGED IN THE LAST FRAME: {cap_last}\n\n"
+        "Write ONE prompt of roughly 50-80 words describing this shot from first frame to last. "
+        "Output ONLY the prompt text — no preamble, no quotes, no commentary."
+    )
+
+    text_model = _get_ollama_text_model()
+    prompt = ""
+    if text_model:
+        try:
+            r = requests.post(f"{OLLAMA_URL}/api/generate", json={
+                "model": text_model,
+                "prompt": f"{system}\n\n{user_msg}",
+                "stream": False, "keep_alive": 0,
+                # Mid temp: faithful to the observed changes but written with
+                # cinematic flow — 0.35 produced telegraphic comma-lists.
+                "options": {"temperature": 0.55, "num_predict": 180, "repeat_penalty": 1.06},
+            }, timeout=150)
+            if r.ok:
+                prompt = _clean_caption_text(r.json().get("response", ""))
+        except Exception:
+            prompt = ""
+    if not prompt:
+        # No Ollama text model -> ComfyUI LLM fallback, seeded with both captions.
+        try:
+            prompt = _comfy_generate_prompt(
+                f"Motion between two video keyframes. First frame: {cap_first} Last frame: {cap_last}. "
+                "Describe the transition/transformation and the camera move in one vivid sentence."
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Prompt generation failed: {exc}")
+
+    return {
+        "success": True,
+        "prompt": prompt.strip().strip('"'),
+        "caption_first": cap_first,
+        "caption_last": cap_last,
+        "model": text_model or "comfyui",
+    }
 
 
 @app.get("/api/ollama/vision-models")

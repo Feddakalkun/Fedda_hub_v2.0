@@ -617,9 +617,18 @@ foreach ($Node in $NodesConfig) {
 
     $NodeDir = Join-Path $CustomNodesDir $Node.folder
     if (-not (Test-Path $NodeDir)) {
-        Write-Step "  [$($Node.name)] Cloning..." "White"
+        # Vendored copy wins over git clone: some nodes have no reliable upstream.
+        $VendorDir = Join-Path $RootPath "vendor\custom_nodes\$($Node.folder)"
         $ErrorActionPreference = "Continue"
-        $out = & git clone --depth 1 --recurse-submodules $Node.url "$NodeDir" 2>&1 | Out-String
+        if (Test-Path $VendorDir) {
+            Write-Step "  [$($Node.name)] Installing from vendored copy..." "White"
+            Copy-Item -Recurse -Force $VendorDir $NodeDir
+            $out = "vendored"
+            & cmd /c exit 0   # reset LASTEXITCODE so the success branch below runs
+        } else {
+            Write-Step "  [$($Node.name)] Cloning..." "White"
+            $out = & git clone --depth 1 --recurse-submodules $Node.url "$NodeDir" 2>&1 | Out-String
+        }
         $ErrorActionPreference = "Stop"
 
         if ($LASTEXITCODE -eq 0) {

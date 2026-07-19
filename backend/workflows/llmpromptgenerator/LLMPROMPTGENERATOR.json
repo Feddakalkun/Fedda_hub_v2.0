@@ -1,0 +1,45 @@
+{
+  "2": {
+    "inputs": {
+      "text": "Digital illustration showcasing a whimsical, playful scene featuring two cats and one dog. The setting is an adorable living room or garden filled with colorful toys, comfortable furniture, and vibrant wallpaper to create a cozy ambiance. One of the cats perches gracefully on top of a fluffy couch, watching curiously as its feline companion plays with a bright red ball nearby. The third animal in the scene is an energetic dog, leaping joyously through the air towards the cat that's playing with the toy. Their interaction captures the essence of friendship and playful competition between pets. The image is rendered in a vibrant, cartoony style to emphasize the endearing personalities and charm of each animal.",
+      "anything": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "GENERATED PROMPT"
+    }
+  },
+  "3": {
+    "inputs": {
+      "text": "woman 3d character on grey bg",
+      "random_seed": 1345,
+      "model": "Mistral-7B-Instruct-v0.3.Q4_K_M.gguf",
+      "max_tokens": 4100,
+      "apply_instructions": true,
+      "instructions": "Generate image prompt with many details \"{prompt}\""
+    },
+    "class_type": "Searge_LLM_Node",
+    "_meta": {
+      "title": "LLM PROMPT GENERATOR"
+    }
+  },
+  "5": {
+    "inputs": {
+      "root_dir": "output",
+      "file": "LLM prompts.txt",
+      "append": "append",
+      "insert": true,
+      "text": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "SaveText|pysssss",
+    "_meta": {
+      "title": "SAVE TEXT FILE"
+    }
+  }
+}
