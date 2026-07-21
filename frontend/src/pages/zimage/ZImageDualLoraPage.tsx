@@ -6,6 +6,7 @@ import {
   Loader2,
   Lock,
   RefreshCw,
+  RotateCcw,
   Sparkles,
   Unlock,
   Wand2,
@@ -65,6 +66,28 @@ const shortLoraLabel = (name: string) => (name.replace(/\\/g, '/').split('/').po
 const buttonBase = 'inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-45';
 const panelBase = 'rounded-lg border border-white/10 bg-[#0d0e12]';
 
+const DEFAULT_NEGATIVE = 'blurry, low quality, bad anatomy, deformed, extra limbs, distorted face, plastic skin, split image, split screen, collage, diptych, two separate photos, different backgrounds, panel border, seam down the middle';
+
+// Known-good tuning, verified by the settings sweep (matches the workflow's baked-in
+// values, which produced the coherent faces). The "Reset to best settings" button
+// writes every one of these back — overwriting anything saved in localStorage — so a
+// bad manual tweak is always one click away from recovery. LoRA choices, character
+// descriptions, scene/style and seed are intentionally NOT reset (they're your content).
+const QUALITY_DEFAULTS = {
+  loraMainStrength: 1.0,
+  loraDetailStrength: 1.0,
+  changeStrength: 0.55,
+  refineMode: 'faces' as const,
+  swapSides: false,
+  sceneCfg: 1.1,
+  swapCfg: 1.0,
+  dualSteps: 9,
+  maskFeather: 20,
+  edgeFeather: 5,
+  detailSize: 512,
+  negativePrompt: DEFAULT_NEGATIVE,
+};
+
 async function pollPrompt(promptId: string, workflowId: string, timeoutMs = 300000): Promise<StageStatus> {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
@@ -87,15 +110,19 @@ export const ZImageDualLoraPage = () => {
   const { clearOutputs, registerNodeMap, previewUrl } = useComfyExecution();
 
   const [loraMainName, setLoraMainName] = usePersistentState('zimage_dual_lora_main_name', '');
-  const [loraMainStrength, setLoraMainStrength] = usePersistentState('zimage_dual_lora_main_strength', 1.2);
+  const [loraMainStrength, setLoraMainStrength] = usePersistentState('zimage_dual_lora_main_strength', QUALITY_DEFAULTS.loraMainStrength);
   const [loraDetailName, setLoraDetailName] = usePersistentState('zimage_dual_lora_detail_name', '');
-  const [loraDetailStrength, setLoraDetailStrength] = usePersistentState('zimage_dual_lora_detail_strength', 1.2);
+  const [loraDetailStrength, setLoraDetailStrength] = usePersistentState('zimage_dual_lora_detail_strength', QUALITY_DEFAULTS.loraDetailStrength);
 
   // How strongly the selected person is repainted into Person 2 (DetailerForEach denoise).
-  const [changeStrength, setChangeStrength] = usePersistentState('zimage_dual_change_strength', 0.75);
+  const [changeStrength, setChangeStrength] = usePersistentState('zimage_dual_change_strength', QUALITY_DEFAULTS.changeStrength);
 
   // Refine faces (identity) or whole bodies (outfit/pose).
   const [refineMode, setRefineMode] = usePersistentState<'faces' | 'bodies'>('zimage_dual_refine_mode', 'faces');
+
+  // Who-gets-who: by default Person 1's LoRA repaints the LEFT face, Person 2's the
+  // RIGHT. If the detector flips them, this swaps which LoRA lands on which person.
+  const [swapSides, setSwapSides] = usePersistentState('zimage_dual_swap_sides', false);
 
   // Advanced quality knobs (defaults match the workflow).
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -104,7 +131,7 @@ export const ZImageDualLoraPage = () => {
   const [dualSteps, setDualSteps] = usePersistentState('zimage_dual_steps', 9);
   const [maskFeather, setMaskFeather] = usePersistentState('zimage_dual_mask_feather', 20);
   const [edgeFeather, setEdgeFeather] = usePersistentState('zimage_dual_edge_feather', 5);
-  const [detailSize, setDetailSize] = usePersistentState('zimage_dual_detail_size', 768);
+  const [detailSize, setDetailSize] = usePersistentState('zimage_dual_detail_size', QUALITY_DEFAULTS.detailSize);
 
   const [scene, setScene] = usePersistentState('zimage_dual_scene', SCENES[0]);
   const [style, setStyle] = usePersistentState('zimage_dual_style', STYLES[0]);
@@ -119,7 +146,15 @@ export const ZImageDualLoraPage = () => {
   const [sheetLoading, setSheetLoading] = useState<{ a: boolean; b: boolean }>({ a: false, b: false });
 
   const [mainPrompt, setMainPrompt] = usePersistentState('zimage_dual_main_prompt', '');
-  const [negativePrompt, setNegativePrompt] = usePersistentState('zimage_dual_negative_prompt', 'blurry, low quality, bad anatomy, deformed, extra limbs, distorted face, plastic skin, split image, split screen, collage, diptych, two separate photos, different backgrounds, panel border, seam down the middle');
+  const [negativePrompt, setNegativePrompt] = usePersistentState('zimage_dual_negative_prompt', DEFAULT_NEGATIVE);
+
+  // Stage 3 — entry mode: generate a base scene from the prompt, or refine an
+  // uploaded 2-person photo. uploadFilename is the ComfyUI input name (persisted so a
+  // reload can still run); the object-URL preview is ephemeral.
+  const [entryMode, setEntryMode] = usePersistentState<'generate' | 'upload'>('zimage_dual_entry_mode', 'generate');
+  const [uploadFilename, setUploadFilename] = usePersistentState<string | null>('zimage_dual_upload_filename', null);
+  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const [lockedSeed, setLockedSeed] = usePersistentState<number>('zimage_dual_locked_seed', randomSeed());
   const [seedLocked, setSeedLocked] = usePersistentState<boolean>('zimage_dual_seed_locked', false);
@@ -128,11 +163,35 @@ export const ZImageDualLoraPage = () => {
   const [beforeImageUrl, setBeforeImageUrl] = usePersistentState<string | null>('zimage_dual_before_image', null);
   const [finalImageUrl, setFinalImageUrl] = usePersistentState<string | null>('zimage_dual_final_image', null);
 
+  // Stage 2 mask preview: which face each LoRA actually repainted (seg_preview_p1/p2).
+  const [p1PreviewUrl, setP1PreviewUrl] = usePersistentState<string | null>('zimage_dual_p1_preview', null);
+  const [p2PreviewUrl, setP2PreviewUrl] = usePersistentState<string | null>('zimage_dual_p2_preview', null);
+
   const [runningWorkflow, setRunningWorkflow] = useState(false);
   const [availableLoras, setAvailableLoras] = useState<string[]>([]);
 
   const isRunning = runningWorkflow;
-  const canRun = !!loraMainName && !!loraDetailName && loraMainStrength > 0 && loraDetailStrength > 0;
+  const canRun = !!loraMainName && !!loraDetailName && loraMainStrength > 0 && loraDetailStrength > 0
+    && (entryMode === 'generate' || !!uploadFilename);
+
+  const handleUpload = async (file?: File | null) => {
+    if (!file || uploading) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch(`${BACKEND_API.BASE_URL}/api/upload`, { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.detail || data.error || 'Upload failed');
+      setUploadFilename(data.filename);
+      setUploadPreview(URL.createObjectURL(file));
+      toast('Photo uploaded — ready to refine.', 'success');
+    } catch (err: any) {
+      toast(err.message || 'Upload failed', 'error');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     comfyService.getLoras().then((all) => {
@@ -214,6 +273,25 @@ export const ZImageDualLoraPage = () => {
     ...personPrompts(),
   });
 
+  // Restore every tuning knob to the known-good sweep values, overwriting whatever
+  // is saved in localStorage. Deliberately leaves LoRA picks, character text,
+  // scene/style and seed untouched — only the quality settings snap back.
+  const resetSettings = () => {
+    setLoraMainStrength(QUALITY_DEFAULTS.loraMainStrength);
+    setLoraDetailStrength(QUALITY_DEFAULTS.loraDetailStrength);
+    setChangeStrength(QUALITY_DEFAULTS.changeStrength);
+    setRefineMode(QUALITY_DEFAULTS.refineMode);
+    setSwapSides(QUALITY_DEFAULTS.swapSides);
+    setSceneCfg(QUALITY_DEFAULTS.sceneCfg);
+    setSwapCfg(QUALITY_DEFAULTS.swapCfg);
+    setDualSteps(QUALITY_DEFAULTS.dualSteps);
+    setMaskFeather(QUALITY_DEFAULTS.maskFeather);
+    setEdgeFeather(QUALITY_DEFAULTS.edgeFeather);
+    setDetailSize(QUALITY_DEFAULTS.detailSize);
+    setNegativePrompt(QUALITY_DEFAULTS.negativePrompt);
+    toast('Settings reset to the best-known values.', 'success');
+  };
+
   const registerWorkflowNodeMap = async (workflowId: string) => {
     try {
       const response = await fetch(`${BACKEND_API.BASE_URL}/api/workflow/node-map/${workflowId}`);
@@ -235,6 +313,8 @@ export const ZImageDualLoraPage = () => {
     setSeedLocked(true);
     clearOutputs();
     setFinalImageUrl(null);
+    setP1PreviewUrl(null);
+    setP2PreviewUrl(null);
     setRunningWorkflow(true);
 
     try {
@@ -244,40 +324,51 @@ export const ZImageDualLoraPage = () => {
       const negativeForRun = /split image|collage|diptych/i.test(negativePrompt)
         ? negativePrompt
         : `${negativePrompt}, ${antiSplit}`;
-      await registerWorkflowNodeMap('z-image-dual-lora');
-      const payload = {
-        workflow_id: 'z-image-dual-lora',
-        params: {
-          main_prompt: prompts.base,
-          person_a_prompt: prompts.personA,
-          person_b_prompt: prompts.personB,
-          negative: negativeForRun,
-          detect_model: refineMode === 'bodies' ? 'bbox/yolov8m.pt' : 'bbox/face_yolov8m.pt',
-          detect_labels: refineMode === 'bodies' ? 'person' : 'all',
-          seed,
-          lora_main_name: loraMainName,
-          lora_main_strength: Number(loraMainStrength),
-          lora_detail_name: loraDetailName,
-          lora_detail_strength: Number(loraDetailStrength),
-          detail_denoise: Number(changeStrength),
-          scene_cfg: Number(sceneCfg),
-          swap_cfg: Number(swapCfg),
-          dual_steps: Number(dualSteps),
-          mask_feather: Number(maskFeather),
-          edge_feather: Number(edgeFeather),
-          detail_size: Number(detailSize),
-          client_id: comfyService.clientId,
-        },
+      const isUpload = entryMode === 'upload';
+      const workflowId = isUpload ? 'z-image-dual-lora-upload' : 'z-image-dual-lora';
+      await registerWorkflowNodeMap(workflowId);
+      // Shared refine params for both entry modes.
+      const params: Record<string, unknown> = {
+        person_a_prompt: prompts.personA,
+        person_b_prompt: prompts.personB,
+        negative: negativeForRun,
+        detect_model: refineMode === 'bodies' ? 'bbox/yolov8m.pt' : 'bbox/face_yolov8m.pt',
+        detect_labels: refineMode === 'bodies' ? 'person' : 'all',
+        // Who-gets-who: Person 1's LoRA repaints the leftmost face (index 0) by
+        // default; swap sends P1→right, P2→left.
+        person1_face_index: swapSides ? 1 : 0,
+        person2_face_index: swapSides ? 0 : 1,
+        seed,
+        lora_main_name: loraMainName,
+        lora_main_strength: Number(loraMainStrength),
+        lora_detail_name: loraDetailName,
+        lora_detail_strength: Number(loraDetailStrength),
+        detail_denoise: Number(changeStrength),
+        swap_cfg: Number(swapCfg),
+        dual_steps: Number(dualSteps),
+        mask_feather: Number(maskFeather),
+        edge_feather: Number(edgeFeather),
+        // Full-person crops are tall — at 512 the face inside gets downscaled and
+        // softens, so refine at >=768 in that mode (face-only keeps the slider value).
+        detail_size: refineMode === 'bodies' ? Math.max(Number(detailSize), 768) : Number(detailSize),
+        client_id: comfyService.clientId,
       };
+      if (isUpload) {
+        // Refine the user's photo — no base generation, so no scene prompt / CFG.
+        params.image = uploadFilename;
+      } else {
+        params.main_prompt = prompts.base;
+        params.scene_cfg = Number(sceneCfg);
+      }
       const response = await fetch(`${BACKEND_API.BASE_URL}${BACKEND_API.ENDPOINTS.GENERATE}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ workflow_id: workflowId, params }),
       });
       const data = await response.json();
       if (!data.success) throw new Error(data.detail || 'Failed to start Dual LoRA workflow');
 
-      const done = await pollPrompt(data.prompt_id, 'z-image-dual-lora');
+      const done = await pollPrompt(data.prompt_id, workflowId);
       const beforeImage = selectBestImage(done.images, 'main_before_detail');
       const finalImage = selectBestImage(done.images, 'final_refined');
       if (beforeImage) {
@@ -285,6 +376,12 @@ export const ZImageDualLoraPage = () => {
         setBaseImageUrl(imageUrl);
         setBeforeImageUrl(imageUrl);
       }
+      // Stage 2: the face each LoRA repainted. Present only if detection found
+      // both — a single-face detection leaves one preview empty.
+      const p1Preview = (done.images || []).find((img) => String(img.filename).toLowerCase().includes('seg_preview_p1'));
+      const p2Preview = (done.images || []).find((img) => String(img.filename).toLowerCase().includes('seg_preview_p2'));
+      setP1PreviewUrl(p1Preview ? comfyService.getImageUrl(p1Preview) : null);
+      setP2PreviewUrl(p2Preview ? comfyService.getImageUrl(p2Preview) : null);
       if (!finalImage) throw new Error('No refined image returned');
       setFinalImageUrl(comfyService.getImageUrl(finalImage));
 
@@ -310,6 +407,25 @@ export const ZImageDualLoraPage = () => {
       output={null}
     >
         <section className={`${panelBase} p-3`}>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Start from</span>
+            {([
+              { m: 'generate' as const, label: 'Generate base', hint: 'make a new 2-person scene from the prompt' },
+              { m: 'upload' as const, label: 'Upload photo', hint: 'refine two people in a photo you already have' },
+            ]).map((o) => (
+              <button
+                key={o.m}
+                onClick={() => setEntryMode(o.m)}
+                title={o.hint}
+                className={`flex-1 rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${entryMode === o.m ? 'bg-white text-black' : 'bg-white/[0.04] text-white/55 hover:bg-white/[0.08]'}`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className={`${panelBase} p-3`}>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-white/85">
               <CircleDot className="h-4 w-4 text-white/50" />
@@ -332,6 +448,14 @@ export const ZImageDualLoraPage = () => {
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 New Seed
+              </button>
+              <button
+                onClick={resetSettings}
+                title="Restore every quality knob (strengths, denoise, CFG, steps, feathers, detail size, negative) to the best-known values. Keeps your LoRAs, descriptions, scene and seed."
+                className={`${buttonBase} border-amber-400/25 bg-amber-400/[0.06] px-2.5 py-1.5 text-amber-200/80 hover:bg-amber-400/[0.12]`}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Reset to best settings
               </button>
             </div>
           </div>
@@ -381,9 +505,28 @@ export const ZImageDualLoraPage = () => {
                 onClick={() => setRefineMode(m)}
                 className={`flex-1 rounded-md px-3 py-1.5 text-[11px] font-semibold capitalize transition ${refineMode === m ? 'bg-white text-black' : 'bg-white/[0.04] text-white/55 hover:bg-white/[0.08]'}`}
               >
-                {m === 'faces' ? 'Faces (identity)' : 'Bodies (outfit/pose)'}
+                {m === 'faces' ? 'Face only (identity)' : 'Full person (face + body)'}
               </button>
             ))}
+          </div>
+
+          <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold text-white/70">Who gets who</div>
+              <div className="mt-0.5 text-[10px] text-white/35">
+                {swapSides
+                  ? <><span className="text-sky-300/80">Person 1</span> → right face · <span className="text-emerald-300/80">Person 2</span> → left face</>
+                  : <><span className="text-sky-300/80">Person 1</span> → left face · <span className="text-emerald-300/80">Person 2</span> → right face</>}
+              </div>
+            </div>
+            <button
+              onClick={() => setSwapSides((v) => !v)}
+              title="If each LoRA landed on the wrong person, flip this and re-run."
+              className={`${buttonBase} shrink-0 ${swapSides ? 'border-amber-400/30 bg-amber-400/[0.1] text-amber-200/85' : 'border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08]'}`}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              {swapSides ? 'Swapped' : 'Swap sides'}
+            </button>
           </div>
 
           <button
@@ -483,18 +626,43 @@ export const ZImageDualLoraPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <div>
-                    <PromptAssistant
-                      context="zimage"
-                      value={mainPrompt}
-                      onChange={setMainPrompt}
-                      label="1 · Full Scene Prompt (the main image)"
-                      minRows={5}
-                      accent="sky"
-                      placeholder="The whole image with both people — setting, who's where, what they wear. e.g. 'two people on a crowded bus, a woman on the left in a red coat, a man on the right in a suit...'"
-                    />
-                    <p className="mt-1 text-[10px] text-white/30">This generates the base image with <span className="text-sky-300/70">Person 1</span>'s LoRA. Describe the full scene here.</p>
-                  </div>
+                  {entryMode === 'generate' ? (
+                    <div>
+                      <PromptAssistant
+                        context="zimage"
+                        value={mainPrompt}
+                        onChange={setMainPrompt}
+                        label="1 · Full Scene Prompt (the main image)"
+                        minRows={5}
+                        accent="sky"
+                        placeholder="The whole image with both people — setting, who's where, what they wear. e.g. 'two people on a crowded bus, a woman on the left in a red coat, a man on the right in a suit...'"
+                      />
+                      <p className="mt-1 text-[10px] text-white/30">This generates the base image with <span className="text-sky-300/70">Person 1</span>'s LoRA. Describe the full scene here.</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-white/45">1 · Your 2-person photo</div>
+                      <label
+                        onDrop={(e) => { e.preventDefault(); handleUpload(e.dataTransfer.files?.[0]); }}
+                        onDragOver={(e) => e.preventDefault()}
+                        className="flex min-h-[150px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-sky-400/25 bg-sky-400/[0.03] p-3 text-center transition hover:bg-sky-400/[0.06]"
+                      >
+                        {uploadPreview ? (
+                          <img src={uploadPreview} alt="uploaded" className="max-h-[220px] rounded-md border border-white/10 object-contain" />
+                        ) : uploadFilename ? (
+                          <div className="text-[11px] text-white/60">Photo ready: <span className="font-mono text-white/80">{uploadFilename}</span><div className="mt-1 text-[10px] text-white/30">click to replace</div></div>
+                        ) : (
+                          <>
+                            {uploading ? <Loader2 className="h-5 w-5 animate-spin text-white/60" /> : <ImageIcon className="h-6 w-6 text-white/30" />}
+                            <div className="text-[11px] font-semibold text-white/60">{uploading ? 'Uploading…' : 'Drop a photo of two people'}</div>
+                            <div className="text-[10px] text-white/30">or click to browse — no base is generated, we just refine the two faces</div>
+                          </>
+                        )}
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload(e.target.files?.[0])} />
+                      </label>
+                      <p className="mt-1 text-[10px] text-white/30">Both people get detected + repainted with your two LoRAs. Person 1 = left, Person 2 = right (use <span className="text-amber-200/70">Swap sides</span> if flipped).</p>
+                    </div>
+                  )}
                   <label className="block space-y-1 text-[11px] font-semibold uppercase tracking-wide text-white/45">
                     Negative
                     <textarea value={negativePrompt} onChange={(e) => setNegativePrompt(e.target.value)} rows={2} className={`${inputBase} resize-none`} />
@@ -555,6 +723,41 @@ export const ZImageDualLoraPage = () => {
 
                 <aside className="border-t border-white/10 bg-[#0b0c10] p-3 xl:border-l xl:border-t-0">
                   <div className="space-y-3">
+                    {(p1PreviewUrl || p2PreviewUrl) && (
+                      <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.02] p-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-white/55">Mask preview — who got repainted</div>
+                          <button
+                            onClick={() => setSwapSides((v) => !v)}
+                            title="Wrong LoRA on the wrong face? Swap and re-run."
+                            className={`${buttonBase} h-6 px-2 py-0 text-[10px] ${swapSides ? 'border-amber-400/30 bg-amber-400/[0.1] text-amber-200/85' : 'border-white/10 bg-white/[0.04] text-white/60 hover:bg-white/[0.08]'}`}
+                          >
+                            <RefreshCw className="h-3 w-3" />
+                            {swapSides ? 'Swapped' : 'Swap'}
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold text-sky-300/80">
+                              <span className="inline-block h-2 w-2 rounded-full bg-sky-400" /> Person 1 {shortLoraLabel(loraMainName) && <span className="truncate text-white/35">· {shortLoraLabel(loraMainName)}</span>}
+                            </div>
+                            {p1PreviewUrl
+                              ? <img src={p1PreviewUrl} alt="Person 1 mask" className="w-full rounded border border-sky-400/30 bg-black object-contain" />
+                              : <div className="flex h-24 items-center justify-center rounded border border-dashed border-white/10 text-[9px] text-white/25">no 2nd face found</div>}
+                          </div>
+                          <div>
+                            <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold text-emerald-300/80">
+                              <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" /> Person 2 {shortLoraLabel(loraDetailName) && <span className="truncate text-white/35">· {shortLoraLabel(loraDetailName)}</span>}
+                            </div>
+                            {p2PreviewUrl
+                              ? <img src={p2PreviewUrl} alt="Person 2 mask" className="w-full rounded border border-emerald-400/30 bg-black object-contain" />
+                              : <div className="flex h-24 items-center justify-center rounded border border-dashed border-white/10 text-[9px] text-white/25">no 2nd face found</div>}
+                          </div>
+                        </div>
+                        <p className="text-[9px] leading-snug text-white/30">Each panel is the exact region that LoRA repainted ({refineMode === 'bodies' ? 'whole person' : 'face'}). If they're on the wrong people, hit Swap and re-run.</p>
+                      </div>
+                    )}
+
                       {finalImageUrl && (
                       <div className="space-y-2">
                         <div className="text-xs font-semibold uppercase tracking-wide text-white/45">Finished Image</div>

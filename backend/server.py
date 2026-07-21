@@ -1958,13 +1958,19 @@ def _caption_prompt_for_context(context: str) -> str:
     ctx = (context or "zimage").strip().lower()
     if ctx == "zimage":
         return (
-            "Write one photorealistic generation prompt grounded ONLY in visible details. Include: subject identity cues, "
-            "facial expression, visible makeup/face paint, hair, wardrobe/materials, composition, lighting direction and color, "
-            "and background mood. If clown/joker-style makeup or nose paint is visible, mention it explicitly. "
-            "Do NOT invent facts not clearly visible (e.g., pregnancy, sauna, unseen body posture, unseen location). "
+            "Write ONE photorealistic image-generation prompt that would recreate this exact photo, "
+            "grounded ONLY in what is clearly visible. "
+            "FOCUS: describe only the one or two people who are in sharp foreground focus — the clear subjects "
+            "of the shot, largest and closest to the camera. If two people are in focus, describe BOTH and state "
+            "each one's position (e.g. 'a woman on the left', 'a man on the right'). "
+            "IGNORE every other person: anyone blurred, seated behind, in the background, passing by, or part of a "
+            "crowd — do not mention them at all. "
+            "For each focal subject include: apparent age and gender, face and expression, visible makeup/face paint, "
+            "hair, wardrobe and materials, and pose. Then describe the setting, composition and camera framing, and "
+            "the lighting direction and color. "
+            "Do NOT invent facts not clearly visible (no unseen actions, locations, relationships, or body posture). "
             "Do NOT mention fisheye, ultra-wide, or lens distortion unless clearly visible. "
-            "No meta wording like 'the image shows'. 55-95 words. Output only the final prompt."
-            + _SINGLE_SUBJECT_RULE
+            "No meta wording like 'the image shows'. 60-110 words. Output only the final prompt."
         )
     if ctx == "ltx-flf":
         return (
@@ -4219,6 +4225,64 @@ async def wan_story_generate(req: WanStoryRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+_OBJECT_INFO_CHOICES_CACHE: Dict[str, Dict[str, list]] = {}
+_MODEL_PATH_EXTS = ('.safetensors', '.ckpt', '.pt', '.pth', '.onnx', '.bin', '.gguf', '.sft', '.vae', '.pkl')
+
+
+def _comfy_class_choices(class_type: str) -> Dict[str, list]:
+    """Per-input dropdown choices ComfyUI actually offers for a node class
+    (cached). Used to make model paths match ComfyUI's own separator style."""
+    if class_type in _OBJECT_INFO_CHOICES_CACHE:
+        return _OBJECT_INFO_CHOICES_CACHE[class_type]
+    choices: Dict[str, list] = {}
+    try:
+        r = requests.get(f"{COMFY_URL}/object_info/{class_type}", timeout=4)
+        if r.ok:
+            spec = (r.json() or {}).get(class_type, {})
+            inp = spec.get("input", {})
+            for group in ("required", "optional"):
+                for key, val in (inp.get(group) or {}).items():
+                    if isinstance(val, list) and val and isinstance(val[0], list):
+                        choices[key] = val[0]
+    except Exception:
+        pass
+    _OBJECT_INFO_CHOICES_CACHE[class_type] = choices
+    return choices
+
+
+def _normalize_model_paths_to_comfy(prompt: Dict[str, Any]) -> list:
+    """Rewrite model-path inputs (LoRA/checkpoint/vae/...) so their path
+    separators match ComfyUI's live list. Fixes Windows(\\) vs Linux(/) 'Value not
+    in list' validation errors — the SAME node can want '\\' for LoRAs and '/' for
+    detector subfolders, so we resolve against the real list rather than guessing.
+    Returns [(node_id, key, old, new), ...] of the fixes applied."""
+    def sep_key(s: str) -> str:
+        return str(s).replace("\\", "/").lower()
+    fixes: list = []
+    for node_id, node in prompt.items():
+        if not isinstance(node, dict):
+            continue
+        class_type = node.get("class_type")
+        inputs = node.get("inputs")
+        if not class_type or not isinstance(inputs, dict):
+            continue
+        choices = None
+        for key, val in list(inputs.items()):
+            if not isinstance(val, str) or not val.lower().endswith(_MODEL_PATH_EXTS):
+                continue
+            if choices is None:
+                choices = _comfy_class_choices(class_type)
+            valid = choices.get(key)
+            if not valid or val in valid:
+                continue
+            want = sep_key(val)
+            match = next((c for c in valid if sep_key(c) == want), None)
+            if match:
+                inputs[key] = match
+                fixes.append((node_id, key, val, match))
+    return fixes
+
+
 @app.post("/api/generate")
 async def generate(req: GenerateRequest):
     """
@@ -4324,6 +4388,16 @@ async def generate(req: GenerateRequest):
                     status_code=400,
                     detail="; ".join(flux2klein_payload_debug.get("errors") or ["FLUX2-KLEIN payload verification failed"]),
                 )
+
+        # Make every model path's separators (\ vs /) match ComfyUI's live list so
+        # the same workflow validates on both Windows and Linux/RunPod.
+        try:
+            sep_fixes = _normalize_model_paths_to_comfy(payload)
+            if sep_fixes:
+                logger.info("Path-normalized %d model input(s) to match ComfyUI: %s",
+                            len(sep_fixes), [f"{f[0]}.{f[1]}:{f[2]}->{f[3]}" for f in sep_fixes])
+        except Exception as _sep_e:
+            logger.warning("model-path normalization skipped: %s", _sep_e)
 
         client_id = req.params.get("client_id", "fedda_hub_v2")
         comfy_payload = {"prompt": payload, "client_id": client_id}

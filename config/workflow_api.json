@@ -387,10 +387,7 @@
       },
       "lora_main_strength": {
         "node_id": "4",
-        "input_keys": [
-          "strength_model",
-          "strength_clip"
-        ],
+        "input_key": "strength_model",
         "type": "number",
         "label": "Person 1 LoRA Strength"
       },
@@ -402,10 +399,7 @@
       },
       "lora_detail_strength": {
         "node_id": "5",
-        "input_keys": [
-          "strength_model",
-          "strength_clip"
-        ],
+        "input_key": "strength_model",
         "type": "number",
         "label": "Person 2 LoRA Strength"
       },
@@ -493,6 +487,160 @@
         "input_key": "labels",
         "type": "string",
         "label": "Detect labels"
+      },
+      "person1_face_index": {
+        "node_id": "32",
+        "input_key": "take_start",
+        "type": "number",
+        "label": "Person 1 face pick (0=left)"
+      },
+      "person2_face_index": {
+        "node_id": "33",
+        "input_key": "take_start",
+        "type": "number",
+        "label": "Person 2 face pick (1=right)"
+      }
+    }
+  },
+  "z-image-dual-lora-upload":   {
+    "name": "Z-Image Dual LoRA (Upload)",
+    "filename": "z-image/z-image-dual-lora-upload.json",
+    "description": "Refine two people in an uploaded photo with two LoRAs (no base generation).",
+    "inputs": {
+      "image": {
+        "node_id": "60",
+        "input_key": "image",
+        "type": "string",
+        "label": "Uploaded photo"
+      },
+      "negative": {
+        "node_id": "10",
+        "input_key": "text",
+        "type": "string",
+        "label": "Negative Prompt"
+      },
+      "lora_main_name": {
+        "node_id": "4",
+        "input_key": "lora_name",
+        "type": "string",
+        "label": "Person 1 LoRA"
+      },
+      "lora_main_strength": {
+        "node_id": "4",
+        "input_key": "strength_model",
+        "type": "number",
+        "label": "Person 1 LoRA Strength"
+      },
+      "lora_detail_name": {
+        "node_id": "5",
+        "input_key": "lora_name",
+        "type": "string",
+        "label": "Person 2 LoRA"
+      },
+      "lora_detail_strength": {
+        "node_id": "5",
+        "input_key": "strength_model",
+        "type": "number",
+        "label": "Person 2 LoRA Strength"
+      },
+      "person_a_prompt": {
+        "node_id": "42",
+        "input_key": "text",
+        "type": "string",
+        "label": "Left person"
+      },
+      "person_b_prompt": {
+        "node_id": "43",
+        "input_key": "text",
+        "type": "string",
+        "label": "Right person"
+      },
+      "detail_denoise": {
+        "node_ids": [
+          "40",
+          "41"
+        ],
+        "input_key": "denoise",
+        "type": "number",
+        "label": "Change Strength"
+      },
+      "swap_cfg": {
+        "node_ids": [
+          "40",
+          "41"
+        ],
+        "input_key": "cfg",
+        "type": "number",
+        "label": "Refine CFG"
+      },
+      "dual_steps": {
+        "node_ids": [
+          "40",
+          "41"
+        ],
+        "input_key": "steps",
+        "type": "number",
+        "label": "Steps"
+      },
+      "mask_feather": {
+        "node_ids": [
+          "40",
+          "41"
+        ],
+        "input_key": "noise_mask_feather",
+        "type": "number",
+        "label": "Mask feather"
+      },
+      "edge_feather": {
+        "node_ids": [
+          "40",
+          "41"
+        ],
+        "input_key": "feather",
+        "type": "number",
+        "label": "Edge feather"
+      },
+      "detail_size": {
+        "node_ids": [
+          "40",
+          "41"
+        ],
+        "input_key": "guide_size",
+        "type": "number",
+        "label": "Detail size"
+      },
+      "seed": {
+        "node_ids": [
+          "40",
+          "41"
+        ],
+        "input_key": "seed",
+        "type": "number",
+        "label": "Seed"
+      },
+      "detect_model": {
+        "node_id": "30",
+        "input_key": "model_name",
+        "type": "string",
+        "label": "Detector"
+      },
+      "detect_labels": {
+        "node_id": "31",
+        "input_key": "labels",
+        "type": "string",
+        "label": "Detect labels"
+      },
+      "person1_face_index": {
+        "node_id": "32",
+        "input_key": "take_start",
+        "type": "number",
+        "label": "Person 1 face pick"
+      },
+      "person2_face_index": {
+        "node_id": "33",
+        "input_key": "take_start",
+        "type": "number",
+        "label": "Person 2 face pick"
       }
     }
   },
@@ -3080,6 +3228,199 @@
       },
       "seed": {
         "node_id": "308",
+        "input_key": "seed",
+        "type": "number",
+        "label": "Seed"
+      }
+    }
+  },
+  "facefix": {
+    "name": "Face Fixer",
+    "filename": "facefix/facefix.json",
+    "description": "Detect and re-detail every face in a photo (Impact Pack FaceDetailer, multi-face)",
+    "inputs": {
+      "image": {
+        "node_id": "2",
+        "input_key": "image",
+        "type": "string",
+        "label": "Image"
+      },
+      "checkpoint": {
+        "node_id": "1",
+        "input_key": "ckpt_name",
+        "type": "string",
+        "label": "Checkpoint"
+      },
+      "denoise": {
+        "node_id": "6",
+        "input_key": "denoise",
+        "type": "number",
+        "label": "Fix Strength"
+      },
+      "steps": {
+        "node_id": "6",
+        "input_key": "steps",
+        "type": "number",
+        "label": "Steps"
+      },
+      "cfg": {
+        "node_id": "6",
+        "input_key": "cfg",
+        "type": "number",
+        "label": "CFG"
+      },
+      "sampler_name": {
+        "node_id": "6",
+        "input_key": "sampler_name",
+        "type": "string",
+        "label": "Sampler"
+      },
+      "scheduler": {
+        "node_id": "6",
+        "input_key": "scheduler",
+        "type": "string",
+        "label": "Scheduler"
+      },
+      "guide_size": {
+        "node_id": "6",
+        "input_key": "guide_size",
+        "type": "number",
+        "label": "Face Detail Size"
+      },
+      "feather": {
+        "node_id": "6",
+        "input_key": "feather",
+        "type": "number",
+        "label": "Feather"
+      },
+      "bbox_threshold": {
+        "node_id": "6",
+        "input_key": "bbox_threshold",
+        "type": "number",
+        "label": "Detection Sensitivity"
+      },
+      "bbox_crop_factor": {
+        "node_id": "6",
+        "input_key": "bbox_crop_factor",
+        "type": "number",
+        "label": "Context Around Face"
+      },
+      "seed": {
+        "node_id": "6",
+        "input_key": "seed",
+        "type": "number",
+        "label": "Seed"
+      },
+      "detect_model": {
+        "node_id": "3",
+        "input_key": "model_name",
+        "type": "string",
+        "label": "Face Detector"
+      }
+    }
+  },
+  "z-image-inpaint-automask": {
+    "name": "Z-Image Inpaint (Auto-Mask)",
+    "filename": "z-image/z-image-inpaintautomask.json",
+    "description": "Auto-mask a region (face/hair/body/clothes) and regenerate it with Z-Image + your character LoRAs",
+    "inputs": {
+      "image": {
+        "node_id": "164",
+        "input_key": "image",
+        "type": "string",
+        "label": "Source Image"
+      },
+      "prompt": {
+        "node_id": "171",
+        "input_key": "text",
+        "type": "string",
+        "label": "Prompt"
+      },
+      "negative": {
+        "node_id": "161",
+        "input_key": "text",
+        "type": "string",
+        "label": "Negative"
+      },
+      "loras": {
+        "node_id": "170",
+        "type": "loras",
+        "label": "LoRAs"
+      },
+      "mask_face": {
+        "node_id": "173",
+        "input_key": "face",
+        "type": "boolean",
+        "label": "Mask Face"
+      },
+      "mask_hair": {
+        "node_id": "173",
+        "input_key": "hair",
+        "type": "boolean",
+        "label": "Mask Hair"
+      },
+      "mask_body": {
+        "node_id": "173",
+        "input_key": "body",
+        "type": "boolean",
+        "label": "Mask Body"
+      },
+      "mask_clothes": {
+        "node_id": "173",
+        "input_key": "clothes",
+        "type": "boolean",
+        "label": "Mask Clothes"
+      },
+      "mask_accessories": {
+        "node_id": "173",
+        "input_key": "accessories",
+        "type": "boolean",
+        "label": "Mask Accessories"
+      },
+      "mask_background": {
+        "node_id": "173",
+        "input_key": "background",
+        "type": "boolean",
+        "label": "Mask Background"
+      },
+      "mask_confidence": {
+        "node_id": "173",
+        "input_key": "confidence",
+        "type": "number",
+        "label": "Mask Confidence"
+      },
+      "mask_black_point": {
+        "node_id": "173",
+        "input_key": "black_point",
+        "type": "number",
+        "label": "Mask Black Point"
+      },
+      "mask_white_point": {
+        "node_id": "173",
+        "input_key": "white_point",
+        "type": "number",
+        "label": "Mask White Point"
+      },
+      "steps": {
+        "node_id": "169",
+        "input_key": "steps",
+        "type": "number",
+        "label": "Steps"
+      },
+      "cfg": {
+        "node_id": "169",
+        "input_key": "cfg",
+        "type": "number",
+        "label": "CFG"
+      },
+      "denoise": {
+        "node_id": "169",
+        "input_key": "denoise",
+        "type": "number",
+        "label": "Denoise"
+      },
+      "seed": {
+        "node_id": "169",
         "input_key": "seed",
         "type": "number",
         "label": "Seed"

@@ -81,13 +81,16 @@
       "enabled": true,
       "tabs": [
         "z-image-dual-lora",
-        "z-image-controlnet-pose"
+        "z-image-controlnet-pose",
+        "z-image-inpaint-automask"
       ],
       "workflows": [
         "z-image-dual-lora",
+        "z-image-dual-lora-upload",
         "z-image-dual-base",
         "z-image-dual-detail",
-        "z-image-controlnet-pose"
+        "z-image-controlnet-pose",
+        "z-image-inpaint-automask"
       ],
       "custom_nodes": [
         "comfyui_controlnet_aux",
@@ -109,14 +112,16 @@
         "sdxl-inpaint-automask",
         "sdxl-outpaint",
         "sdxl-controlnet-depth",
-        "sdxl-controlnet-openpose"
+        "sdxl-controlnet-openpose",
+        "facefix"
       ],
       "workflows": [
         "sdxl-inpaint-automask",
         "sdxl-outpaint",
         "sdxl-controlnet-depth",
         "sdxl-controlnet-openpose",
-        "sdxl-txt2img"
+        "sdxl-txt2img",
+        "facefix"
       ],
       "custom_nodes": [
         "comfyui_controlnet_aux",
