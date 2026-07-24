@@ -20,7 +20,7 @@ is in BREADCRUMBS.md (same folder) — read the newest entries there for recent 
   `git add` them explicitly. A fresh clone (like `fedda_hub_latest\repo`) avoids this —
   keep it in sync via `git pull`, never robocopy.
 - The install root holds thin local-only wrappers (never committed): `run.bat`,
-  `update.bat`, `download_models.bat`, `symlink_loras.bat`, outer `FEDDA_v2.0_Installer.bat`.
+  `update.bat`, `download_models.bat`, `symlink_modelfolder.bat`, outer `FEDDA_v2.0_Installer.bat`.
 
 ## Distribution / community installs (the vendoring layer)
 

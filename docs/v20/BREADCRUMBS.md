@@ -1245,3 +1245,22 @@ Project purpose (context): original AI personas for Fanvue (platform welcomes AI
   spacy-pkuseg (Chinese) — not needed for English TTS.
 - The numpy/transformers/diffusers/safetensors "incompatible" warnings pip prints for
   chatterbox remain EXPECTED: we deliberately keep the newer versions ComfyUI needs.
+
+
+## 2026-07-24 - symlink tool renamed+generalized; download_models framed optional
+- Renamed scripts/symlink_loras.bat -> scripts/symlink_modelfolder.bat and
+  GENERALIZED it: was hardcoded to models\loras, now links an external folder into
+  ANY ComfyUI\models\<subfolder> (loras, checkpoints, controlnet, vae, ...). Picks
+  the subfolder interactively (default loras) or via arg:
+  symlink_modelfolder.bat <subfolder> <name> <target>  /  remove <subfolder> <name>.
+  Kept the junction (mklink /J, no admin) approach + the safety guard that refuses to
+  rmdir a real folder (fsutil reparsepoint check). Still stable.
+- Updated refs: backend/lora_service.py comment, HANDOFF wrapper list, and the outer
+  FEDDA_v2.0_Installer.bat (root-wrapper generator + completion text) - the last is
+  local-only/distributable, not committed.
+- download_models.bat is now framed as OPTIONAL: the HuggingFaceDownloader node
+  ("HF Model Downloader Pro", ComfyUI-Studio-nodes) is already core:true in
+  config/nodes.json (guaranteed installed) and embedded in 43 workflows, so a workflow
+  can self-fetch its models at first run. download_models.bat stays as the recommended
+  fast pre-fetch; the node is the auto-fallback. Follow-up: point fragile-model
+  workflows' downloader nodes at the fedda-mirror URL so the fallback covers them too.

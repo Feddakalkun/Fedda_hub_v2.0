@@ -371,7 +371,7 @@ class LoRAService:
         expects and what every workflow's LoRA dropdown stores. Do not normalize it.
 
         Junction/symlink-loop safe: users link external LoRA stashes into the
-        loras dir (symlink_loras.bat), and a bad link can create an infinite
+        loras dir (symlink_modelfolder.bat), and a bad link can create an infinite
         directory cycle that made pathlib.rglob crash with WinError 1921.
         We walk manually and prune any directory whose real path was already
         visited."""
