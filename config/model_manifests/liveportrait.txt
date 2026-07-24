@@ -1,11 +1,12 @@
 # Models for workflow: liveportrait (AdvancedLivePortrait + ReActor face restore)
 # Format: URL folder [filename]
-# inswapper_128 has no stable official source (pulled upstream) -> FeddaKalkun mirror.
 # insightface buffalo_l detection models auto-download on first use.
+# NOTE: LivePortrait's ReActor node is RestoreFace (GFPGAN) only — it does NOT
+# face-swap, so inswapper_128 is deliberately NOT listed here. If a face-SWAP
+# workflow is added later, source inswapper separately (it was withdrawn upstream).
 https://huggingface.co/Kijai/LivePortrait_safetensors/resolve/main/appearance_feature_extractor.safetensors liveportrait
 https://huggingface.co/Kijai/LivePortrait_safetensors/resolve/main/motion_extractor.safetensors liveportrait
 https://huggingface.co/Kijai/LivePortrait_safetensors/resolve/main/spade_generator.safetensors liveportrait
 https://huggingface.co/Kijai/LivePortrait_safetensors/resolve/main/warping_module.safetensors liveportrait
 https://huggingface.co/Kijai/LivePortrait_safetensors/resolve/main/stitching_retargeting_module.safetensors liveportrait
 https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth facerestore_models
-https://huggingface.co/datasets/FeddaKalkun/fedda-mirror/resolve/main/insightface/inswapper_128.onnx insightface

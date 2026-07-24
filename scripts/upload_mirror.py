@@ -22,7 +22,10 @@ REPO_ID = "FeddaKalkun/fedda-mirror"
 
 UPLOADS = [
     # (local path relative to app root, path inside the mirror repo)
-    ("ComfyUI/models/insightface/inswapper_128.onnx", "insightface/inswapper_128.onnx"),
+    # inswapper_128 intentionally NOT mirrored: it's the withdrawn InsightFace
+    # face-swap model, and nothing we ship uses it (LivePortrait uses GFPGAN
+    # RestoreFace, not swap). Publicly redistributing a withdrawn deepfake model
+    # risks the account. Source it separately only if a face-swap workflow needs it.
     ("ComfyUI/models/loras/wan/SECRET_SAUCE_WAN2.1_14B_fp8.safetensors", "loras/SECRET_SAUCE_WAN2.1_14B_fp8.safetensors"),
 ]
 NODE_ZIPS = ["ComfyUI-AdvancedLivePortrait", "comfyui-reactor-node"]
