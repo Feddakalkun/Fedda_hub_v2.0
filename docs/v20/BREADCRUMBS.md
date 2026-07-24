@@ -1264,3 +1264,21 @@ Project purpose (context): original AI personas for Fanvue (platform welcomes AI
   can self-fetch its models at first run. download_models.bat stays as the recommended
   fast pre-fetch; the node is the auto-fallback. Follow-up: point fragile-model
   workflows' downloader nodes at the fedda-mirror URL so the fallback covers them too.
+
+
+## 2026-07-24 - Installer front-of-house ported + installer now version-controlled
+- Ported the ghost front-of-house into the real installer and committed the installer
+  to the repo at `installer/FEDDA_v2.0_Installer.bat` (+ dist/README). It was previously
+  local-only/uncommitted; version-controlling it fixes a single-point-of-failure for
+  the key distributable (and it auto-mirrors to the fedda-pi Forgejo).
+- Flow now: Welcome -> Requirements (live Git/Node check, offers winget install of
+  whichever is missing, Y/N loop) -> Disclaimer (adults-only / responsibility /
+  no-real-people-without-consent / third-party licenses / local+private) -> Ready/info
+  -> real clone+install. Adapted for the installer's EnableDelayedExpansion: `!` text
+  swapped to `[X]`, and REQ_MANUAL now EXITS (clone needs git) instead of continuing.
+- Validated by running a truncated harness (stops before clone) end-to-end: all screens
+  render, Git/Node detected as found, happy path reaches the real-work boundary. The
+  winget-missing path is the same code already live-tested in the ghost.
+- The prototype `install\ghost-installer.bat` stays (local, uncommitted) for future
+  front-of-house iterations. installer/ copy is source of truth; running copy sits in the
+  install root above app\.

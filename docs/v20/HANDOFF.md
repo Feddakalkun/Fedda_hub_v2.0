@@ -20,7 +20,15 @@ is in BREADCRUMBS.md (same folder) — read the newest entries there for recent 
   `git add` them explicitly. A fresh clone (like `fedda_hub_latest\repo`) avoids this —
   keep it in sync via `git pull`, never robocopy.
 - The install root holds thin local-only wrappers (never committed): `run.bat`,
-  `update.bat`, `download_models.bat`, `symlink_modelfolder.bat`, outer `FEDDA_v2.0_Installer.bat`.
+  `update.bat`, `download_models.bat`, `symlink_modelfolder.bat`.
+- The outer `FEDDA_v2.0_Installer.bat` is now version-controlled at
+  `installer/FEDDA_v2.0_Installer.bat` (source of truth) — it's the one file you hand
+  a new user. The running copy lives in the install ROOT (one level above `app\`),
+  NOT inside `app\`; when you change `installer/`, copy it out to the install root.
+  (`dist/` is gitignored — it's the frontend build output — so the installer can't
+  live there.)
+  It has the front-of-house flow (welcome / requirements+winget offer / disclaimer /
+  info; prototyped in the local, uncommitted `install\ghost-installer.bat`).
 
 ## Distribution / community installs (the vendoring layer)
 
