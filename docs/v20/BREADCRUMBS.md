@@ -1228,3 +1228,20 @@ Project purpose (context): original AI personas for Fanvue (platform welcomes AI
   ComfyUI-FLOAT node + float.pth) — research offloaded to Higgsfield Supercomputer.
 - Higgsfield Supercomputer = a free agentic-AI relay the user pastes between; use it for
   web-research grunt work, integrate/verify its output here.
+
+
+## 2026-07-24 - Chatterbox: add missing pyloudnorm dep
+- Fresh-install verify surfaced a real gap behind the (expected, harmless) chatterbox
+  --no-deps pip conflict warnings: `pyloudnorm` was silently NOT installed. Chatterbox
+  0.1.7 needs it at synthesis time for loudness normalization -> would error on Voice
+  Studio "natural" generate, not at import.
+- Installed pyloudnorm 0.2.0 into the fresh install (safe: only numpy+scipy, both present;
+  no --no-deps risk). Verified import + Meter API.
+- Patched installer permanently: added `pyloudnorm` to the chatterbox extras line in
+  install.ps1 and update_logic.ps1. Also hardened update_logic's skip-guard from
+  `import chatterbox` -> `import chatterbox, pyloudnorm` so existing installs self-heal
+  (backfill pyloudnorm) on update instead of skipping the whole block.
+- Left unlisted on purpose: gradio (chatterbox web UI, unused), pykakasi (Japanese),
+  spacy-pkuseg (Chinese) — not needed for English TTS.
+- The numpy/transformers/diffusers/safetensors "incompatible" warnings pip prints for
+  chatterbox remain EXPECTED: we deliberately keep the newer versions ComfyUI needs.

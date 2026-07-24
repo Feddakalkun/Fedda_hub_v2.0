@@ -122,10 +122,15 @@ is in BREADCRUMBS.md (same folder) — read the newest entries there for recent 
 
 - 3090 / 24 GB VRAM. Models ≥19 GB (Qwen fp8, Qwen Edit) run VRAM-bound/slow.
 - Chatterbox pip install MUST be `--no-deps` (+ conformer s3tokenizer
-  resemble-perth pydub) and setuptools pinned <81 (80.9.0) or perth breaks on
-  missing pkg_resources. Its own pins would downgrade transformers/numpy/
-  diffusers/starlette and break ComfyUI + backend. install.ps1/update_logic.ps1
-  already encode this.
+  resemble-perth pydub pyloudnorm) and setuptools pinned <81 (80.9.0) or perth
+  breaks on missing pkg_resources. Its own pins would downgrade transformers/
+  numpy/diffusers/starlette and break ComfyUI + backend. install.ps1/
+  update_logic.ps1 already encode this. The dependency-conflict WARNINGS pip
+  prints for chatterbox (wants old numpy/transformers/diffusers/safetensors) are
+  EXPECTED and harmless — we deliberately keep the newer versions ComfyUI needs.
+  pyloudnorm was added 2026-07-24 (chatterbox needs it at synthesis time for
+  loudness; it was silently missing and would error on generate). gradio/pykakasi/
+  spacy-pkuseg stay unlisted (web UI + Japanese/Chinese-only, not needed).
 - yt-dlp extractors go stale fast — upgrade it in the install when downloads
   break (currently 2026.7.4).
 - Full restart (close all consoles) after any custom-node or ComfyUI change.

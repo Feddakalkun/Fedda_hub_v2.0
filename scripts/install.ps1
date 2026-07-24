@@ -548,7 +548,7 @@ Venv-Pip "install llama-cpp-python --prefer-binary --extra-index-url https://abe
 # separately. setuptools must stay <81 - perth needs pkg_resources.
 Write-Step "Installing Chatterbox TTS (natural voice engine)..."
 Venv-Pip "install --no-deps chatterbox-tts"
-Venv-Pip "install conformer s3tokenizer resemble-perth pydub"
+Venv-Pip "install conformer s3tokenizer resemble-perth pydub pyloudnorm"
 Venv-Pip "install setuptools==80.9.0"
 
 # Comprehensive deps (same as portable)
