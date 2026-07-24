@@ -9,6 +9,8 @@ import { QwenMultiAnglesPage } from './qwen/QwenMultiAnglesPage';
 import { QwenRapidEditPage } from './qwen/QwenRapidEditPage';
 import { ZImageDualLoraPage } from './zimage/ZImageDualLoraPage';
 import { SDXLInpaintAutomask } from './sdxl/SDXLInpaintAutomask';
+import { ZImageInpaintAutomask } from './zimage/ZImageInpaintAutomask';
+import { FaceFixPage } from './facefix/FaceFixPage';
 import { SDXLOutpaint } from './sdxl/SDXLOutpaint';
 import { SDXLControlNetDepth } from './sdxl/SDXLControlNetDepth';
 import { SDXLControlNetOpenPose } from './sdxl/SDXLControlNetOpenPose';
@@ -46,6 +48,8 @@ export const IMAGE_WORKFLOW_PAGES: Record<string, ComponentType> = {
   'qwen-rapid-edit-v23': QwenRapidEditPage,
   'qwen-multi-angle': QwenMultiAnglesPage,
   'sdxl-inpaint-automask': SDXLInpaintAutomask,
+  'z-image-inpaint-automask': ZImageInpaintAutomask,
+  'facefix': FaceFixPage,
   'sdxl-outpaint': SDXLOutpaint,
   'sdxl-controlnet-depth': SDXLControlNetDepth,
   'sdxl-controlnet-openpose': SDXLControlNetOpenPose,
