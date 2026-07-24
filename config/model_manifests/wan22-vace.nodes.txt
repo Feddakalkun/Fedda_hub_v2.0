@@ -1,0 +1,10 @@
+# Custom nodes for workflow: wan22-vace (non-core; core set ships with the installer)
+# Format: folder git_url
+# Hand-maintained (see liveportrait.nodes.txt note). KJNodes/Custom-Scripts/Easy-Use/
+# VideoHelperSuite are core and already installed, so they are not listed here.
+ComfyUI-WanVideoWrapper https://github.com/kijai/ComfyUI-WanVideoWrapper.git
+comfyui_controlnet_aux https://github.com/Fannovel16/comfyui_controlnet_aux.git
+ComfyUI-Frame-Interpolation https://github.com/Fannovel16/ComfyUI-Frame-Interpolation.git
+ComfyUI-Lotus https://github.com/kijai/ComfyUI-Lotus.git
+comfy_mtb https://github.com/melMass/comfy_mtb.git
+ComfyMath https://github.com/evanspearman/ComfyMath.git

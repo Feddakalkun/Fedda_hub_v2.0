@@ -1,0 +1,7 @@
+# Custom nodes for workflow: liveportrait (non-core; core set ships with the installer)
+# Format: folder git_url
+# Hand-maintained (NOT auto-generated — do not run generate_model_manifests.py over
+# liveportrait/wan22-vace, it would clobber the hand-written model URLs + mirror lines).
+# The installer/download_models.bat prefer vendor/custom_nodes/<folder> before this git url.
+ComfyUI-AdvancedLivePortrait https://github.com/PowerHouseMan/ComfyUI-AdvancedLivePortrait.git
+comfyui-reactor-node https://codeberg.org/Gourieff/comfyui-reactor-node.git
