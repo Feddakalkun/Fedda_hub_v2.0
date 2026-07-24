@@ -5,15 +5,37 @@ is in BREADCRUMBS.md (same folder) — read the newest entries there for recent 
 
 ## The two trees (this is the most important thing)
 
-- `H:\Fedda-Hub\Fedda_hub_v2.0\repo\` — source of truth, git remote
-  https://github.com/Feddakalkun/Fedda_hub_v2.0 (underscore, unlike v22's hyphen).
-- `H:\Fedda-Hub\Fedda_hub_v2.0\install\app\` — the runnable app. It is a **git
-  clone of the same repo**, NOT a robocopy target. Sync = commit in repo → push →
-  `git pull` in install\app. Never copy files into `install\frontend` or
-  `install\backend` — those top-level folders don't exist and nothing reads them.
-- The install root also holds thin local-only wrappers (never committed):
-  `run.bat`, `update.bat`, `download_models.bat`, `symlink_loras.bat`, and the
-  outer `FEDDA_v2.0_Installer.bat`.
+- **Canonical location as of 2026-07-23: `H:\Fedda-Hub\fedda_hub_latest\`**
+  (`repo\` = clean git clone / source of truth; `install\app\` = the built running
+  app). The old `H:\Fedda-Hub\Fedda_hub_v2.0\` and the ~30 other `H:\Fedda-Hub\*`
+  folders are being retired — confirm which tree the user means before editing.
+- git remote: https://github.com/Feddakalkun/Fedda_hub_v2.0 (underscore, not v22's
+  hyphen). `repo\` is a clean checkout of origin/main.
+- `install\app\` is a **git clone of the same repo**, NOT a robocopy target. Sync =
+  commit in repo → push → `git pull` in install\app.
+- **Two-tree gotcha (why the reset happened):** the previous `Fedda_hub_v2.0\install\app`
+  drifted onto an ancient base (`bea63c5`) and diverged in ~49 files (CRLF + install
+  running older code than committed). A bulk `install→repo` copy ROLLS FILES BACKWARD.
+  Rule: never bulk-copy between trees; copy only the specific files you changed and
+  `git add` them explicitly. A fresh clone (like `fedda_hub_latest\repo`) avoids this —
+  keep it in sync via `git pull`, never robocopy.
+- The install root holds thin local-only wrappers (never committed): `run.bat`,
+  `update.bat`, `download_models.bat`, `symlink_loras.bat`, outer `FEDDA_v2.0_Installer.bat`.
+
+## Distribution / community installs (the vendoring layer)
+
+- **Nodes with no reliable upstream are VENDORED in the repo**: `vendor/custom_nodes/`
+  ships `ComfyUI-AdvancedLivePortrait` + `comfyui-reactor-node` (naked folders, no git
+  remote, absent from Manager). `install.ps1` / `update_logic.ps1` / `download_models.bat`
+  all install from the vendored copy BEFORE trying git clone. Add future no-upstream nodes
+  here the same way.
+- **Fragile models** → `FeddaKalkun/fedda-mirror` (public HF dataset). Populate with
+  `python_embeded\python.exe scripts\upload_mirror.py` (needs a WRITE HF token saved in
+  Settings). Currently hosts `SECRET_SAUCE_WAN2.1_14B_fp8` + node-zip backups. The
+  per-workflow `config/model_manifests/*.txt` point at it. **Do NOT re-add inswapper_128**
+  (withdrawn deepfake model, account risk, and unused).
+- A genuine new user gets everything automatically: git clone (code+nodes) + manifests
+  (public HF + the mirror). No manual copying.
 
 ## Standing rules
 
@@ -62,7 +84,24 @@ is in BREADCRUMBS.md (same folder) — read the newest entries there for recent 
 - Cross-page media handoff: `frontend/src/utils/workflowHandoff.ts`
   (kinds: image, video, audio).
 
-## Feature state (as of 2026-07-08)
+## Feature state (recent — as of 2026-07-23)
+
+- **Library / Character page** (`/tab/library`) is a real browser now: Characters
+  (grouped from `app/<Name>/` + folders with a lone `.md`), Files, Packs; family as a
+  filter; per-character sheet editor (trigger/appearance + Ollama-vision "describe");
+  previews served by `GET /api/lora/preview` (sidecar `<stem>.preview.jpg`).
+- **LivePortrait** tab (face/talking-head: portrait + driving video) and **WAN VACE**
+  tab (FULL-BODY motion transfer — the tool for realistic cam-style body motion;
+  LivePortrait is face-only). Both from the E:\Comfyuistudio pack, vendored.
+- **FaceFix** + **Z-Image Inpaint** pages (auto-mask person/face → regenerate).
+- **LTX** img2vid stacks multiple LoRAs (Power Lora Loader node 5584, NOT the distill
+  node); LTX First-Last-Frame has a "Write prompt from frames" button
+  (`POST /api/ollama/flf-prompt`, captions both keyframes → motion prompt).
+- Global media **drag-and-drop** on all upload surfaces.
+- Uncensored prompt/vision path: joycaption preferred for vision; explicit LTX/WAN
+  caption+enhancer recipes; Ollama with a ComfyUI-LLM fallback for no-Ollama/RunPod.
+
+## Feature state (older — as of 2026-07-08)
 
 - Batch prompt queue (one prompt per line) on all image + video workflow pages.
 - Voice Studio (tab id `zonos-tts`, file ZonosTTSPage.tsx — historical name):

@@ -1155,3 +1155,76 @@ Worked through the pending UX backlog by delegating frontend work to a third age
 5. Untested end-to-end (needs real rig): Scail2 capture→caption→generate flow, WAN Story dynamic at high frame counts (VRAM scales with total length — 24GB should stay ≤720/≤6s).
 
 **Open backlog:** LTX Audio-to-Video: remove 30s cap + make upscale step optional (user OOM'd on RTX 6000 with a 3-min song at 720). Transform Reel edit-strength slider. Z-Image advanced sampler options.
+
+## 2026-07-19 → 07-23 — Opus session: Library overhaul, LTX unfiltered, LivePortrait + WAN VACE, distribution layer, CLEAN-SLATE RESET
+
+Long multi-day session. HEAD ends at `0eed3ae`. All pushed to origin/main.
+
+**Library / Character overhaul (`9b9914b`, `5ccfef0`)** — `/tab/library` was a 51-line
+tab switcher; now a real page. Backend `lora_service`: `get_installed()` keyed by
+normalized RELATIVE path (was bare filename → silently dropped duplicate names like
+both `lightx2v_*`), added name/folder/mtime/is_link; fixed `get_pack_catalog` false-Ready;
+HF-token settings fallback (saved token was never applied → gated repos empty). New
+`GET /api/lora/preview` (the `/lora-previews/*` path was NEVER served by the backend —
+no StaticFiles mount) + sidecar `<stem>.preview.jpg` convention. `GET /api/lora/characters`
+= backend character detection (union rule: a folder with a lone `.md`, OR a direct child
+of `app/`). Frontend: Characters/Files/Packs views, family-as-filter, character sheet
+editor (trigger/appearance + Ollama-vision "describe"). FaceFix + Z-Image Inpaint pages
+were rescued into the repo in `5ccfef0` (their config was committed earlier, the
+page/workflow/registry wiring was not).
+
+**LTX unfiltered + multi-LoRA (`1cac6dd`)** — LTX img2vid `lora_name` targeted node 4922
+(the DISTILL loader) → picking a LoRA REPLACED distillation. Rewired to node 5584 (Power
+Lora Loader, stacks 10). Vision priority now prefers uncensored joycaption over aligned
+llava; `ltx-img2vid` caption + enhancer recipes made explicit (were SFW). Also: collapsible
+output strip + removed the redundant WorkflowShell header (both global).
+
+**LTX First-Last-Frame "Write prompt from frames"** — new `POST /api/ollama/flf-prompt`:
+captions BOTH keyframes (frame 2 RELATIVE to frame 1 so it surfaces the real change) then
+one motion prompt. Handles motion AND transformation; explicitly does NOT assume "same
+person" (that was the storyboard brain's bug for FLF morphs). Ollama with ComfyUI-LLM
+fallback (works no-Ollama / RunPod).
+
+**Global drag-and-drop** (`c69481c`) — shared `UploadDrop` got real drop handling; it was
+the only click-only upload surface (UploadSlot + image cockpit already had drop).
+
+**LivePortrait + WAN VACE (`64c0d29`)** — two workflows from the E:\Comfyuistudio pack,
+wired as FEDDA pages. LivePortrait = face/talking-head (portrait + driving video → talking
+video; AdvancedLivePortrait + ReActor RestoreFace). WAN VACE = FULL-BODY motion transfer
+(the right tool for realistic upper-body cam-style motion; LivePortrait is face-only).
+Both nodes' classes verified registered; RIFE 47→49 patch (FEDDA ships 49). `VideoSectionCards`
+got an icon+label fallback for card-less modules.
+
+**Distribution layer — the "works for the community, not just this machine" pass:**
+- `vendor/custom_nodes/{ComfyUI-AdvancedLivePortrait,comfyui-reactor-node}` — both are naked
+  folders with NO git remote and absent from ComfyUI-Manager, so the REPO now ships the code.
+  `install.ps1` / `update_logic.ps1` / `download_models.bat` all prefer the vendored copy
+  BEFORE git clone. This is the durable fix for nodes that have no reliable upstream.
+- `config/model_manifests/{liveportrait,wan22-vace}.txt` — every URL HEAD-verified.
+- `FeddaKalkun/fedda-mirror` (HF dataset, public) hosts `SECRET_SAUCE_WAN2.1_14B_fp8` (unofficial
+  community merge, no public source) + node-zip backups. Populated via `scripts/upload_mirror.py`
+  (needs a WRITE HF token). Manifest URLs verified live (200).
+- **`inswapper_128` was REMOVED** (`0eed3ae`) from manifest + mirror: it's the withdrawn
+  InsightFace face-swap model (pulled upstream on deepfake grounds), it was a FALSE dependency
+  (LivePortrait uses GFPGAN RestoreFace, not swap), and hosting a withdrawn deepfake model
+  publicly risks the account. Source it separately only if a face-SWAP workflow is ever added.
+
+**CLEAN-SLATE RESET (in progress at session end):** `H:\Fedda-Hub` had ~30 install folders and
+the old `Fedda_hub_v2.0\install\app` had drifted into a divergent franken-tree (its git HEAD
+stuck at `bea63c5`, 49 files differing from committed repo, 3 uncommitted wired pages, stray
+junk incl. `runtime_settings.json` with live keys). Rather than untangle it, started fresh at
+**`H:\Fedda-Hub\fedda_hub_latest\`** (`repo\` = clean clone, `install\` = installer builds
+`install\app`). Repo is the clean canonical source. A genuine new-user install now pulls
+everything automatically: code+nodes from git, public models from HF/Comfy-Org/Kijai, the 1
+unfindable file from the mirror. Old installs kept as fallback until the fresh build is verified.
+Project purpose (context): original AI personas for Fanvue (platform welcomes AI creators).
+
+**Open / next:**
+- Verify the fresh `fedda_hub_latest` install builds clean (watch for `Installing from vendored
+  copy...` on both nodes) + LivePortrait/VACE run end-to-end; then retire the ~30 old installs.
+- Char-animation handoff still valid: `install/PLAN-char-animation.md` — Stage B (fps probe),
+  C (Steady Dancer de-fragilize), E (brush mask). Scail2 capture→generate never live-tested.
+- LIPSYNC FLOAT (speech2video) is the next pack workflow to wire (image+audio→talking; needs
+  ComfyUI-FLOAT node + float.pth) — research offloaded to Higgsfield Supercomputer.
+- Higgsfield Supercomputer = a free agentic-AI relay the user pastes between; use it for
+  web-research grunt work, integrate/verify its output here.
